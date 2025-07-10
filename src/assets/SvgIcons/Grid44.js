@@ -1,0 +1,59 @@
+import * as React from "react";
+import Svg, { Line } from "react-native-svg";
+const Grid44 = (props) => (
+  <Svg
+    width={35}
+    height={35}
+    viewBox="0 0 35 35"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...props}
+  >
+    <Line
+      x1={26.4999}
+      x2={26.4999}
+      y2={35}
+      stroke="#484848"
+      strokeWidth={0.5}
+    />
+    <Line
+      x1={8.99988}
+      x2={8.99988}
+      y2={35}
+      stroke="#484848"
+      strokeWidth={0.5}
+    />
+    <Line
+      x1={17.7499}
+      x2={17.7499}
+      y2={35}
+      stroke="#484848"
+      strokeWidth={0.5}
+    />
+    <Line
+      x1={34.9999}
+      y1={26.5}
+      x2={-0.000122081}
+      y2={26.5}
+      stroke="#484848"
+      strokeWidth={0.5}
+    />
+    <Line
+      x1={34.9999}
+      y1={9}
+      x2={-0.000122081}
+      y2={9}
+      stroke="#484848"
+      strokeWidth={0.5}
+    />
+    <Line
+      x1={34.9999}
+      y1={17.75}
+      x2={-0.000122092}
+      y2={17.75}
+      stroke="#484848"
+      strokeWidth={0.5}
+    />
+  </Svg>
+);
+export default Grid44;

@@ -1,0 +1,55 @@
+diff --git a/node_modules/react-native-country-codes-picker/index.tsx b/node_modules/react-native-country-codes-picker/index.tsx
+index 6464ae1..ac96198 100644
+--- a/node_modules/react-native-country-codes-picker/index.tsx
++++ b/node_modules/react-native-country-codes-picker/index.tsx
+@@ -11,7 +11,8 @@ import {
+     Keyboard,
+     ViewStyle,
+     Modal,
+-    TextStyle
++    TextStyle,
++    TouchableOpacity
+ } from 'react-native';
+ import { CountryItem, ItemTemplateProps, Style, ListHeaderComponentProps } from "./types/Types";
+ import { useKeyboardStatus } from "./helpers/useKeyboardStatus";
+@@ -104,6 +105,7 @@ export const CountryPicker = ({
+             setShowModal(true);
+         } else {
+             closeModal();
++        
+         }
+     }, [show]);
+ 
+@@ -187,6 +189,7 @@ export const CountryPicker = ({
+     };
+ 
+     const closeModal = () => {
++        setSearchValue('')
+         Animated.timing(animationDriver, {
+             toValue: 0,
+             duration: 400,
+@@ -225,12 +228,14 @@ export const CountryPicker = ({
+             onShow={openModal}
+             onRequestClose={onRequestClose}
+         >
++
+             <View
+                 style={{
+                     flex: 1,
+                     justifyContent: 'flex-end'
+                 }}
+             >
++                
+                 {!disableBackdrop && (
+                     <Animated.View
+                         onStartShouldSetResponder={onStartShouldSetResponder}
+@@ -261,6 +266,9 @@ export const CountryPicker = ({
+                         },
+                     ]}
+                 >
++                    <TouchableOpacity onPress={onRequestClose} style={{ paddingHorizontal:10,marginLeft:10,marginBottom:10,alignSelf:'flex-end',height: 26,  borderRadius: 13, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }}>
++                    <Text style={{ color: '#fff', fontWeight: "800", }}>Close</Text>
++                </TouchableOpacity>
+                     <View
+                         style={{
+                             flexDirection: 'row',

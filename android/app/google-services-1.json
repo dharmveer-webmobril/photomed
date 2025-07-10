@@ -1,0 +1,84 @@
+{
+  "project_info": {
+    "project_number": "880972773465",
+    "project_id": "photomed-pro",
+    "storage_bucket": "photomed-pro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:880972773465:android:0b5e4558c3c91925bfd948",
+        "android_client_info": {
+          "package_name": "com.photomed"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "880972773465-onvndmq9rt99ajpa91u9rpang4i31djt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.photomed",
+            "certificate_hash": "fc8d25098925a4f012faee43c1280ec00639b918"
+          }
+        },
+        {
+          "client_id": "880972773465-0qq5eo3bb8h6sijtavc9sjfrc9mnilk4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyByVklVFj5u9NShZAMvuAhDmtIfLsACLsA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "880972773465-0qq5eo3bb8h6sijtavc9sjfrc9mnilk4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:880972773465:android:a38520c7a306a1adbfd948",
+        "android_client_info": {
+          "package_name": "com.photomedPro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "880972773465-penvv4gjiktt5pfsdcsh6nnpcrp77jce.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.photomedPro",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "880972773465-0qq5eo3bb8h6sijtavc9sjfrc9mnilk4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyByVklVFj5u9NShZAMvuAhDmtIfLsACLsA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "880972773465-0qq5eo3bb8h6sijtavc9sjfrc9mnilk4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

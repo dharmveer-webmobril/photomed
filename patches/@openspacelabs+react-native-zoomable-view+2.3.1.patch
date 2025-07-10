@@ -1,0 +1,27 @@
+diff --git a/node_modules/@openspacelabs/react-native-zoomable-view/lib/typescript/ReactNativeZoomableView.d.ts b/node_modules/@openspacelabs/react-native-zoomable-view/lib/typescript/ReactNativeZoomableView.d.ts
+index 7f84620..7ad9137 100644
+--- a/node_modules/@openspacelabs/react-native-zoomable-view/lib/typescript/ReactNativeZoomableView.d.ts
++++ b/node_modules/@openspacelabs/react-native-zoomable-view/lib/typescript/ReactNativeZoomableView.d.ts
+@@ -205,6 +205,7 @@ declare class ReactNativeZoomableView extends Component<ReactNativeZoomableViewP
+      * @param newZoomLevel
+      * @param zoomCenter relative coords compared to the zoom subject. Default to the center.
+      */
++    resetTo(): void;
+     zoomTo(newZoomLevel: number, zoomCenter?: {
+         x: number;
+         y: number;
+diff --git a/node_modules/@openspacelabs/react-native-zoomable-view/src/ReactNativeZoomableView.tsx b/node_modules/@openspacelabs/react-native-zoomable-view/src/ReactNativeZoomableView.tsx
+index c890857..ab3871b 100644
+--- a/node_modules/@openspacelabs/react-native-zoomable-view/src/ReactNativeZoomableView.tsx
++++ b/node_modules/@openspacelabs/react-native-zoomable-view/src/ReactNativeZoomableView.tsx
+@@ -1095,6 +1095,10 @@ class ReactNativeZoomableView extends Component<
+    * @param newZoomLevel
+    * @param zoomCenter relative coords compared to the zoom subject. Default to the center.
+    */
++  resetTo(){
++    this.panAnim.setValue({ x: 0, y: 0});
++    this.zoomAnim.setValue(1);
++  }
+   zoomTo(newZoomLevel: number, zoomCenter = { x: 0, y: 0 }) {
+     if (!this.props.zoomEnabled) return false;
+     if (this.props.maxZoom && newZoomLevel > this.props.maxZoom) return false;

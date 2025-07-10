@@ -1,0 +1,28 @@
+diff --git a/node_modules/react-native-ui-datepicker/src/components/header/next-button.tsx b/node_modules/react-native-ui-datepicker/src/components/header/next-button.tsx
+index bc36f13..85ce5d1 100644
+--- a/node_modules/react-native-ui-datepicker/src/components/header/next-button.tsx
++++ b/node_modules/react-native-ui-datepicker/src/components/header/next-button.tsx
+@@ -79,7 +79,8 @@ const NextButton = ({
+         {components.IconNext || (
+           <Image
+             source={arrow_right}
+-            style={iconStyle}
++            style={{height:20,width:20,tintColor:'#32327C'}}
++            tintColor="#32327C"
+             className={imageClassName}
+           />
+         )}
+diff --git a/node_modules/react-native-ui-datepicker/src/components/header/prev-button.tsx b/node_modules/react-native-ui-datepicker/src/components/header/prev-button.tsx
+index 34475ac..ef1b5db 100644
+--- a/node_modules/react-native-ui-datepicker/src/components/header/prev-button.tsx
++++ b/node_modules/react-native-ui-datepicker/src/components/header/prev-button.tsx
+@@ -79,7 +79,8 @@ const PrevButton = ({
+         {components.IconPrev || (
+           <Image
+             source={arrow_left}
+-            style={iconStyle}
++            tintColor="red"
++      style={{height:20,width:20,tintColor:'#32327C'}}
+             className={imageClassName}
+           />
+         )}
