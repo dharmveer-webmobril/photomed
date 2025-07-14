@@ -23,11 +23,10 @@ import Toast from 'react-native-simple-toast'
 import DeviceInfo from 'react-native-device-info';
 import { getData } from '../../configs/helperFunction';
 import { configUrl } from '../../configs/api';
-import { appleAuth, AppleButton } from '@invertase/react-native-apple-authentication';
 import { jwtDecode } from 'jwt-decode';
 import Orientation from 'react-native-orientation-locker';
-
-
+import { appleAuth, AppleButton } from '@invertase/react-native-apple-authentication';
+ 
 const Login = () => {
 
     const navigation = useNavigation()

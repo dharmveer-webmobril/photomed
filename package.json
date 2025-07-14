@@ -53,7 +53,7 @@
     "react-native-gesture-handler": "2.25.0",
     "react-native-get-random-values": "^1.11.0",
     "react-native-htmlview": "^0.17.0",
-    "react-native-iap": "^12.16.2",
+    "react-native-iap": "12.16.2",
     "react-native-image-crop-picker": "^0.41.4",
     "react-native-image-pan-zoom": "^2.1.12",
     "react-native-keyboard-aware-scroll-view": "^0.9.5",

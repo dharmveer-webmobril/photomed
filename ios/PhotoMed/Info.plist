@@ -52,7 +52,7 @@
 		<true/>
 		<key>NSExceptionDomains</key>
 		<dict>
-			<key>52.22.241.165</key>
+			<key>photomedpro.com</key>
 			<dict>
 				<key>NSExceptionAllowsInsecureHTTPLoads</key>
 				<true/>

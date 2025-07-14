@@ -161,7 +161,7 @@ PODS:
   - libwebp/webp (1.5.0):
     - libwebp/sharpyuv
   - lottie-ios (4.5.0)
-  - lottie-react-native (7.2.2):
+  - lottie-react-native (7.2.4):
     - DoubleConversion
     - glog
     - lottie-ios (= 4.5.0)
@@ -1411,7 +1411,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-cameraroll (7.10.0):
+  - react-native-cameraroll (7.10.1):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.01.01.00)
@@ -1432,7 +1432,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-compressor (1.11.0):
+  - react-native-compressor (1.12.0):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.01.01.00)
@@ -1457,7 +1457,7 @@ PODS:
     - react-native-config/App (= 1.5.5)
   - react-native-config/App (1.5.5):
     - React-Core
-  - react-native-date-picker (5.0.12):
+  - react-native-date-picker (5.0.13):
     - React-Core
   - react-native-document-picker (9.3.1):
     - DoubleConversion
@@ -1486,27 +1486,8 @@ PODS:
     - React-Core
   - react-native-orientation-locker (1.6.0):
     - React-Core
-  - react-native-quick-base64 (2.1.2):
-    - DoubleConversion
-    - glog
-    - RCT-Folly (= 2024.01.01.00)
-    - RCTRequired
-    - RCTTypeSafety
+  - react-native-quick-base64 (2.2.0):
     - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - Yoga
   - react-native-safe-area-context (4.14.1):
     - React-Core
   - react-native-simple-toast (3.3.2):
@@ -1554,7 +1535,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-webview (13.13.5):
+  - react-native-webview (13.15.0):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.01.01.00)
@@ -1822,11 +1803,11 @@ PODS:
     - React-Core
   - RNAppleAuthentication (2.4.1):
     - React-Core
-  - RNBootSplash (6.3.8):
+  - RNBootSplash (6.3.10):
     - React-Core
-  - RNCAsyncStorage (2.1.2):
+  - RNCAsyncStorage (2.2.0):
     - React-Core
-  - RNDateTimePicker (8.3.0):
+  - RNDateTimePicker (8.4.2):
     - React-Core
   - RNDeviceInfo (14.0.4):
     - React-Core
@@ -1887,7 +1868,7 @@ PODS:
     - RNNotifee/NotifeeCore (= 9.1.8)
   - RNNotifee/NotifeeCore (9.1.8):
     - React-Core
-  - RNReanimated (3.17.5):
+  - RNReanimated (3.18.0):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.01.01.00)
@@ -1907,10 +1888,10 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/reanimated (= 3.17.5)
-    - RNReanimated/worklets (= 3.17.5)
+    - RNReanimated/reanimated (= 3.18.0)
+    - RNReanimated/worklets (= 3.18.0)
     - Yoga
-  - RNReanimated/reanimated (3.17.5):
+  - RNReanimated/reanimated (3.18.0):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.01.01.00)
@@ -1930,9 +1911,9 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/reanimated/apple (= 3.17.5)
+    - RNReanimated/reanimated/apple (= 3.18.0)
     - Yoga
-  - RNReanimated/reanimated/apple (3.17.5):
+  - RNReanimated/reanimated/apple (3.18.0):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.01.01.00)
@@ -1953,7 +1934,7 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - RNReanimated/worklets (3.17.5):
+  - RNReanimated/worklets (3.18.0):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.01.01.00)
@@ -1973,9 +1954,9 @@ PODS:
     - ReactCodegen
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
-    - RNReanimated/worklets/apple (= 3.17.5)
+    - RNReanimated/worklets/apple (= 3.18.0)
     - Yoga
-  - RNReanimated/worklets/apple (3.17.5):
+  - RNReanimated/worklets/apple (3.18.0):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.01.01.00)
@@ -2029,11 +2010,11 @@ PODS:
   - SocketRocket (0.7.0)
   - Toast (4.1.1)
   - TOCropViewController (2.7.4)
-  - VisionCamera (4.6.4):
-    - VisionCamera/Core (= 4.6.4)
-    - VisionCamera/React (= 4.6.4)
-  - VisionCamera/Core (4.6.4)
-  - VisionCamera/React (4.6.4):
+  - VisionCamera (4.7.0):
+    - VisionCamera/Core (= 4.7.0)
+    - VisionCamera/React (= 4.7.0)
+  - VisionCamera/Core (4.7.0)
+  - VisionCamera/React (4.7.0):
     - React-Core
   - Yoga (0.0.0)
 
@@ -2391,7 +2372,7 @@ SPEC CHECKSUMS:
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   lottie-ios: a881093fab623c467d3bce374367755c272bdd59
-  lottie-react-native: de4d02ad4fa92cd4aa7487180a1e02344e41ac1f
+  lottie-react-native: be94dc4066380c875393405ea8a7c01861201107
   MLImage: 1824212150da33ef225fbd3dc49f184cf611046c
   MLKitCommon: afec63980417d29ffbb4790529a1b0a2291699e1
   MLKitFaceDetection: 7c0e8bf09ddd27105da32d088fca978a99fc30cc
@@ -2427,20 +2408,20 @@ SPEC CHECKSUMS:
   React-logger: d79b704bf215af194f5213a6b7deec50ba8e6a9b
   React-Mapbuffer: b982d5bba94a8bc073bda48f0d27c9b28417fae3
   React-microtasksnativemodule: 475ea38712131abd7f7935c82a41364cea2fa01f
-  react-native-cameraroll: 7d91bd34911297fd2478cc2f68d865a8f289e887
-  react-native-compressor: 89b62fe92d2e18e2da4dfe28e21c98ecfe0e1ce5
+  react-native-cameraroll: febb3f47d5dd10ff19d8ae12346db5f380de5dd8
+  react-native-compressor: 7945999d05c5e42443afe11b9ee9ce52400f2a6f
   react-native-config: 3367df9c1f25bb96197007ec531c7087ed4554c3
-  react-native-date-picker: 52078dd21bce8973b221607ff2472a34ae3d3e03
+  react-native-date-picker: b64721d6278b52708457292c218196b383b553b1
   react-native-document-picker: ccca729bfa32ac6f20db6c48dd8ad4ca29ea8795
   react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
   react-native-orientation-locker: 4409c5b12b65f942e75449872b4f078b6f27af81
-  react-native-quick-base64: 3de0af2c1cce190d1274d5792ed12f77d5875b6b
+  react-native-quick-base64: 40a87a8bd5d23b649e570f6f0be3c759281e3e40
   react-native-safe-area-context: 141eca0fd4e4191288dfc8b96a7c7e1c2983447a
   react-native-simple-toast: 645b68c26e43786fc05e3d7401de2b057f139054
   react-native-slider: 9e7c4e0ddf1f81396e443fe497c9a57d3e16866a
   react-native-view-shot: 39a7bc16d013713148241e7e6067aa11ee4ec6d9
-  react-native-webview: 6acb5e443158f5c7c5a46daa1491c835d2272f98
+  react-native-webview: a9661db787ee37b595c81c218a7e9b8dc7e996a5
   React-nativeconfig: 8c83d992b9cc7d75b5abe262069eaeea4349f794
   React-NativeModulesApple: b8465afc883f5bf3fe8bac3767e394d581a5f123
   React-perflogger: 59e1a3182dca2cee7b9f1f7aab204018d46d1914
@@ -2468,9 +2449,9 @@ SPEC CHECKSUMS:
   ReactCommon: 8377a2a5504f72e284ce1b1cd207d8455bdbfdf3
   rn-fetch-blob: f065bb7ab7fb48dd002629f8bdcb0336602d3cba
   RNAppleAuthentication: b2d8b5ccba86b5b1e55a1a2e858f7ac6d8a21816
-  RNBootSplash: 95181f0d573171efb0dec33f96aebdb64203f8e3
-  RNCAsyncStorage: addfc2cb6511dbe199c56c6b26ede383b6c38919
-  RNDateTimePicker: a793ed8822283f576dd0a205a0916c5098c2611f
+  RNBootSplash: 2c6b226e3ad3c97d16b6d53bd75d0cd281646bfb
+  RNCAsyncStorage: 23e56519cc41d3bade3c8d4479f7760cb1c11996
+  RNDateTimePicker: 5f8f466cebb540aabd442d485e4ce5b27cf54b23
   RNDeviceInfo: feea80a690d2bde1fe51461cf548039258bd03f2
   RNFastImage: 5c9c9fed9c076e521b3f509fe79e790418a544e8
   RNFBApp: 5f87753a8d8b37d229adf85cd0ff37709ffdf008
@@ -2482,7 +2463,7 @@ SPEC CHECKSUMS:
   RNImageCropPicker: 8e39c01f205e00d739c31e682f068aac315587bf
   RNMLKitFaceDetection: c3d95579c042b8937a682a55b04659dc0c4812f8
   RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
-  RNReanimated: 3cc6bd27fdc7355464f5fff3a5bce759e0b133f8
+  RNReanimated: 17c7f50f19ed6fb9ada4d1cf49e4b1fbaac42613
   RNScreens: 6bdabf3bea6afc5028221d802a9bfc289ee398f6
   RNSVG: 28b61fc4856abe8eaea46794419f848986ee7e80
   SDWebImage: a7f831e1a65eb5e285e3fb046a23fcfbf08e696d
@@ -2490,7 +2471,7 @@ SPEC CHECKSUMS:
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   Toast: 1f5ea13423a1e6674c4abdac5be53587ae481c4e
   TOCropViewController: 80b8985ad794298fb69d3341de183f33d1853654
-  VisionCamera: b5c2b3c45e641102902a5194af11dc532805221e
+  VisionCamera: b3c0cf261b9ad1ac7d60ec292d252cf3368b801e
   Yoga: 055f92ad73f8c8600a93f0e25ac0b2344c3b07e6
 
 PODFILE CHECKSUM: bf0a8a7dc5827e02194f4a868b3da326bde616d7
