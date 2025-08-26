@@ -133,7 +133,6 @@ const PatientImageList = memo(
         renderItem={({ item: section }) => {
 
           let isAllIdsIncluded = checkAllIdsIncluded(section?.data, selectedImages)
-          console.log('isAllIdsIncludedisAllIdsIncluded', isAllIdsIncluded)
           return (
             <>
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: 'space-between', width: "100%", }}>
@@ -161,7 +160,6 @@ const PatientImageList = memo(
               <View style={{ width: "100%", flexDirection: "row", flexWrap: "wrap", justifyContent: 'space-between' }}>
                 {
                   section?.data && formatData(section?.data, 3)?.map((item, index) => {
-                    console.log('formatData formatData formatData', formatData(section?.data, 3))
 
                     const selected = !item?.empty && selectedImages.includes(
                       provider == "google" ? item.id : item.path_display

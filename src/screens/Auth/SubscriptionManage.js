@@ -28,7 +28,7 @@ import {
 } from 'react-native-iap';
 import ScreenName from '../../configs/screenName';
 const itemSkus = Platform.select({
-  ios: ['quarterlysubscription_20', 'yearly_subscription_photomed', 'monthly_plan_photomed'],
+  ios: ['com.photomedthreemonth', 'com.photomedonemonth', 'com.photomedyearlyplan'],
   android: ['com.photomedPro.com'],
 });
 
@@ -52,10 +52,10 @@ class SubscriptionManage extends Component {
   async componentDidMount() {
 
 
-    this.props.navigation.addListener('focus', () => {
-      this.fetchUserSubscription();
-      this.initializeIap();
-    })
+    this.fetchUserSubscription();
+    this.initializeIap();
+    // this.props.navigation.addListener('focus', () => {
+    // })
 
     await initConnection()
       .then(() => {
@@ -92,8 +92,8 @@ class SubscriptionManage extends Component {
                 });
 
               if (this.state.apiStatus) {
-                  await this.addSubscriptionToBackend(purchase);
-                  this.setState({ apiStatus: false })
+                await this.addSubscriptionToBackend(purchase);
+                this.setState({ apiStatus: false })
               }
 
               if (Platform.OS === 'ios') {
@@ -185,42 +185,6 @@ class SubscriptionManage extends Component {
     } finally {
       this.setState({ loadingUserSub: false });
     }
-
-
-    //   const { token } = this.props;
-    //   try {
-    //     this.setState({ loadingUserSub: true });
-    //     const userSub = await getUserPlans(token);
-
-
-
-    //     const responseBody = userSub?.ResponseBody;
-    //     if (responseBody?.receiptData) {
-    //       const validReceipt1 = await validateSubscription1(this.props.route.params.token, responseBody.receiptData, responseBody.platform);
-    //       console.log('validReceipt1validReceipt1-', validReceipt1);
-    //       if (validReceipt1 && validReceipt1?.succeeded) {
-    //          this.setState({
-    //           userSubscription: validReceipt1?.ResponseBody,
-    //           selectedPlan: validReceipt1?.ResponseBody?.productId,
-    //         });
-    //       }
-    //       // const validReceipt = await validateReceiptData(responseBody.receiptData, responseBody.platform);
-    //       // if (validReceipt) {
-    //       //   this.setState({
-    //       //     userSubscription: validReceipt,
-    //       //     selectedPlan: validReceipt.productId,
-    //       //   });
-    //       // }
-    //     }
-    //   } catch (err) {
-    //     console.log('Error', 'Failed to fetch subscription details.', err);
-    //     Alert.alert('Error', 'Failed to fetch subscription details.');
-    //   } finally {
-    //     this.setState({ loadingUserSub: false });
-    //   }
-    // };
-
-
   };
 
 
@@ -265,7 +229,7 @@ class SubscriptionManage extends Component {
         planeType: purchase.productId,
         transactionDate: purchase.transactionDate,
         startDate: purchase.transactionDate,
-        endDate:  purchase.transactionDate,
+        endDate: purchase.transactionDate,
         platform: Platform.OS,
         receiptData: Platform.OS === 'ios' ? purchase.transactionReceipt : purchase.purchaseToken,
         status: 1,
@@ -323,10 +287,14 @@ class SubscriptionManage extends Component {
                     style={[styles.planCard, isSelected && styles.selectedCard]}
                   >
                     <View style={styles.cardHeader}>
-                      <Text style={styles.planTitle}>{plan.title}</Text>
+                      {plan.title == 'com.photomedthreemonth' && <Text style={styles.planTitle}>{"3-Month Premium Plan"}</Text>}
+                      {plan.title == 'com.photomedyearlyplan' && <Text style={styles.planTitle}>{"Annual Pro Subscription"}</Text>}
+                      {plan.title == 'com.photomedonemonth' && <Text style={styles.planTitle}>{"Monthly Access Plan"}</Text>}
                       <Text style={styles.planPrice}>{plan.localizedPrice}</Text>
                     </View>
-                    <Text style={styles.planText}>• {plan.description}</Text>
+                    {plan.description == 'com.photomedthreemonth' && <Text style={styles.description}>. {"Enjoy full access to all features for 3 months"}</Text>}
+                    {plan.description == 'com.photomedyearlyplan' && <Text style={styles.description}>. {"Full app access for a year at a great value"}</Text>}
+                    {plan.description == 'com.photomedonemonth' && <Text style={styles.description}>. {"Access to all features for 1 month"}</Text>}
                     <Text style={styles.planText}>• Everything in Standard Plan</Text>
                     <Text style={styles.planText}>• Exclusive Content & Tips</Text>
                     <View style={styles.radioWrapper}>
@@ -360,7 +328,15 @@ class SubscriptionManage extends Component {
                   )}
               </>
             )}
+
+            
           </ScrollView>
+          <Text style={{textAlign:'center',marginHorizontal:20,color:'#000'}}>Payment will be charged to iTunes Account at confirmation of purchase. Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period. Account will be charged for renewal within 24-hours prior to the end of the current period, and identify the cost of the renewal. Subscriptions may be managed by the user and auto-renewal may be turned off by going to the user's Account Settings after purchase. No cancellation of the current subscription is allowed during active subscription period. Any unused portion of a free trial period, if offered, will be forfeited when the user purchases a subscription to that publication, where applicable</Text>
+
+          <View style={{flexDirection:'row',marginHorizontal:20,marginBottom:20,marginVertical:30,justifyContent:'center'}}>
+            <Text onPress={() => navigate('Terms and Condition', { slug: 'terms-and-conditions', screenName: 'Terms and Conditions' })} style={{color:'#32327C',marginRight:10,textDecorationLine:'underline'}}>Terms of Service</Text>
+            <Text onPress={() => navigate('Terms and Condition', { slug: 'privacy-policy', screenName: 'Privacy Policy' })} style={{color:'#32327C',marginLeft:10,textDecorationLine:'underline'}}>Privacy Policy</Text>
+          </View>
         </View>
       </SafeAreaView>
     );

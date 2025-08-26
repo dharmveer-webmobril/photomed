@@ -9,6 +9,7 @@ import {
   FlatList,
   Alert,
   useWindowDimensions,
+  Platform,
 } from "react-native";
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import WrapperContainer from "../components/WrapperContainer";
@@ -21,7 +22,7 @@ import commonStyles from "../styles/commonStyles";
 import COLORS from "../styles/colors";
 import SearchIcon from "../assets/SvgIcons/SearchIcon";
 import FONTS from "../styles/fonts";
-import { moderateScale, verticalScale } from "../styles/responsiveLayoute";
+import { moderateScale, scale, verticalScale } from "../styles/responsiveLayoute";
 import ScaleIcon from "../assets/SvgIcons/ScaleIcon";
 import Grid33 from "../assets/SvgIcons/Grid33";
 import Grid44 from "../assets/SvgIcons/Grid44";
@@ -78,7 +79,7 @@ import {
 import ImageWithLoader from "../components/ImageWithLoader";
 import DeleteImagePopUp from "../components/DeleteImagePopUp";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
-import { Image as ImageResizer } from "react-native-compressor";
+import { Image as CompressImage } from "react-native-compressor";
 import SelectedGridOverlay from "../components/SelectedGridOverlay";
 import imagePaths from "../assets/images";
 import { setCurrentPatient, setPatientImages } from "../redux/slices/patientSlice";
@@ -86,6 +87,7 @@ import FastImage from "react-native-fast-image";
 import Orientation from "react-native-orientation-locker";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
+import ImageResizer from 'react-native-image-resizer';
 
 
 
@@ -194,10 +196,127 @@ const CameraGrid = (props) => {
 
   const activePatient = useSelector((state) => state.patient?.currentActivePatient);
 
+
+
+  const cropToPreview = async (photoPath, previewRatio = "16:9") => {
+    try {
+      // Get width/height from ratio
+      let targetWidth = 1080;
+      let targetHeight = 1080;
+
+      if (previewRatio === "16:9") {
+        targetWidth = 1920;
+        targetHeight = 1080;
+      } else if (previewRatio === "4:3") {
+        targetWidth = 1200;
+        targetHeight = 900;
+      } else if (previewRatio === "1:1") {
+        targetWidth = 1080;
+        targetHeight = 500;
+      }
+      console.log('targetWidthtargetWidth', targetWidth);
+      console.log('targetHeighttargetHeight', targetHeight);
+
+      // Resize & crop
+      const resizedImage = await ImageResizer.createResizedImage(
+        photoPath,
+        targetWidth,
+        targetHeight,
+        "JPEG",
+        100,
+        0,
+        null,
+        false,
+        { mode: "cover" } // important! ensures cropping, not stretching
+      );
+
+      return resizedImage.uri;
+    } catch (e) {
+      console.log("Crop Error:", e);
+      return photoPath;
+    }
+  };
+
+  // const capturePhoto = async () => {
+  //   if (loacalImageArr.length >= 5) return false;
+  //   if (cameraRef.current !== null) {
+  //     let photo = await cameraRef.current.takePhoto({
+  //       quality: 0.5,
+  //       skipMetadata: true,
+  //     });
+  //     setImageSource(photo.path);
+  //     if (!photo.path.startsWith('file://')) {
+  //       photo.path = `file://${photo.path}`;
+  //     }
+
+  //     try {
+  //       // Example: Resize/Crop according to desired aspect ratio
+  //       // Options: "contain", "cover", "stretch" (for cropping)
+  //       const resizedImage = await cropToPreview(photo.path, aspectRatio);
+  //       console.log('resizedImageresizedImage', resizedImage);
+
+  //       let fileJson = {};
+  //       provider === "google"
+  //         ? (fileJson.webContentLink = resizedImage)
+  //         : (fileJson.publicUrl = resizedImage);
+
+  //       let uniqueKey = generateUniqueKey();
+  //       let imageName = `${patientName}_${uniqueKey}.jpg`;
+
+  //       fileJson.path = resizedImage;
+  //       fileJson.uri = resizedImage;
+  //       fileJson.type = "image/jpeg";
+  //       fileJson.name = imageName;
+
+  //       console.log('loacalImageArr 207', fileJson);
+  //       setLocalImageArr((prevImages) => [fileJson, ...prevImages]);
+
+  //       if (ghostImage) {
+  //         setIsVisible(true);
+  //       }
+  //     } catch (error) {
+  //       console.log("Resize Error:", error);
+  //     }
+  //   }
+  // };
+
+  const capturePhoto = async () => {
+    if (loacalImageArr.length >= 5) return false
+    if (cameraRef.current !== null) {
+      let photo = await cameraRef.current.takePhoto({
+        quality: 0.5,
+        skipMetadata: true,
+      });
+
+
+      let fileJson = {};
+
+      if (!photo.path.startsWith('file://')) {
+        photo.path = `file://${photo.path}`;
+      }
+      setImageSource(photo.path);
+
+      provider === "google" ? fileJson.webContentLink = photo.path : fileJson.publicUrl = photo.path
+      let uniqueKey = generateUniqueKey();
+      let imageName = `${patientName}_${uniqueKey}.jpg`;
+      fileJson.path = photo.path;
+      fileJson.uri = photo.path;
+      fileJson.type = "image/jpeg";
+      fileJson.name = imageName;
+      console.log('loacalImageArr 207', fileJson);
+      setLocalImageArr((prevImages) => [fileJson, ...prevImages]);
+
+      if (ghostImage) {
+        setIsVisible(true);
+      }
+    }
+  };
+
+
   const updatePatientImage = async (imgData) => {
     let id = activePatient?._id;
     const formData = new FormData();
-    let imgUri = await ImageResizer.compress(imgData.uri, {
+    let imgUri = await CompressImage.compress(imgData.uri, {
       compressionMethod: "auto",
       maxWidth: 1200,
       maxHeight: 1200,
@@ -227,35 +346,6 @@ const CameraGrid = (props) => {
   };
 
 
-  const capturePhoto = async () => {
-    if (loacalImageArr.length >= 5) return false
-    if (cameraRef.current !== null) {
-      let photo = await cameraRef.current.takePhoto({
-        quality: 0.5,
-        skipMetadata: true,
-      });
-      setImageSource(photo.path);
-
-      let fileJson = {};
-
-      if (!photo.path.startsWith('file://')) {
-        photo.path = `file://${photo.path}`;
-      }
-      provider === "google" ? fileJson.webContentLink = photo.path : fileJson.publicUrl = photo.path
-      let uniqueKey = generateUniqueKey();
-      let imageName = `${patientName}_${uniqueKey}.jpg`;
-      fileJson.path = photo.path;
-      fileJson.uri = photo.path;
-      fileJson.type = "image/jpeg";
-      fileJson.name = imageName;
-      console.log('loacalImageArr 207', fileJson);
-      setLocalImageArr((prevImages) => [fileJson, ...prevImages]);
-
-      if (ghostImage) {
-        setIsVisible(true);
-      }
-    }
-  };
 
   useEffect(() => {
     if (capturedImages.length > 0 && capturedImages.length == loacalImageArr.length) {
@@ -541,8 +631,14 @@ const CameraGrid = (props) => {
     "1:1": 1 / 1,
   };
 
-  const height = width * aspectRatios[aspectRatio];
+  let height = width * aspectRatios[aspectRatio];
 
+  function getHeight() {
+    if (!Platform.isPad && aspectRatio == '1:1') {
+      return height + verticalScale(70)
+    }
+    return height
+  }
   const format = useCameraFormat(device, [
     { photoAspectRatio: aspectRatios[aspectRatio] },
     { photoResolution: Math.max(width, height) },
@@ -638,13 +734,13 @@ const CameraGrid = (props) => {
         <View style={{ flex: 1 }}>
           <View
             style={[
-              { width, height, alignItems: "center", overflow: "hidden" },
+              { width: width, height: getHeight() > windowHeight ? windowHeight : getHeight(), alignItems: "center", overflow: "hidden" },
             ]}
           >
             <Camera
               ref={cameraRef}
               style={[
-                { width, height, alignItems: "center", overflow: "hidden" },
+                { alignItems: "center", overflow: "hidden" }, { position: 'absolute', top: 0, bottom: 0, right: 0, left: 0 }
               ]}
               device={device}
               isActive={true}
@@ -652,7 +748,8 @@ const CameraGrid = (props) => {
               photo={true}
               zoom={zoomLevel}
               preset="photo"
-              ratio
+              ratio={aspectRatio}
+              resizeMode={Platform.isPad ? "contain" : "contain"}
             />
 
             {selectedGridItem &&
@@ -664,7 +761,7 @@ const CameraGrid = (props) => {
             <SelectedGridOverlay
               selectedGridItem={selectedGridItem}
               selectedCategory={selectedCategory}
-              height={height}
+              height={getHeight() > windowHeight ? windowHeight : getHeight()}
               width={width}
             />
           </View>
@@ -739,7 +836,8 @@ const CameraGrid = (props) => {
         <View
           style={[
             commonStyles.flexView,
-            { alignSelf: "center", marginTop: verticalScale(10) },
+            { alignSelf: "center", marginTop: verticalScale(10), width: Platform.isPad ? '12%' : '20%', justifyContent: Platform.isPad ? 'center' : 'space-between' },
+
           ]}
         >
           <View style={{ justifyContent: "center", alignItems: "center" }}>
@@ -748,8 +846,8 @@ const CameraGrid = (props) => {
               style={[
                 styles.actionBtn,
                 {
-                  marginRight: moderateScale(10),
                   backgroundColor: activeZoom ? COLORS.primary : COLORS.white,
+                  alignItems: "center"
                 },
               ]}
             >
@@ -759,9 +857,9 @@ const CameraGrid = (props) => {
                 width={19.13}
               />
             </TouchableOpacity>
-            <Text style={styles.txtStyle}>2x</Text>
+            <Text style={[styles.txtStyle,]}>2x</Text>
           </View>
-          <View style={{ justifyContent: "center", alignItems: "center" }}>
+          {!Platform.isPad && <View style={{ justifyContent: "center", alignItems: "center" }}>
             <TouchableOpacity
               disabled={
                 selectedCategory == 1 || selectedCategory == 6 ? false : true
@@ -785,7 +883,7 @@ const CameraGrid = (props) => {
               />
             </TouchableOpacity>
             <Text style={styles.txtStyle}>{aspectRatio}</Text>
-          </View>
+          </View>}
         </View>
 
         {/* Camera Capture Buttons */}

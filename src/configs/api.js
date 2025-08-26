@@ -1432,6 +1432,8 @@ export async function addSubscriptions(token, data1) {
 }
 
 export const validateSubscription = async (token) => {
+console.log("configUrl.BASE_URL + 'validate-receipt'", configUrl.BASE_URL + 'validate-receipt');
+console.log("configUrl.BASE_URL + token", token);
 
   try {
     const response = await fetch(configUrl.BASE_URL + 'validate-receipt', {
@@ -1480,109 +1482,109 @@ export const validateSubscription1 = async (token, receipt, platform = Platform.
   }
 };
 
-export const validateReceiptData = async (receipt, platform = Platform.OS) => {
-  const validProductIds = Platform.select({
-    ios: ['quarterlysubscription_20', 'yearly_subscription_photomed', 'monthly_plan_photomed'],
-    android: ['com.photomedPro.com'],
-  });
+// export const validateReceiptData = async (receipt, platform = Platform.OS) => {
+//   const validProductIds = Platform.select({
+//     ios: ['quarterlysubscription_20', 'yearly_subscription_photomed', 'monthly_plan_photomed'],
+//     android: ['com.photomedPro.com'],
+//   });
 
-  try {
-    let validation = null;
+//   try {
+//     let validation = null;
 
-    if (platform === 'ios') {
-      let response = await axios.post('https://buy.itunes.apple.com/verifyReceipt', {
-        'receipt-data': receipt,
-        'password': configUrl.APP_STORE_SECRET,
-        'exclude-old-transactions': true,
-      });
+//     if (platform === 'ios') {
+//       let response = await axios.post('https://buy.itunes.apple.com/verifyReceipt', {
+//         'receipt-data': receipt,
+//         'password': configUrl.APP_STORE_SECRET,
+//         'exclude-old-transactions': true,
+//       });
 
-      if (response.data.status === 21007) {
-        response = await axios.post('https://sandbox.itunes.apple.com/verifyReceipt', {
-          'receipt-data': receipt,
-          'password': configUrl.APP_STORE_SECRET,
-          'exclude-old-transactions': true,
-        });
-      }
+//       if (response.data.status === 21007) {
+//         response = await axios.post('https://sandbox.itunes.apple.com/verifyReceipt', {
+//           'receipt-data': receipt,
+//           'password': configUrl.APP_STORE_SECRET,
+//           'exclude-old-transactions': true,
+//         });
+//       }
 
-      const { status, latest_receipt_info, pending_renewal_info } = response.data;
-      console.log('===response===', response.data);
+//       const { status, latest_receipt_info, pending_renewal_info } = response.data;
+//       console.log('===response===', response.data);
 
-      if (status !== 0) {
-        console.warn('Apple receipt validation failed:', response.data);
-        return null;
-      }
+//       if (status !== 0) {
+//         console.warn('Apple receipt validation failed:', response.data);
+//         return null;
+//       }
 
-      const activeSub = latest_receipt_info
-        .filter((r) => validProductIds.includes(r.product_id))
-        .sort((a, b) => b.purchase_date_ms - a.purchase_date_ms)[0];
+//       const activeSub = latest_receipt_info
+//         .filter((r) => validProductIds.includes(r.product_id))
+//         .sort((a, b) => b.purchase_date_ms - a.purchase_date_ms)[0];
 
-      if (activeSub) {
-        const expiresDateMs = parseInt(activeSub.expires_date_ms, 10);
-        const isExpired = Date.now() > expiresDateMs ? 'yes' : 'no';;
-        const renewalInfo = pending_renewal_info?.find(
-          (info) => info.product_id === activeSub.product_id
-        );
-        const isCanceled = renewalInfo?.auto_renew_status === '0' ? 'yes' : 'no';;
+//       if (activeSub) {
+//         const expiresDateMs = parseInt(activeSub.expires_date_ms, 10);
+//         const isExpired = Date.now() > expiresDateMs ? 'yes' : 'no';;
+//         const renewalInfo = pending_renewal_info?.find(
+//           (info) => info.product_id === activeSub.product_id
+//         );
+//         const isCanceled = renewalInfo?.auto_renew_status === '0' ? 'yes' : 'no';;
 
-        validation = {
-          platform: 'ios',
-          productId: activeSub.product_id,
-          transactionId: activeSub.original_transaction_id,
-          isExpired,
-          isCanceled,
-          expirationDate: new Date(expiresDateMs).toISOString(),
-          expirationDateMs: expiresDateMs,
-        };
-      }
-    } else {
-      const receiptData = JSON.parse(receipt);
-      const { purchaseToken, productId, packageName } = receiptData;
+//         validation = {
+//           platform: 'ios',
+//           productId: activeSub.product_id,
+//           transactionId: activeSub.original_transaction_id,
+//           isExpired,
+//           isCanceled,
+//           expirationDate: new Date(expiresDateMs).toISOString(),
+//           expirationDateMs: expiresDateMs,
+//         };
+//       }
+//     } else {
+//       const receiptData = JSON.parse(receipt);
+//       const { purchaseToken, productId, packageName } = receiptData;
 
-      const purchase = await androidPublisher.purchases.subscriptions.get({
-        packageName,
-        subscriptionId: productId,
-        token: purchaseToken,
-      });
+//       const purchase = await androidPublisher.purchases.subscriptions.get({
+//         packageName,
+//         subscriptionId: productId,
+//         token: purchaseToken,
+//       });
 
-      const sub = purchase.data;
-      const expiresDateMs = parseInt(sub.expiryTimeMillis, 10);
-      const isExpired = Date.now() > expiresDateMs ? 'yes' : 'no';
-      const isCanceled = (sub.autoRenewing === false && !isExpired) ? 'yes' : 'no';;
+//       const sub = purchase.data;
+//       const expiresDateMs = parseInt(sub.expiryTimeMillis, 10);
+//       const isExpired = Date.now() > expiresDateMs ? 'yes' : 'no';
+//       const isCanceled = (sub.autoRenewing === false && !isExpired) ? 'yes' : 'no';;
 
-      validation = {
-        platform: 'android',
-        productId,
-        isExpired,
-        isCanceled,
-        expirationDate: new Date(expiresDateMs).toISOString(),
-        expirationDateMs: expiresDateMs,
-      };
-    }
+//       validation = {
+//         platform: 'android',
+//         productId,
+//         isExpired,
+//         isCanceled,
+//         expirationDate: new Date(expiresDateMs).toISOString(),
+//         expirationDateMs: expiresDateMs,
+//       };
+//     }
 
-    return validation;
-  } catch (err) {
-    console.error('❌ Receipt validation failed:', err?.response?.data || err.message);
-    return null;
-  }
-};
+//     return validation;
+//   } catch (err) {
+//     console.error('❌ Receipt validation failed:', err?.response?.data || err.message);
+//     return null;
+//   }
+// };
 
-export const getUserSubscription = async (token) => {
-  try {
-    getUserPlans(token).then(async (userSub) => {
-      if (userSub?.ResponseBody) {
-        let validRecipt = await validateReceiptData(userSub?.ResponseBody?.receiptData, userSub?.ResponseBody?.receiptData?.platform);
-        console.log('validReciptvalidRecipt', validRecipt);
-        if (validRecipt) {
-          dispatch(setUserSubscription(validRecipt));
-        }
-      }
-      // console.log('getUserPlans success ---', userSub);
-    }).catch((error) => {
-      console.log('getUserPlans error---', error);
-    })
+// export const getUserSubscription = async (token) => {
+//   try {
+//     getUserPlans(token).then(async (userSub) => {
+//       if (userSub?.ResponseBody) {
+//         let validRecipt = await validateReceiptData(userSub?.ResponseBody?.receiptData, userSub?.ResponseBody?.receiptData?.platform);
+//         console.log('validReciptvalidRecipt', validRecipt);
+//         if (validRecipt) {
+//           dispatch(setUserSubscription(validRecipt));
+//         }
+//       }
+//       // console.log('getUserPlans success ---', userSub);
+//     }).catch((error) => {
+//       console.log('getUserPlans error---', error);
+//     })
 
-  } catch (error) {
+//   } catch (error) {
 
-  }
+//   }
 
-}
+// }

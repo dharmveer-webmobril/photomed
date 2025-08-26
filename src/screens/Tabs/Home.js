@@ -10,6 +10,7 @@ import {
   TextInput,
   Platform,
   useWindowDimensions,
+  Alert,
 } from "react-native";
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import WrapperContainer from "../../components/WrapperContainer";
@@ -31,7 +32,9 @@ import { navigate } from "../../navigators/NavigationService";
 import ScreenName from "../../configs/screenName";
 import {
   useGetBannersQuery,
+  useGetItemsQuery,
   useGetUserProfileQuery,
+  useSearchPatientQuery,
 } from "../../redux/api/common"; // Changed to query
 import { useDispatch, useSelector } from "react-redux";
 import Loading from "../../components/Loading";
@@ -61,25 +64,14 @@ const Home = () => {
     scopes: [
       "email",
       "profile",
-      "https://www.googleapis.com/auth/drive",
-      "https://www.googleapis.com/auth/drive.file",
-      "https://www.googleapis.com/auth/drive.appdata",
-      "https://www.googleapis.com/auth/drive.metadata",
-      "https://www.googleapis.com/auth/drive.readonly",
-      "https://www.googleapis.com/auth/drive.metadata.readonly",
-      "https://www.googleapis.com/auth/drive.apps.readonly",
-      "https://www.googleapis.com/auth/drive.photos.readonly",
+      "https://www.googleapis.com/auth/drive.file"
     ],
   });
 
   const token = useSelector((state) => state.auth?.user);
   const accessToken = useSelector((state) => state.auth.accessToken);
-
-  const [patientData2, setPatientData2] = useState([]);
-  const [originalData, setOriginalData] = useState([]);
   const [refreshing, setRefreshing] = useState(false); // State for pull-to-refresh
   const [patients, setPatients] = useState(null); // State for pull-to-refresh
-  const [isLoading, setIsLoading] = useState(false); // State for pull-to-refresh
   const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false); // State for pull-to-refresh
   const [isSubscriptionModal, setIsSubscriptionModal] = useState(false); // State for pull-to-refresh
 
@@ -91,53 +83,58 @@ const Home = () => {
   const banners = banner?.ResponseBody;
 
 
-  const { data: profileData, isLoading: profileLoading, isError: err, error } = useGetUserProfileQuery({ token });
-  if (profileData) {
-    console.log('profileDataprofileData', profileData);
-  }
+  // const { data: profileData, isLoading: profileLoading, isError: err, error } = useGetUserProfileQuery({ token });
+  // if (profileData) {
+  //   console.log('profileDataprofileData', profileData);
+  // }
+
+  const showSubscriptionAlert = () => {
+    Alert.alert(
+      "Your subscription has expired",
+      "To continue enjoying full access, please renew or choose a new plan.",
+      [
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: () => {
+            dispatch(logout());
+          },
+        },
+        {
+          text: "View Plans",
+          style: "default",
+          onPress: () => {
+            navigate('SubscriptionManage', { token: token });
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
   async function getSubs() {
     try {
       if (token) {
         setIsSubscriptionLoading(true)
         let res = await validateSubscription(token)
-        console.log('get Subs res', res);
-
         if (res?.succeeded) {
           let subRes = res?.ResponseBody
           if (subRes?.isExpired === 'yes') {
-            setIsSubscriptionModal(true)
+            showSubscriptionAlert()
           }
           dispatch(setUserSubscription(subRes));
         } else {
-          setIsSubscriptionModal(true)
+          showSubscriptionAlert()
         }
         setIsSubscriptionLoading(false)
-        // setIsSubscriptionLoading(true)
-        // getUserPlans(token).then(async (userSub) => {
-        //   if (userSub?.ResponseBody?.receiptData) {
-        //     let validRecipt = await validateReceiptData(userSub?.ResponseBody?.receiptData, userSub?.ResponseBody?.platform);
-        //     console.log('home recipt---', validRecipt);
-        //     if (validRecipt) {
-        //       if (validRecipt.isExpired === 'yes') {
-        //         setIsSubscriptionModal(true)
-        //       }
-        //       dispatch(setUserSubscription(validRecipt));
-        //     }
-        //   }
-        //   if(!userSub?.succeeded) {
-        //     setIsSubscriptionModal(true)
-        //   }
-        //   console.log('getUserPlans success home---', userSub);
-        // }).catch((error) => {
-        //   console.log('home plan get error', error);
-        // }).finally(() => {
-        //   setIsSubscriptionLoading(false)
-        // })
+
       }
     } catch (error) {
+      showSubscriptionAlert()
       setIsSubscriptionLoading(false)
     }
   }
+
   useFocusEffect(
     useCallback(() => {
       // Platform.OS == 'ios' && getSubs()
@@ -149,88 +146,38 @@ const Home = () => {
   useFocusEffect(
     useCallback(() => {
       setSearchTerm("");
-      searchPatientApi("", "");
       dispatch(setPatientImages([]));
     }, [])
   );
-  useEffect(() => {
-    if (patients) {
-      const patientList = patients?.ResponseBody?.patientData || [];
-      setOriginalData(patientList); // Set the original data
-      setPatientData2(patientList); // Initialize display data
-    }
-  }, [patients]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    searchPatientApi("", "1st");
     await refetchBanner();
     setRefreshing(false);
   }, []);
 
-  const [timeoutToClear, setTimeoutToClear] = useState();
   const [searchTerm, setSearchTerm] = useState("");
-  const debounce = (callback, alwaysCall, ms) => {
-    return (...args) => {
-      alwaysCall(...args);
-      clearTimeout(timeoutToClear);
-      setTimeoutToClear(
-        setTimeout(() => {
-          callback(...args);
-        }, ms)
-      );
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  // Debounce effect
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm); // Update API query only after delay
+    }, 500); // 500ms delay
+    return () => {
+      clearTimeout(handler); // Cleanup timeout on each keystroke
     };
-  };
+  }, [searchTerm]);
 
-  const setSearchTextAlways = (txt) => {
-    setSearchTerm(txt);
-    console.log("setSearchTextAlways");
-  };
-  const getScreenWidth = () => Dimensions.get('window').width;
+  // API query runs only when debouncedSearchTerm changes
+  const { data: patientsData, isLoading, isError } = useSearchPatientQuery({
+    term: debouncedSearchTerm, // your search input value
+    token: token, // your auth token
+  },);
 
-  const searchPatientApi = async (txt, type = "") => {
-    console.log("searchPatientApisearchPatientApi", txt);
-    type != '1st' && setIsLoading(true);
-    try {
-      const pDataRes = await fetch(
-        `${configUrl.BASE_URL}getpatients?search=${txt}`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      const pData = await pDataRes.json();
-      console.log("pDatapData", JSON.stringify());
-      setIsLoading(false);
-      if (pData?.ResponseCode === 200 || pData?.ResponseCode === "200") {
-        setPatients(pData);
-      } else {
-        setOriginalData([]);
-        setPatientData2([]);
-      }
-    } catch (error) {
-      setIsLoading(false);
-      console.log("pDatapData", error);
-      if (error?.data?.isDeleted || error?.data?.status === 2) {
-        dispatch(logout());
-        Toast.show(
-          "Your account is deactivated. Please contact the administrator."
-        );
-      }
-      Toast.show("Failed to fetch patients. Please try again later.");
-    }
-  };
-
-
-  const debouncedSearchPatient = debounce(
-    searchPatientApi,
-    setSearchTextAlways,
-    800
-  );
-
+  useEffect(() => {
+    setPatients(patientsData?.ResponseBody?.patientData || []);
+  }, [patientsData]);
 
   const formatUrl = (url) => {
     // Replace backslashes with forward slashes
@@ -239,6 +186,13 @@ const Home = () => {
     return encodeURI(formattedUrl);
   };
   const { width, height } = useWindowDimensions();
+
+
+  const goPatientDetailPage = async (item) => {
+    await removeData("patientFolderId");
+    dispatch(setCurrentPatient(item));
+    navigate(ScreenName.PATIENT_DETAILS, { item });
+  };
 
   const renderBannerItem = (item) => {
 
@@ -266,11 +220,6 @@ const Home = () => {
       </View>
     );
   };
-  const goPatientDetailPage = async (item) => {
-    await removeData("patientFolderId");
-    dispatch(setCurrentPatient(item));
-    navigate(ScreenName.PATIENT_DETAILS, { item });
-  };
 
   const renderItem = ({ item }) => {
     return (
@@ -296,39 +245,13 @@ const Home = () => {
             )}
             {item?.email && <Text style={styles.subTitle}>{item.email}</Text>}
           </View>
-          {/*<View style={styles.countWrapper}>
-            {item?.imageCount &&
-              item?.imageCount !== "" &&
-              item?.imageCount !== null &&
-              item?.imageCount !== "null" &&
-              item?.imageCount !== undefined &&
-              item?.imageCount !== "0" && (
-                <View style={styles.countContainer}>
-                  <Text style={styles.countTxt}>
-                    {item?.imageCount > 9 ? (
-                      <Text>
-                        9<Text style={styles.plusTxt}>+</Text>
-                      </Text>
-                    ) : (
-                      item?.imageCount
-                    )}
-                  </Text>
-                </View>
-              )}
-            <Image source={imagePath.gallery} style={styles.imgIcon} />
-          </View>*/}
+
         </View>
       </TouchableOpacity>
     );
   };
 
-  // const navigation = useNavigation()
-  // useEffect(() => {
-  //   const unsubscribe = navigation.addListener('focus', () => {
-  //     Orientation.unlockAllOrientations();
-  //     Orientation.lockToPortrait();
-  //   });
-  // }, [navigation]);
+
   return (
     <WrapperContainer
       wrapperStyle={[commonStyles.innerContainer, { paddingHorizontal: 0 }]}
@@ -353,14 +276,14 @@ const Home = () => {
             placeholder={"Search..."}
             placeholderTextColor={COLORS.textColor}
             value={searchTerm}
-            onChangeText={debouncedSearchPatient}
+            // onChangeText={debouncedSearchPatient}
+            onChangeText={setSearchTerm}
             autoCapitalize="none"
           />
           {searchTerm.length > 0 && ( // Show CrossIcon only if there's text in the input
             <TouchableOpacity
               onPress={() => {
                 setSearchTerm("");
-                searchPatientApi("", ''); // Reset the patient list to the original data
               }}
               style={{
                 justifyContent: "center",
@@ -376,7 +299,7 @@ const Home = () => {
 
       <View style={{ flex: 1 }}>
         <FlatList
-          data={patientData2}
+          data={patients}
           keyExtractor={(item, index) => index.toString()}
           showsVerticalScrollIndicator={false}
           renderItem={renderItem}

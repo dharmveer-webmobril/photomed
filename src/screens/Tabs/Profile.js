@@ -77,11 +77,11 @@ const Profile = (props) => {
       screenName: ScreenName.CHANGE_PASSWORD,
     }] : []),
 
-    // ...(Platform.OS == 'ios' ? [{
-    //   id: 8,
-    //   name: 'Manage Subscription',
-    //   screenName: ScreenName.SUB_MANAGE,
-    // }] : []),
+    ...(Platform.OS == 'ios' ? [{
+      id: 8,
+      name: 'Manage Subscription',
+      screenName: ScreenName.SUB_MANAGE,
+    }] : []),
 
     {
       id: 4,

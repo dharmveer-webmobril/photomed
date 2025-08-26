@@ -54,7 +54,7 @@ import { setPatientImages } from "../redux/slices/patientSlice";
 const { width } = Dimensions.get("window");
 import uuid from "react-native-uuid";
 import { Colors } from "react-native/Libraries/NewAppScreen";
-
+import { useGoogleDriveImages } from "../configs/hooks/getDriveImages";
 const PatientDetails = (props) => {
   const dispatch = useDispatch();
   const [selectedImages, setSelectedImages] = useState([]);
@@ -98,7 +98,7 @@ const PatientDetails = (props) => {
     isLoading: load,
     refetch,
   } = useGetAllImageUrlsQuery({
-    userId: `${preData.full_name}${trimmedId}` || "", // Default to empty string if undefined
+    userId: `${preData.full_name}${trimmedId}` || "",
     accessToken: accessToken || "",
   });
 
@@ -185,14 +185,18 @@ const PatientDetails = (props) => {
       setSelectionMode(true);
     }
   };
-
+  const { fetchGoogleDriveImages: fetchGoogleDriveImages1, loading: dajhbdjha } = useGoogleDriveImages();
+  // useEffect(() => {
+  //   fetchGoogleDriveImages1(accessToken, patientName, trimmedId, (count) => {
+  //     console.log("Image count:------------", count);
+  //   });
+  // }, [accessToken]);
   const fetchGoogleDriveImages = async () => {
     try {
       let vailidToken = await checkAndRefreshGoogleAccessToken(accessToken);
 
       // Step 1: Locate the "PhotoMed" folder
       const photoMedFolderId = await getFolderId("PhotoMed", accessToken);
-      // console.log('abscd folder', photoMedFolderId);
 
       if (!photoMedFolderId) {
         console.error("PhotoMed folder not found");
@@ -208,7 +212,7 @@ const PatientDetails = (props) => {
         photoMedFolderId
       );
 
-      console.log('adsda----', preData.full_name + trimmedId, photoMedFolderId, accessToken, patientFolderId);
+      // console.log('adsda----', preData.full_name + trimmedId, photoMedFolderId, accessToken, patientFolderId);
 
       if (!patientFolderId) {
         console.error("Patient folder not found");
@@ -239,6 +243,8 @@ const PatientDetails = (props) => {
           return { ...image, publicUrl };
         })
       );
+      console.log('publicImages-----', publicImages);
+
 
       publicImages?.length &&
         publicImages?.length &&
@@ -390,7 +396,7 @@ const PatientDetails = (props) => {
     }
   };
 
-  const handleDeleteDropBox = async () => { 
+  const handleDeleteDropBox = async () => {
     try {
       // Create delete promises for all selected images
       const deletePromises = selectedImages.map(async (filePath) => {
@@ -491,8 +497,8 @@ const PatientDetails = (props) => {
             source={require('../assets/images/icons/backIcon.png')}
           />
         </TouchableOpacity>
-        <Text style={{ fontSize: 15, color: '#424242',marginLeft:-30 }}>Patient Details</Text>
-        <View/> 
+        <Text style={{ fontSize: 15, color: '#424242', marginLeft: -30 }}>Patient Details</Text>
+        <View />
       </View>
       <DeleteImagePopUp
         title={`Delete ${selectedImages.length} selected photo`}
@@ -689,9 +695,9 @@ export default PatientDetails;
 
 const styles = StyleSheet.create({
   headerContainer: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",marginBottom:20
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20
   },
-  backIcon: {  height: 40, width: 40 },
+  backIcon: { height: 40, width: 40 },
   cardContainer: {
     paddingHorizontal: moderateScale(20),
     paddingVertical: moderateScale(15),

@@ -68,7 +68,7 @@ const ZoomSwiper = (props) => {
   const provider = useSelector((state) => state.auth.cloudType);
   const isConnected = useSelector((state) => state.network.isConnected);
 
-  const [deleteFile, { isLoading: loaded, isError, isSuccess }] = useDeleteFileFromDropboxMutation();
+  const [deleteFile] = useDeleteFileFromDropboxMutation();
   const [deleteImage, { isLoading }] = useDeleteImageMutation();
   const screen = props.route.params.ScreenName;
   const preData = props.route.params.preData;
@@ -300,7 +300,7 @@ const ZoomSwiper = (props) => {
   };
   const { width, height } = useWindowDimensions();
   return (
-    <View>
+    <View style={{ flexGrow: 1 }}>
       <DeleteImagePopUp
         title={"Delete 1 selected photo"}
         onPressCancel={() => setIsVisible(false)}
@@ -353,93 +353,91 @@ const ZoomSwiper = (props) => {
             </View>)
         })}
       </SwiperFlatList>
-      <View>
-        <View
-          style={[
-            commonStyles.flexView,
-            { justifyContent: "space-between", padding: moderateScale(20) },
-          ]}
-        >
-          <CommonComp
-            onPress={() => {
-              setSelected("Details");
-              navigate(ScreenName.IMAGE_DETAILS, {
-                images: screen === 'gallery' ? [preData[currentIndex]] : preData,
-              });
-            }}
-            isSelected={selected === "Details"}
-            title={"Details"}
-            Icon={
-              <DetailsIcon
-                tintColor={selected == "Details" && COLORS.whiteColor}
-              />
-            }
-          />
-          <CommonComp
-            onPress={() => btnCollagePress()}
-            isSelected={selected === "Collage"}
-            title={"Collage"}
-            Icon={
-              <ImageCollege
-                tintColor={selected == "Collage" ? COLORS.whiteColor : "#32327C"}
-              />
-            }
-          />
-          <CommonComp
-            onPress={() => btnFilterPress()}
-            isSelected={selected === "Filter"}
-            title={"Filter"}
-            Icon={
-              <FilterIcon tintColor={selected == "Filter" && COLORS.whiteColor} />
-            }
-          />
-          <CommonComp
-            onPress={onReframePress}
-            isSelected={selected === "Reframe"}
-            title={"Reframe"}
-            Icon={
-              <ReframeIcon
-                tintColor={selected == "Reframe" && COLORS.whiteColor}
-              />
-            }
-          />
-          <CommonComp
-            onPress={() => {
-              onShare()
-            }}
-            isSelected={selected === "Share"}
-            title={"Share"}
-            Icon={
-              <ShareIcon tintColor={selected == "Share" && COLORS.whiteColor} />
-            }
-          />
-          <CommonComp
-            onPress={() => {
-              setIsVisible(true)
-            }}
-            isSelected={selected === "Delete"}
-            title={"Delete"}
-            Icon={
-              <DeleteIcon tintColor={selected == "Delete" && COLORS.whiteColor} />
-            }
-          />
-          <CommonComp
-            onPress={() => {
-              let img = [preData[currentIndex]];
-              navigate(ScreenName.CAMERA_GRID, {
-                preScreen: "Image_View",
-                selectedImgItem: img[0],
-                imageData: provider == "google" ? patientImages : imageUrls,
-                provider,
-              });
-            }}
-            isSelected={selected === "Ghost"}
-            title={"Ghost"}
-            Icon={
-              <GhostIcon height={25} width={25} tintColor={selected == "Delete" && COLORS.whiteColor} />
-            }
-          />
-        </View>
+      <View
+        style={[
+          commonStyles.flexView,
+          { justifyContent: "space-between", padding: moderateScale(20), position: "absolute", width: "100%", bottom:18,backgroundColor:'#fff' },
+        ]}
+      >
+        <CommonComp
+          onPress={() => {
+            setSelected("Details");
+            navigate(ScreenName.IMAGE_DETAILS, {
+              images: screen === 'gallery' ? [preData[currentIndex]] : preData,
+            });
+          }}
+          isSelected={selected === "Details"}
+          title={"Details"}
+          Icon={
+            <DetailsIcon
+              tintColor={selected == "Details" && COLORS.whiteColor}
+            />
+          }
+        />
+        <CommonComp
+          onPress={() => btnCollagePress()}
+          isSelected={selected === "Collage"}
+          title={"Collage"}
+          Icon={
+            <ImageCollege
+              tintColor={selected == "Collage" ? COLORS.whiteColor : "#32327C"}
+            />
+          }
+        />
+        <CommonComp
+          onPress={() => btnFilterPress()}
+          isSelected={selected === "Filter"}
+          title={"Filter"}
+          Icon={
+            <FilterIcon tintColor={selected == "Filter" && COLORS.whiteColor} />
+          }
+        />
+        <CommonComp
+          onPress={onReframePress}
+          isSelected={selected === "Reframe"}
+          title={"Reframe"}
+          Icon={
+            <ReframeIcon
+              tintColor={selected == "Reframe" && COLORS.whiteColor}
+            />
+          }
+        />
+        <CommonComp
+          onPress={() => {
+            onShare()
+          }}
+          isSelected={selected === "Share"}
+          title={"Share"}
+          Icon={
+            <ShareIcon tintColor={selected == "Share" && COLORS.whiteColor} />
+          }
+        />
+        <CommonComp
+          onPress={() => {
+            setIsVisible(true)
+          }}
+          isSelected={selected === "Delete"}
+          title={"Delete"}
+          Icon={
+            <DeleteIcon tintColor={selected == "Delete" && COLORS.whiteColor} />
+          }
+        />
+        <CommonComp
+          onPress={() => {
+            let img = [preData[currentIndex]];
+            navigate(ScreenName.CAMERA_GRID, {
+              preScreen: "Image_View",
+              selectedImgItem: img[0],
+              imageData: preData,
+              provider,
+            });
+          }}
+          isSelected={selected === "Ghost"}
+          title={"Ghost"}
+          Icon={
+            <GhostIcon height={25} width={25} tintColor={selected == "Ghost" && COLORS.whiteColor} />
+          }
+        />
       </View>
     </View>
   );

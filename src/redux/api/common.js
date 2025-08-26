@@ -42,6 +42,24 @@ export const commonApi = createApi({
         }),
       }),
     }),
+
+
+    searchPatient: builder.query({
+      query: ({ term = "", token }) => {
+        const searchQuery = term?.trim()
+          ? `getpatients?search=${encodeURIComponent(term)}`
+          : `getpatients`; // no search param -> get all
+
+        return {
+          url: searchQuery,
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`, // Add token here
+            "Content-Type": "application/json",
+          },
+        };
+      },
+    }),
     // Fetch a list of patients
     getPatients: builder.query({
       query: ({ token }) => ({
@@ -436,7 +454,6 @@ export const commonApi = createApi({
 
           // Filter out folders
           const fileEntries = files.filter((entry) => entry[".tag"] === "file");
-          console.log("fileEntriesfileEntries", fileEntries);
 
           // Step 2: Fetch temporary URLs for each file
           const fileUrls = await Promise.all(
@@ -535,7 +552,6 @@ export const commonApi = createApi({
 
           // Filter out folders
           const fileEntries = files.filter((entry) => entry[".tag"] === "file");
-          console.log("fileEntriesfileEntries", fileEntries);
 
           // Step 2: Fetch temporary URLs for each file
           const fileUrls = await Promise.all(
@@ -956,4 +972,7 @@ export const {
   // usePostPatientTagsMutation
   usePostAttachImageWithTagMutation,
   useLazyGetAttachImageWithTagQuery,
+
+
+  useSearchPatientQuery,
 } = commonApi;
