@@ -24,6 +24,7 @@ import Framing from '../screens/Framing';
 import ImageZoomML from '../screens/ImageZoomML'
 import { Image, TouchableOpacity, View } from 'react-native';
 import SubscriptionManage from "../screens/Auth/SubscriptionManage";
+import MarkableImage from '../screens/MarkableImage';
 
 
 const Stack = createNativeStackNavigator();
@@ -89,6 +90,14 @@ const MainStack = () => {
         }}
       />
       <Stack.Screen
+        name={'MarkableImage'}
+        component={MarkableImage}
+        options={{
+          headerShown: true,
+          headerTintColor: COLORS.textColor
+        }}
+      />
+      <Stack.Screen
         name={ScreenName.PATIENT_DETAILS}
         component={PatientDetails}
         options={{
@@ -139,7 +148,7 @@ const MainStack = () => {
           }
         }}
       />
-      
+
       <Stack.Screen
         name={'ImageZoomML'}
         component={ImageZoomML}
@@ -213,7 +222,7 @@ const MainStack = () => {
           headerTitle: 'Reframe',
         }}
       />
-        <Stack.Screen
+      <Stack.Screen
         name={ScreenName.TAG_FILTER}
         component={TagFilter}
         options={{

@@ -634,11 +634,11 @@ const CameraGrid = (props) => {
   let height = width * aspectRatios[aspectRatio];
 
   function getHeight() {
-    if (!Platform.isPad && aspectRatio == '1:1') {
-      return height + verticalScale(70)
-    }
-    return height
+    return (Platform.OS === 'ios' && aspectRatio === '1:1')
+      ? height + verticalScale(70)
+      : height;
   }
+
   const format = useCameraFormat(device, [
     { photoAspectRatio: aspectRatios[aspectRatio] },
     { photoResolution: Math.max(width, height) },
@@ -734,13 +734,13 @@ const CameraGrid = (props) => {
         <View style={{ flex: 1 }}>
           <View
             style={[
-              { width: width, height: getHeight() > windowHeight ? windowHeight : getHeight(), alignItems: "center", overflow: "hidden" },
+              { width: width, height: getHeight() > windowHeight ? windowHeight : getHeight(), alignItems: "center", overflow: "hidden"},
             ]}
           >
             <Camera
               ref={cameraRef}
               style={[
-                { alignItems: "center", overflow: "hidden" }, { position: 'absolute', top: 0, bottom: 0, right: 0, left: 0 }
+                { alignItems: "center", overflow: "hidden" }, { width: width, height: getHeight() > windowHeight ? windowHeight : getHeight() }
               ]}
               device={device}
               isActive={true}
@@ -749,8 +749,9 @@ const CameraGrid = (props) => {
               zoom={zoomLevel}
               preset="photo"
               ratio={aspectRatio}
-              resizeMode={Platform.isPad ? "contain" : "contain"}
+              resizeMode={"contain"}
             />
+            {/* <Image style={{ width: width, height: getHeight() > windowHeight ? windowHeight : getHeight()}} resizeMode="contain" source={require('../assets/images/notificationIcon1.png')}/> */}
 
             {selectedGridItem &&
               selectedCategory != 6 &&

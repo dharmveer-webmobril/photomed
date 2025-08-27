@@ -34,7 +34,9 @@ const EditPatient = (props) => {
     const dispatch = useDispatch()
     const patientDetails = props.route.params.patient
     const { imageCount } = props.route.params
-
+    const maxDate = useMemo(() => {
+        return new Date()
+    }, []);
 
     const [visible, setIsVisible] = useState(false);
     const [modal, setModal] = useState(false)
@@ -232,7 +234,7 @@ const EditPatient = (props) => {
             .catch(e => console.log('Error capturing image:', e));
     };
 
-   
+
 
     const onPhoneInputChange = (val) => {
         if (val && val?.length > 0) {
@@ -267,13 +269,13 @@ const EditPatient = (props) => {
                     onPressCancel={() => setIsVisible(false)}
                     onPressDelete={() => handleDelete()}
                     visible={visible} />
-                <DatePickerModal
+                {/* <DatePickerModal
                     selected={selected}
                     modalVisible={modalVisible}
                     selcetDate={(date) => setSelected(date)}
                     closeModal={() => setModalVisible(false)}
                     doneModal={() => { setModalVisible(false), handleDateChange() }}
-                />
+                /> */}
                 <View style={{ flex: 0.6 }}>
 
                     <AppTextInput
@@ -287,26 +289,36 @@ const EditPatient = (props) => {
                     />
                     {/* Date Picker Modal */}
 
-                    {/* <DatePicker
+                    <DatePicker
                         modal
                         open={isDatePickerVisible}
                         date={new Date(datePickerValue)}
                         onConfirm={(date) => {
+                            const today = new Date();
+                            if (date > today) {
+                                Toast.show("You can’t select a future date");
+                                return;
+                            }
                             setDatePickerVisibility(false)
                             handleDateChange(date)
                         }}
                         mode="date"
-                        maximumDate={maxDate}
-                        minimumDate={new Date('1925-01-01')}
+                        // maximumDate={maxDate}
+                        // minimumDate={new Date('1925-01-01')}s
                         onCancel={() => {
                             setDatePickerVisibility(false)
                         }}
-                    /> */}
+                    />
 
-                    <TouchableOpacity style={styles.datePickerBox} onPress={() => setModalVisible(true)}>
+                    <TouchableOpacity style={styles.datePickerBox}
+                        // onPress={() => setModalVisible(true)}
+                        onPress={() => setDatePickerVisibility(true)}
+                    >
                         <Text style={{ color: COLORS.textColor, fontSize: 12, }}>{dob}</Text>
                     </TouchableOpacity>
-
+                    {
+                        <Text style={{ color: 'red', fontSize: 12, }}>{dob}</Text>
+                    }
                     <CountryPickerComp
                         isPickerOpen={isCountryPickerOpen}
                         closeCountryPicker={(val) => { setIsCountryPickerOpen(val) }}

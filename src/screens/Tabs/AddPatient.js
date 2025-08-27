@@ -18,9 +18,9 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import { logout } from "../../redux/slices/authSlice";
 import ConsentPopUp from "../../components/ConsentPopUp";
 import { useFocusEffect } from "@react-navigation/native";
-// import DatePicker from 'react-native-date-picker'
+import DatePicker from 'react-native-date-picker'
 import { CountryPicker, countryCodes } from "react-native-country-codes-picker";
- 
+
 
 
 const AddPatient = () => {
@@ -193,28 +193,33 @@ const AddPatient = () => {
         />
         <Loading visible={isLoading} />
 
-        {/* <DatePicker
+        <DatePicker
           modal
           open={isDatePickerVisible}
           date={datePickerValue}
           onConfirm={(date) => {
+            const today = new Date();
+            if (date > today) {
+              Toast.show("You can’t select a future date");
+              return;
+            }
             setDatePickerVisibility(false)
             handleDateChange(date)
           }}
-          maximumDate={maxDate}
-          minimumDate={new Date('1925-01-01')}
+
+
           mode="date"
           onCancel={() => {
             setDatePickerVisibility(false)
           }}
-        /> */}
-        <DatePickerModal
+        />
+        {/* <DatePickerModal
           selected={selected}
           modalVisible={modalVisible}
           selcetDate={(date)=>setSelected(date)}
           closeModal={() => setModalVisible(false)}
           doneModal={() => {setModalVisible(false), handleDateChange()}}
-        />
+        /> */}
 
         <RecordAddedPopUp
           onPressCancel={() => {
@@ -235,8 +240,8 @@ const AddPatient = () => {
 
 
           <TouchableOpacity style={styles.datePickerBox}
-            // onPress={() => setDatePickerVisibility(true)}
-            onPress={() => setModalVisible(true)}
+            onPress={() => setDatePickerVisibility(true)}
+          // onPress={() => setModalVisible(true)}
           >
             <Text style={{ color: dob ? COLORS.textColor : COLORS.placeHolderTxtColor, fontSize: 12, }}>{dob ? dob : 'DD-MM-YYYY'}</Text>
           </TouchableOpacity>

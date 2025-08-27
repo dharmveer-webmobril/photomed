@@ -298,39 +298,40 @@ const PatientDetails = (props) => {
   );
 
   const _chooseFile = async () => {
-    try {
-      // Step 1: Select and map files
-      const fileDetails = await ImageCropPicker.openPicker({
-        multiple: true,
-        mediaType: "photo",
-        cropping: true,
-      });
+    navigate('MarkableImage')
+    // try {
+    //   // Step 1: Select and map files
+    //   const fileDetails = await ImageCropPicker.openPicker({
+    //     multiple: true,
+    //     mediaType: "photo",
+    //     cropping: true,
+    //   });
 
-      const mappedFileDetails = fileDetails.map((file) => ({
-        uri: file.path,
-        type: file.mime,
-        name: file.filename || `${patientName}${Date.now()}.jpg`,
-      }));
+    //   const mappedFileDetails = fileDetails.map((file) => ({
+    //     uri: file.path,
+    //     type: file.mime,
+    //     name: file.filename || `${patientName}${Date.now()}.jpg`,
+    //   }));
 
-      // console.log('Mapped File Details:', mappedFileDetails);
-      setLoading(true);
+    //   // console.log('Mapped File Details:', mappedFileDetails);
+    //   setLoading(true);
 
-      // Step 2: Determine upload provider and process accordingly
-      if (provider === "google") {
-        // await ensureValidToken();
-        await checkAndRefreshGoogleAccessToken(accessToken);
-        await handleGoogleDriveUpload(mappedFileDetails);
-      } else {
-        await ensureValidAccessToken(accessToken);
-        await handleDropboxUpload(mappedFileDetails);
-      }
-    } catch (error) {
-      console.error("Error during file selection or upload:", error);
-      // Optionally, handle user cancellation or display a message
-      Toast.show(error.message || "User has cancelled the flow");
-    } finally {
-      setLoading(false); // Ensure loading is stopped regardless of success or error
-    }
+    //   // Step 2: Determine upload provider and process accordingly
+    //   if (provider === "google") {
+    //     // await ensureValidToken();
+    //     await checkAndRefreshGoogleAccessToken(accessToken);
+    //     await handleGoogleDriveUpload(mappedFileDetails);
+    //   } else {
+    //     await ensureValidAccessToken(accessToken);
+    //     await handleDropboxUpload(mappedFileDetails);
+    //   }
+    // } catch (error) {
+    //   console.error("Error during file selection or upload:", error);
+    //   // Optionally, handle user cancellation or display a message
+    //   Toast.show(error.message || "User has cancelled the flow");
+    // } finally {
+    //   setLoading(false); // Ensure loading is stopped regardless of success or error
+    // }
   };
 
   // Separate function for Google Drive uploads
