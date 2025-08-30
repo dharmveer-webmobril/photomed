@@ -21,8 +21,9 @@ import CollageAdd from '../screens/CollageAdd';
 import EditPatient from '../screens/EditPatient';
 import SelectPhoto from '../screens/SelectPhoto';
 import Framing from '../screens/Framing';
+import CollageDermoscopy from '../screens/CollageDermoscopy';
 import ImageZoomML from '../screens/ImageZoomML'
-import { Image, TouchableOpacity, View } from 'react-native';
+import { Image, TouchableOpacity } from 'react-native';
 import SubscriptionManage from "../screens/Auth/SubscriptionManage";
 import MarkableImage from '../screens/MarkableImage';
 
@@ -94,7 +95,17 @@ const MainStack = () => {
         component={MarkableImage}
         options={{
           headerShown: true,
-          headerTintColor: COLORS.textColor
+          headerTintColor: COLORS.textColor,
+          headerTitle: 'Mark Image',
+        }}
+      />
+      <Stack.Screen
+        name={'CollageDermoscopy'}
+        component={CollageDermoscopy}
+        options={{
+          headerShown: true,
+          headerTintColor: COLORS.textColor,
+          headerTitle: "Comapre"
         }}
       />
       <Stack.Screen

@@ -22,46 +22,17 @@ import commonStyles from "../styles/commonStyles";
 import COLORS from "../styles/colors";
 import SearchIcon from "../assets/SvgIcons/SearchIcon";
 import FONTS from "../styles/fonts";
-import { moderateScale, scale, verticalScale } from "../styles/responsiveLayoute";
+import { moderateScale, verticalScale } from "../styles/responsiveLayoute";
 import ScaleIcon from "../assets/SvgIcons/ScaleIcon";
-import Grid33 from "../assets/SvgIcons/Grid33";
-import Grid44 from "../assets/SvgIcons/Grid44";
-import GridBorder from "../assets/SvgIcons/GridBorder";
-import FrontFace from "../assets/SvgIcons/Face/FrontFace";
-import LeftFace from "../assets/SvgIcons/Face/LeftFace";
-import FrontNeck from "../assets/SvgIcons/Neck/FrontNeck";
-import LeftNeck from "../assets/SvgIcons/Neck/LeftNeck";
 import CustToast from "../components/CustToast";
-import BackTrio from "../assets/SvgIcons/Trichology/BackTrio";
 import { navigate } from "../navigators/NavigationService";
 import ScreenName from "../configs/screenName";
 import Loading from "../components/Loading";
-import SlightLeft from "../assets/SvgIcons/Face/SlightLeft";
-import SlightRight from "../assets/SvgIcons/Face/SlightRight";
-import RightFace from "../assets/SvgIcons/Face/RightFace";
-import Lip from "../assets/SvgIcons/Face/Lip";
-import LeftNeckDown from "../assets/SvgIcons/Neck/LeftNeckDown";
-import RightNeck from "../assets/SvgIcons/Neck/RightNeck";
-import RightNeckDown from "../assets/SvgIcons/Neck/RightNeckDown";
-import FrontTrio from "../assets/SvgIcons/Trichology/FrontTrio";
-import SlightLeftTrio from "../assets/SvgIcons/Trichology/SlightLeftTrio";
-import LeftTrio from "../assets/SvgIcons/Trichology/LeftTrio";
-import SlightRightTrio from "../assets/SvgIcons/Trichology/SlightRightTrio";
-import RightTrio from "../assets/SvgIcons/Trichology/RightTrio";
 import CustomBtn from "../components/CustomBtn";
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-} from "react-native-reanimated";
+import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import Slider from "@react-native-community/slider";
 import GhostIcon from "../assets/SvgIcons/GhostIcon";
 import CrossIcon from "../assets/SvgIcons/CrossIcon";
-import LeftBody from "../assets/SvgIcons/body/LeftBody";
-import ColordBody from "../assets/SvgIcons/body/ColordBody";
-import RightBody from "../assets/SvgIcons/body/RightBody";
-import BackBody from "../assets/SvgIcons/body/BackBody";
-import SlightLeftBody from "../assets/SvgIcons/body/SlightLeftBody";
-import SlightRightBody from "../assets/SvgIcons/body/SlightRightBody";
 import {
   checkAndRefreshGoogleAccessToken,
   getDropboxFileUrl,
@@ -78,18 +49,16 @@ import {
 } from "../redux/api/common";
 import ImageWithLoader from "../components/ImageWithLoader";
 import DeleteImagePopUp from "../components/DeleteImagePopUp";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect } from "@react-navigation/native";
 import { Image as CompressImage } from "react-native-compressor";
 import SelectedGridOverlay from "../components/SelectedGridOverlay";
-import imagePaths from "../assets/images";
 import { setCurrentPatient, setPatientImages } from "../redux/slices/patientSlice";
 import FastImage from "react-native-fast-image";
-import Orientation from "react-native-orientation-locker";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
-import ImageResizer from 'react-native-image-resizer';
+// import ImageResizer from 'react-native-image-resizer';
 
-
+import { combinedData, askForDermoScopy } from '../utils';
 
 const CameraGrid = (props) => {
   const dispatch = useDispatch();
@@ -197,90 +166,8 @@ const CameraGrid = (props) => {
   const activePatient = useSelector((state) => state.patient?.currentActivePatient);
 
 
-
-  const cropToPreview = async (photoPath, previewRatio = "16:9") => {
-    try {
-      // Get width/height from ratio
-      let targetWidth = 1080;
-      let targetHeight = 1080;
-
-      if (previewRatio === "16:9") {
-        targetWidth = 1920;
-        targetHeight = 1080;
-      } else if (previewRatio === "4:3") {
-        targetWidth = 1200;
-        targetHeight = 900;
-      } else if (previewRatio === "1:1") {
-        targetWidth = 1080;
-        targetHeight = 500;
-      }
-      console.log('targetWidthtargetWidth', targetWidth);
-      console.log('targetHeighttargetHeight', targetHeight);
-
-      // Resize & crop
-      const resizedImage = await ImageResizer.createResizedImage(
-        photoPath,
-        targetWidth,
-        targetHeight,
-        "JPEG",
-        100,
-        0,
-        null,
-        false,
-        { mode: "cover" } // important! ensures cropping, not stretching
-      );
-
-      return resizedImage.uri;
-    } catch (e) {
-      console.log("Crop Error:", e);
-      return photoPath;
-    }
-  };
-
-  // const capturePhoto = async () => {
-  //   if (loacalImageArr.length >= 5) return false;
-  //   if (cameraRef.current !== null) {
-  //     let photo = await cameraRef.current.takePhoto({
-  //       quality: 0.5,
-  //       skipMetadata: true,
-  //     });
-  //     setImageSource(photo.path);
-  //     if (!photo.path.startsWith('file://')) {
-  //       photo.path = `file://${photo.path}`;
-  //     }
-
-  //     try {
-  //       // Example: Resize/Crop according to desired aspect ratio
-  //       // Options: "contain", "cover", "stretch" (for cropping)
-  //       const resizedImage = await cropToPreview(photo.path, aspectRatio);
-  //       console.log('resizedImageresizedImage', resizedImage);
-
-  //       let fileJson = {};
-  //       provider === "google"
-  //         ? (fileJson.webContentLink = resizedImage)
-  //         : (fileJson.publicUrl = resizedImage);
-
-  //       let uniqueKey = generateUniqueKey();
-  //       let imageName = `${patientName}_${uniqueKey}.jpg`;
-
-  //       fileJson.path = resizedImage;
-  //       fileJson.uri = resizedImage;
-  //       fileJson.type = "image/jpeg";
-  //       fileJson.name = imageName;
-
-  //       console.log('loacalImageArr 207', fileJson);
-  //       setLocalImageArr((prevImages) => [fileJson, ...prevImages]);
-
-  //       if (ghostImage) {
-  //         setIsVisible(true);
-  //       }
-  //     } catch (error) {
-  //       console.log("Resize Error:", error);
-  //     }
-  //   }
-  // };
-
   const capturePhoto = async () => {
+
     if (loacalImageArr.length >= 5) return false
     if (cameraRef.current !== null) {
       let photo = await cameraRef.current.takePhoto({
@@ -294,7 +181,6 @@ const CameraGrid = (props) => {
       if (!photo.path.startsWith('file://')) {
         photo.path = `file://${photo.path}`;
       }
-      setImageSource(photo.path);
 
       provider === "google" ? fileJson.webContentLink = photo.path : fileJson.publicUrl = photo.path
       let uniqueKey = generateUniqueKey();
@@ -304,6 +190,16 @@ const CameraGrid = (props) => {
       fileJson.type = "image/jpeg";
       fileJson.name = imageName;
       console.log('loacalImageArr 207', fileJson);
+
+
+      if (selectedCategory == 7) {
+        askForDermoScopy(
+          () => makrCircleFun(fileJson),
+          () => campareFun(fileJson)
+        );
+        return
+      }
+      setImageSource(photo.path);
       setLocalImageArr((prevImages) => [fileJson, ...prevImages]);
 
       if (ghostImage) {
@@ -312,6 +208,18 @@ const CameraGrid = (props) => {
     }
   };
 
+  const makrCircleFun = (image) => {
+    navigate('MarkableImage', { image, images }); // 👈 send captured image
+  };
+
+  const campareFun = (image) => {
+    setImageSource(image.path);
+    let imgs = provider === 'google' ? images : imageUrls;
+    console.log('imgsimgs', imgs);
+
+    // setLocalImageArr((prevImages) => [image, ...prevImages]);
+    navigate('CollageDermoscopy', { image, images: imgs }); // 👈 send captured image
+  };
 
   const updatePatientImage = async (imgData) => {
     let id = activePatient?._id;
@@ -345,8 +253,6 @@ const CameraGrid = (props) => {
       });
   };
 
-
-
   useEffect(() => {
     if (capturedImages.length > 0 && capturedImages.length == loacalImageArr.length) {
       navigate(ScreenName.IMAGE_VIEWER, {
@@ -358,8 +264,6 @@ const CameraGrid = (props) => {
       setImageSource('')
     }
   }, [capturedImages]);
-
-
 
   const _chooseFile = async () => {
     console.log('activePatient', activePatient);
@@ -432,196 +336,6 @@ const CameraGrid = (props) => {
     }
   }
 
-  const gridData = [
-    { id: 1, icon: Grid33, message: "Grid 3x3" },
-    { id: 2, icon: Grid44, message: "Grid 4x4" },
-    { id: 3, icon: GridBorder, message: "No Grid" },
-  ];
-
-
-  const bodyData = [
-    {
-      id: 1,
-      icon: ColordBody,
-      image: imagePaths.body_front,
-      message: "Frontal body",
-      align: "center",
-    },
-    {
-      id: 2,
-      icon: LeftBody,
-      image: imagePaths.body_left,
-      message: "Left body",
-      align: "center",
-    },
-    {
-      id: 3,
-      icon: SlightLeftBody,
-      image: imagePaths.body_slight_left,
-      message: "Partially left body",
-      align: "center",
-    },
-    {
-      id: 4,
-      icon: SlightRightBody,
-      image: imagePaths.body_slight_right,
-      message: "Partially right body",
-      align: "center",
-    },
-    {
-      id: 5,
-      icon: RightBody,
-      image: imagePaths.body_right,
-      message: "Right body",
-      align: "center",
-    },
-    {
-      id: 6,
-      icon: BackBody,
-      image: imagePaths.body_back,
-      message: "Back body",
-      align: "center",
-    },
-  ];
-
-  const trichologyData = [
-    {
-      id: 1,
-      icon: FrontTrio,
-      image: imagePaths.scalp_top,
-      message: "Parietal scalp",
-      align: "center",
-    },
-    {
-      id: 2,
-      icon: BackTrio,
-      image: imagePaths.scalp_top1,
-      message: "Occipital scalp",
-      align: "center",
-    },
-    {
-      id: 3,
-      icon: LeftTrio,
-      image: imagePaths.scalp_left,
-      message: "Left temporal scalp",
-      align: "flex-start",
-    },
-    {
-      id: 4,
-      icon: SlightLeftTrio,
-      image: imagePaths.scalp_slight_left,
-      message: "Left 45 deg scalp",
-      align: "flex-start",
-    },
-    {
-      id: 5,
-      icon: SlightRightTrio,
-      image: imagePaths.scalp_right,
-      message: "Right 45 deg scalp",
-      align: "flex-end",
-    },
-    {
-      id: 6,
-      icon: RightTrio,
-      image: imagePaths.scalp_slight_right,
-      message: "Left temporal scalp",
-      align: "flex-start",
-    },
-  ];
-
-  const neckData = [
-    {
-      id: 1,
-      icon: FrontNeck,
-      image: imagePaths.neck_front,
-      message: "Frontal neck",
-      align: "center",
-    },
-    {
-      id: 2,
-      icon: LeftNeck,
-      image: imagePaths.neck_left,
-      message: "Left neck",
-      align: "flex-start",
-    },
-    {
-      id: 4,
-      icon: LeftNeckDown,
-      image: imagePaths.neck_down_left,
-      message: "Left neck down",
-      align: "flex-start",
-    },
-    {
-      id: 5,
-      icon: RightNeck,
-      image: imagePaths.neck_right,
-      message: "Right neck",
-      align: "flex-end",
-    },
-    {
-      id: 6,
-      icon: RightNeckDown,
-      image: imagePaths.neck_down_right,
-      message: "Right neck down",
-      align: "flex-end",
-    },
-  ];
-
-  const faceData = [
-    {
-      id: 1,
-      icon: FrontFace,
-      image: imagePaths.face_front,
-      message: "Frontal face",
-      align: "center",
-    },
-    {
-      id: 2,
-      icon: LeftFace,
-      image: imagePaths.face_left,
-      message: "Left face",
-      align: "flex-start",
-    },
-    {
-      id: 3,
-      icon: SlightLeft,
-      image: imagePaths.face_slight_left,
-      message: "Left face 45 deg",
-      align: "flex-start",
-    },
-    {
-      id: 4,
-      icon: SlightRight,
-      image: imagePaths.face_slight_right,
-      message: "Right face 45 deg",
-      align: "flex-end",
-    },
-    {
-      id: 5,
-      icon: RightFace,
-      image: imagePaths.face_right,
-      message: "Right face",
-      align: "flex-end",
-    },
-    {
-      id: 6,
-      icon: Lip,
-      image: imagePaths.face_lips,
-      message: "Lips",
-      align: "center",
-    },
-  ];
-
-  // Combine categories and their respective data into a single array
-  const combinedData = [
-    { id: 1, name: "Grid", data: gridData },
-    { id: 2, name: "Face", data: faceData },
-    { id: 3, name: "Neck", data: neckData },
-    { id: 4, name: "Trichology", data: trichologyData },
-    { id: 5, name: "Body", data: bodyData },
-    { id: 6, name: "Ghost Photo", data: [] },
-  ];
-
   const device = useCameraDevice(isFrontCamera ? "front" : "back");
   let { width } = useWindowDimensions();
 
@@ -634,7 +348,7 @@ const CameraGrid = (props) => {
   let height = width * aspectRatios[aspectRatio];
 
   function getHeight() {
-    return (Platform.OS === 'ios' && aspectRatio === '1:1')
+    return (Platform.OS === 'ios' && aspectRatio === '1:1' && !Platform.isPad)
       ? height + verticalScale(70)
       : height;
   }
@@ -734,7 +448,7 @@ const CameraGrid = (props) => {
         <View style={{ flex: 1 }}>
           <View
             style={[
-              { width: width, height: getHeight() > windowHeight ? windowHeight : getHeight(), alignItems: "center", overflow: "hidden"},
+              { width: width, height: getHeight() > windowHeight ? windowHeight : getHeight(), alignItems: "center", overflow: "hidden" },
             ]}
           >
             <Camera

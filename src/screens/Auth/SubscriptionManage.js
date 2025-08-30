@@ -329,14 +329,14 @@ class SubscriptionManage extends Component {
               </>
             )}
 
-            
-          </ScrollView>
-          <Text style={{textAlign:'center',marginHorizontal:20,color:'#000'}}>Payment will be charged to iTunes Account at confirmation of purchase. Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period. Account will be charged for renewal within 24-hours prior to the end of the current period, and identify the cost of the renewal. Subscriptions may be managed by the user and auto-renewal may be turned off by going to the user's Account Settings after purchase. No cancellation of the current subscription is allowed during active subscription period. Any unused portion of a free trial period, if offered, will be forfeited when the user purchases a subscription to that publication, where applicable</Text>
 
-          <View style={{flexDirection:'row',marginHorizontal:20,marginBottom:20,marginVertical:30,justifyContent:'center'}}>
-            <Text onPress={() => navigate('Terms and Condition', { slug: 'terms-and-conditions', screenName: 'Terms and Conditions' })} style={{color:'#32327C',marginRight:10,textDecorationLine:'underline'}}>Terms of Service</Text>
-            <Text onPress={() => navigate('Terms and Condition', { slug: 'privacy-policy', screenName: 'Privacy Policy' })} style={{color:'#32327C',marginLeft:10,textDecorationLine:'underline'}}>Privacy Policy</Text>
-          </View>
+            <Text style={{ textAlign: 'center', marginHorizontal: 20, color: '#000',marginVertical:20 }}>Payment will be charged to iTunes Account at confirmation of purchase. Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period. Account will be charged for renewal within 24-hours prior to the end of the current period, and identify the cost of the renewal. Subscriptions may be managed by the user and auto-renewal may be turned off by going to the user's Account Settings after purchase. No cancellation of the current subscription is allowed during active subscription period. Any unused portion of a free trial period, if offered, will be forfeited when the user purchases a subscription to that publication, where applicable</Text>
+
+            <View style={{ flexDirection: 'row', marginHorizontal: 20, marginBottom: 20, marginVertical: 30, justifyContent: 'center' }}>
+              <Text onPress={() => navigate('Terms and Condition', { slug: 'terms-and-conditions', screenName: 'Terms and Conditions' })} style={{ color: '#32327C', marginRight: 10, textDecorationLine: 'underline' }}>Terms of Service</Text>
+              <Text onPress={() => navigate('Terms and Condition', { slug: 'privacy-policy', screenName: 'Privacy Policy' })} style={{ color: '#32327C', marginLeft: 10, textDecorationLine: 'underline' }}>Privacy Policy</Text>
+            </View>
+          </ScrollView>
         </View>
       </SafeAreaView>
     );

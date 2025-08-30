@@ -231,7 +231,7 @@ const AddPatient = () => {
         <View style={{ flex: 0.6 }}>
           <AppTextInput
             label={"Name"}
-            maxLength={20}
+            maxLength={100}
             placeHolderTxtColor={COLORS.placeHolderTxtColor}
             placeholder={"Enter name"}
             value={name}
