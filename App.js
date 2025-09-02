@@ -57,10 +57,10 @@ const App = () => {
 
   return (
     <Provider store={store}>
-      <IAPProvider>
+      {/* <IAPProvider> */}
         <StatusBar backgroundColor={'white'} barStyle={'dark-content'} />
         <AppNavigator />
-      </IAPProvider>
+      {/* </IAPProvider> */}
     </Provider>
   );
 
