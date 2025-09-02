@@ -88,6 +88,8 @@ const PatientDetails = (props) => {
   const [isSelectionMode, setSelectionMode] = useState(false);
   const [visible, setIsVisible] = useState(false);
   const [updatePatient] = useUpdatePatientMutation();
+  const [patientProfileImages, setPatientProfileImages] = useState("");
+
 
   const [deleteImage, { isLoading: deleteImageLoading }] =
     useDeleteImageMutation();
@@ -159,7 +161,6 @@ const PatientDetails = (props) => {
         patientData,
         updateType: "count",
       }).unwrap();
-      console.log("image count response", response);
     } catch (error) {
       console.error("Failed to add patient:", error);
     }
@@ -188,7 +189,6 @@ const PatientDetails = (props) => {
   const { fetchGoogleDriveImages: fetchGoogleDriveImages1, loading: dajhbdjha } = useGoogleDriveImages();
   // useEffect(() => {
   //   fetchGoogleDriveImages1(accessToken, patientName, trimmedId, (count) => {
-  //     console.log("Image count:------------", count);
   //   });
   // }, [accessToken]);
   const fetchGoogleDriveImages = async () => {
@@ -203,7 +203,6 @@ const PatientDetails = (props) => {
         return;
       }
 
-      console.log('photoMedFolderId', photoMedFolderId);
 
       // Step 2: Locate the patient folder inside "PhotoMed"
       const patientFolderId = await getFolderId(
@@ -212,7 +211,6 @@ const PatientDetails = (props) => {
         photoMedFolderId
       );
 
-      // console.log('adsda----', preData.full_name + trimmedId, photoMedFolderId, accessToken, patientFolderId);
 
       if (!patientFolderId) {
         console.error("Patient folder not found");
@@ -243,7 +241,6 @@ const PatientDetails = (props) => {
           return { ...image, publicUrl };
         })
       );
-      console.log('publicImages-----', publicImages);
 
 
       publicImages?.length &&
@@ -313,7 +310,6 @@ const PatientDetails = (props) => {
         name: file.filename || `${patientName}${Date.now()}.jpg`,
       }));
 
-      // console.log('Mapped File Details:', mappedFileDetails);
       setLoading(true);
 
       // Step 2: Determine upload provider and process accordingly
@@ -386,9 +382,7 @@ const PatientDetails = (props) => {
       });
 
       const uploadedResults = await Promise.all(uploadPromises);
-      console.log("Uploaded files to Dropbox:", uploadedResults);
       const { data: refreshedImageUrls } = await refetch();
-      console.log("refreshedImageUrlsrefreshedImageUrls", refreshedImageUrls);
 
       saveCount(refreshedImageUrls?.length || 0);
     } catch (error) {
@@ -405,7 +399,6 @@ const PatientDetails = (props) => {
           filePath,
           accessToken,
         });
-        // console.log('File deleted successfully:', response);
       });
       await Promise.all(deletePromises);
       const { data: refreshedImageUrls } = await refetch();
@@ -415,7 +408,6 @@ const PatientDetails = (props) => {
       setIsVisible(false);
       setCollageImage([]);
       // setSelectionMode(newSelectedImages.length > 0);
-      // console.log('All files deleted successfully');
     } catch (error) {
       // console.error('Error deleting files:', error);
     }
@@ -443,12 +435,15 @@ const PatientDetails = (props) => {
   };
 
   const activePatient = useSelector((state) => state.patient?.currentActivePatient);
-  const getProfileImage = () => {
-    if (patient?.profileImage) {
-      return configUrl.imageUrl + activePatient?.profileImage; // Existing profile image
+
+  useEffect(() => {
+    setPatientProfileImages();
+    if (activePatient?.profileImage) {
+      setPatientProfileImages({uri:configUrl.imageUrl + activePatient?.profileImage}); // Existing profile image
+    } else {
+      setPatientProfileImages(imagePath.no_user_img);
     }
-    return configUrl.defaultUser; // Default image
-  };
+  }, [activePatient]);
 
   const navigateCameraGrid = () => {
     navigate(ScreenName.CAMERA_GRID, {
@@ -513,8 +508,8 @@ const PatientDetails = (props) => {
       <View style={[commonStyles.shadowContainer, styles.cardContainer]}>
         <View style={[commonStyles.flexView, { justifyContent: "space-between", width: "100%" }]}>
           <View style={commonStyles.flexView}>
-            <ImageWithLoader
-              uri={getProfileImage()}
+            <Image
+              source={patientProfileImages}
               style={styles.imgStyle} // You can pass a custom style if needed
             />
             <View style={{ flex: 1, paddingRight: 20 }}>

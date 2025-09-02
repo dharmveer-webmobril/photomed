@@ -21,6 +21,7 @@ edit:require('../assets/images/icons/edit.png'),
 rightArrow:require('../assets/images/icons/rightArrow.png'),
 cam:require('../assets/images/icons/cam.png'),
 nointernet:require('../assets/images/nointernet.png'),
+no_user_img:require('../assets/images/icons/no_user_img.png'),
 
 // Bottom Icons
 home:require('../assets/images/icons/home.png'),

@@ -173,7 +173,7 @@ const Home = () => {
   const { data: patientsData, isLoading, isError } = useSearchPatientQuery({
     term: debouncedSearchTerm, // your search input value
     token: token, // your auth token
-  },);
+  });
 
   useEffect(() => {
     setPatients(patientsData?.ResponseBody?.patientData || []);
@@ -222,6 +222,7 @@ const Home = () => {
   };
 
   const renderItem = ({ item }) => {
+
     return (
       <TouchableOpacity
         onPress={() => goPatientDetailPage(item)}
@@ -229,11 +230,7 @@ const Home = () => {
         style={styles.cardContainer}
       >
         <ImageWithLoader
-          uri={
-            item?.profileImage
-              ? configUrl?.imageUrl + item?.profileImage
-              : configUrl.defaultUser
-          }
+          uri={item?.profileImage ? configUrl?.imageUrl + item?.profileImage: imagePath.no_user_img}
           style={styles.imgStyle}
         />
         <View style={[commonStyles.flexView, { flex: 1 }]}>

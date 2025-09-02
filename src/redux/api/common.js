@@ -59,6 +59,7 @@ export const commonApi = createApi({
           },
         };
       },
+      providesTags: ["Patient"],
     }),
     // Fetch a list of patients
     getPatients: builder.query({

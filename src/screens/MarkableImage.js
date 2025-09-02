@@ -10,6 +10,8 @@ import { useSelector, useDispatch } from "react-redux";
 import ViewShot from "react-native-view-shot";
 import { useUploadSingleFileToDropboxMutation } from "../redux/api/common";
 import Loading from "../components/Loading";
+import { goBack, navigate } from "../navigators/NavigationService";
+import ScreenName from "../configs/screenName";
 
 const { height: windowHeight } = Dimensions.get("window");
 
@@ -138,6 +140,7 @@ export default function MarkableImage() {
   };
 
   const saveImage = async () => {
+    let imgss = [];
     try {
       // Capture the screenshot of the ViewShot ref
       const uri = await viewShotRef.current.capture({
@@ -154,7 +157,7 @@ export default function MarkableImage() {
         return;
       }
       setIsLoading(true);
-      console.log("localImageArr length:", localImageArr.length);
+
       if (provider === "google") {
         await checkAndRefreshGoogleAccessToken(accessToken);
         const patientInfo = {
@@ -176,7 +179,7 @@ export default function MarkableImage() {
             };
           })
         );
-        let imgss = [...images, ...uploadedImages];
+        imgss = [...images, ...uploadedImages];
         dispatch(setPatientImages(imgss));
         console.log("Uploaded images:", imgss);
       } else {
@@ -189,8 +192,15 @@ export default function MarkableImage() {
           }).unwrap();
           let publicUrl = await getDropboxFileUrl(result.path_display, accessToken);
           console.log("Dropbox public URL:", publicUrl);
+
+          result = { ...result, publicUrl };
+          imgss = [result, ...images];
         }
       }
+      navigate(ScreenName.CAMERA_GRID, {
+        imageData: imgss,
+        provider
+      })
     } catch (error) {
       Alert.alert("Error", "Something went wrong. Please try again later.");
       console.error("Error capturing or uploading image:", error);
@@ -201,7 +211,7 @@ export default function MarkableImage() {
 
   return (
     <SafeAreaView style={styles.container}>
-     <Loading visible={isLoading} />
+      <Loading visible={isLoading} />
       {/* Background image and SVG overlay wrapped in ViewShot */}
       <View style={styles.drawingArea}>
         <ViewShot

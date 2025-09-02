@@ -97,12 +97,12 @@ const AddPatient = () => {
   };
 
   const validateFields = () => {
-    if (name.trim() === "") {
+    if (name?.trim()?.length <= 0) {
       Toast.show("Please enter your full name");
       return false;
     }
     if (validateNameLength(name.trim())) {
-      Toast.show("Full name must be at least 3 characters long");
+      Toast.show("Full name must be between 3 and 100 characters.");
       return false;
     }
     if (dob.trim() === "") {
@@ -206,8 +206,6 @@ const AddPatient = () => {
             setDatePickerVisibility(false)
             handleDateChange(date)
           }}
-
-
           mode="date"
           onCancel={() => {
             setDatePickerVisibility(false)

@@ -209,7 +209,8 @@ const CameraGrid = (props) => {
   };
 
   const makrCircleFun = (image) => {
-    navigate('MarkableImage', { image, images }); // 👈 send captured image
+    let imgs = provider === 'google' ? images : imageUrls;
+    navigate('MarkableImage', { image, images: imgs }); // 👈 send captured image
   };
 
   const campareFun = (image) => {

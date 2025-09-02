@@ -59,11 +59,14 @@ const OtpVerification = (props) => {
         }
         try {
             const response = await verifyEmailMutation({ token, otp: otpInput });
+            console.log('response:-------', response);
+            
             if (response.data?.succeeded) {
                 Toast.show(response.data.ResponseMessage);
                 if (preScreen == ScreenName.SIGN_UP) {
                     console.log('response.data',response.data);
                     dispatch(saveUserData(response.data.ResponseBody.token))
+                    dispatch(saveUserData(response.data.ResponseBody?.id))
                 } else {
                     navigate(ScreenName.UPDATE_PASSWORD, { token: response.data.ResponseBody.token });
                 }

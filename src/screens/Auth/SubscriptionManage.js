@@ -1,357 +1,198 @@
-import React, { Component } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  SafeAreaView,
-  ScrollView,
-  Platform,
-  Alert,
-  Linking,
-} from 'react-native';
-import { connect } from 'react-redux';
-import { getUserPlans, addSubscriptions, validateReceiptData, validateSubscription1, validateSubscription } from '../../configs/api';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Linking, Alert, Platform } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import Loading from '../../components/Loading';
-import { goBack, navigate } from '../../navigators/NavigationService';
+import { useSelector } from 'react-redux';
+import { useIAP } from '../../configs/IAPContext';
+import { goBack } from '../../navigators/NavigationService';
+import { getAvailablePurchases, requestSubscription } from 'react-native-iap';
 
-import {
-  initConnection,
-  endConnection,
-  purchaseErrorListener,
-  purchaseUpdatedListener,
-  flushFailedPurchasesCachedAsPendingAndroid,
-  acknowledgePurchaseAndroid,
-  finishTransaction,
-  requestSubscription,
-  getSubscriptions,
-} from 'react-native-iap';
-import ScreenName from '../../configs/screenName';
-const itemSkus = Platform.select({
-  ios: ['com.photomedthreemonth', 'com.photomedonemonth', 'com.photomedyearlyplan'],
-  android: ['com.photomedPro.com'],
-});
+export default function SubscriptionManage() {
+  const token = useSelector(state => state.auth.user);
+  const userId = useSelector(state => state.auth.userId);
+  const { subscriptions, currentSubscription, fetchSubscriptions, checkSubscriptionStatus } = useIAP();
+  const [selectedPlan, setSelectedPlan] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-class SubscriptionManage extends Component {
+  console.log('currentSubscription:-------', currentSubscription);
 
-  constructor(props) {
-    super(props)
-    this.state = {
-      subscriptions: [],
-      selectedPlan: null,
-      userSubscription: null,
-      loading: false,
-      loadingUserSub: false,
-      apiStatus: false,
-      processedTransactions: new Set(),
-    };
-  }
+  useEffect(() => {
+    currentSubscription?.productId && setSelectedPlan(currentSubscription.productId);
+  }, [currentSubscription]);
 
-
-
-  async componentDidMount() {
-
-
-    this.fetchUserSubscription();
-    this.initializeIap();
-    // this.props.navigation.addListener('focus', () => {
-    // })
-
-    await initConnection()
-      .then(() => {
-        if (Platform.OS == 'android') {
-          flushFailedPurchasesCachedAsPendingAndroid();
-        } else {
-          /**
-           * WARNING This line should not be included in production code
-           * This call will call finishTransaction in all pending purchases
-           * on every launch, effectively consuming purchases that you might
-           * not have verified the receipt or given the consumer their product
-           *
-           * TL;DR you will no longer receive any updates from Apple on
-           * every launch for pending purchases
-           */
-          //  clearTransactionIOS()
-          //  .catch(()=>{
-          //      console.log('75dfddf')
-          //  })
-        }
-      }).then(() => {
-        this.purchaseUpdateSubscription = purchaseUpdatedListener(
-          async (purchase) => {
-            try {
-              console.log('Processing purchase:', purchase);
-              console.log('apistatus:', this.state.apiStatus);
-
-              const receipt = purchase.transactionReceipt
-                ? purchase.transactionReceipt
-                : JSON.stringify({
-                  purchaseToken: purchase.purchaseToken,
-                  productId: purchase.productId,
-                  packageName: 'com.photoMedPro.com',
-                });
-
-              if (this.state.apiStatus) {
-                await this.addSubscriptionToBackend(purchase);
-                this.setState({ apiStatus: false })
-              }
-
-              if (Platform.OS === 'ios') {
-                await this.finishTransaction(purchase);
-              } else {
-                await this.acknowledgePurchaseAndroid(purchase.purchaseToken, purchase.developerPayloadAndroid, purchase);
-              }
-              this.setState({ loading: false });
-            } catch (err) {
-              this.setState({ loading: false, apiStatus: false });
-              console.warn('Purchase processing error:', err);
-              Alert.alert('Error', 'Failed to process purchase.');
-            }
-          },
-        );
-
-        this.purchaseErrorSubscription = purchaseErrorListener(
-          (error) => {
-            this.setState({ loading: false });
-            console.log('purchaseErrorListener', error);
-          },
-        );
-      });
-  }
-
-
-  componentWillUnmount() {
-    if (this.purchaseUpdateSubscription) {
-      this.purchaseUpdateSubscription.remove();
-      this.purchaseUpdateSubscription = null;
-    }
-
-    if (this.purchaseErrorSubscription) {
-      this.purchaseErrorSubscription.remove();
-      this.purchaseErrorSubscription = null;
-    }
-    // ...
-    endConnection();
-  }
-
-
-  initializeIap = async () => {
-    try {
-      this.setState({ loading: true });
-      await initConnection();
-      const subs = await getSubscriptions({ skus: itemSkus });
-      // console.log('Available subscriptions:', subs);
-
-      this.setState({ subscriptions: subs, loading: false });
-    } catch (err) {
-      Alert.alert('Error', 'Failed to initialize in-app purchases.');
-    } finally {
-      this.setState({ loading: false });
-    }
-  };
-
-  finishTransaction = async (purchase) => {
-    try {
-      await finishTransaction({ purchase, isConsumable: false });
-    } catch (err) {
-      console.warn('Finish transaction error:', err);
-    }
-  };
-
-  acknowledgePurchaseAndroid = async (token, developerPayload, purchase) => {
-    try {
-      await acknowledgePurchaseAndroid({ token, developerPayload });
-      await this.finishTransaction(purchase);
-    } catch (err) {
-      console.warn('Acknowledge purchase error:', err);
-    }
-  };
-
-  fetchUserSubscription = async () => {
-    try {
-      this.setState({ loadingUserSub: true });
-      let userSub = await validateSubscription(this.props.route.params.token);
-      if (userSub?.ResponseBody?.receiptData) {
-        if (userSub && userSub?.succeeded) {
-          this.setState({
-            userSubscription: userSub?.ResponseBody,
-            selectedPlan: userSub?.ResponseBody?.productId,
-          });
-        }
+  useEffect(() => {
+    const loadSubscriptions = async () => {
+      if (!token) {
+        Alert.alert('Error', 'Authentication token missing. Please log in again.');
+        return;
       }
-    } catch (err) {
-      console.log('Error', 'Failed to fetch subscription details.', err);
-      Alert.alert('Error', 'Failed to fetch subscription details.');
-    } finally {
-      this.setState({ loadingUserSub: false });
+      setIsLoading(true);
+      try {
+        await fetchSubscriptions();
+        await checkSubscriptionStatus();
+      } catch (error) {
+        console.error('Error loading subscriptions:', error);
+        Alert.alert('Error', 'Failed to load subscriptions. Please try again.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadSubscriptions();
+  }, [token, userId, fetchSubscriptions, checkSubscriptionStatus]);
+
+  const handlePurchase = async () => {
+    if (!selectedPlan) {
+      Alert.alert('Error', 'Please select a plan.');
+      return;
     }
-  };
-
-
-  handleSubscription = async () => {
-    const { selectedPlan } = this.state;
-    const { userId } = this.props;
-    if (!selectedPlan) return Alert.alert('Error', 'Select a plan before proceeding.');
-    if (!userId) return Alert.alert('Error', 'Please log in to continue.');
-
+    if (!token) {
+      Alert.alert('Error', 'Authentication token missing. Please log in again.');
+      return;
+    }
+    setIsLoading(true);
     try {
-      this.setState({ loading: true });
       await requestSubscription({ sku: selectedPlan });
-    } catch (err) {
-      Alert.alert('Purchase Error', err.message);
-      this.setState({ apiStatus: false });
-    }
-  }
-
-
-  handleCancelSubscription = async () => {
-    const { selectedPlan } = this.state;
-    const url =
-      Platform.OS === 'android'
-        ? `https://play.google.com/store/account/subscriptions?sku=${selectedPlan}&package=com.photomedPro.com`
-        : 'https://apps.apple.com/account/subscriptions';
-
-    try {
-      const canOpen = await Linking.canOpenURL(url);
-      if (canOpen) await Linking.openURL(url);
-      else Alert.alert('Error', 'Unable to open subscription settings.');
-    } catch (err) {
-      Alert.alert('Error', 'Failed to open subscription settings.');
-    }
-  };
-
-
-  addSubscriptionToBackend = async (purchase) => {
-    const { token } = this.props;
-    try {
-      const data = {
-        transactionId: purchase.transactionId,
-        planeType: purchase.productId,
-        transactionDate: purchase.transactionDate,
-        startDate: purchase.transactionDate,
-        endDate: purchase.transactionDate,
-        platform: Platform.OS,
-        receiptData: Platform.OS === 'ios' ? purchase.transactionReceipt : purchase.purchaseToken,
-        status: 1,
-      };
-      this.setState({ loading: true })
-      await addSubscriptions(token, data);
-      await this.fetchUserSubscription();
-      this.setState({ apiStatus: false, loading: false });
-      Alert.alert('Success', 'Subscription added successfully.');
-      navigate(ScreenName.HOME)
-    } catch (err) {
-      Alert.alert('Error', 'Failed to save subscription to backend.');
+      Alert.alert('Success', 'Purchase initiated. Awaiting verification.');
+    } catch (error) {
+      console.error('Purchase failed:', error);
+      Alert.alert('Error', 'Failed to initiate purchase. Please try again.');
     } finally {
-      this.setState({ apiStatus: false, loading: false });
+      setIsLoading(false);
     }
   };
 
+  const restorePurchases = async () => {
+    if (!token) {
+      Alert.alert('Error', 'Authentication token missing. Please log in again.');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      const purchases = await getAvailablePurchases();
+      if (purchases.length > 0) {
+        const latest = purchases.sort((a, b) => new Date(b.transactionDate) - new Date(a.transactionDate))[0];
+        const response = await fetch('http://photomedpro.com/api/verify-inapp-receipt', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            receipt: latest.transactionReceipt,
+            platform: Platform.OS,
+            userId,
+          }),
+        });
+        const responseData = await response.json();
+        console.log('restorePurchases response:', responseData);
+        if (response.ok) {
+          await checkSubscriptionStatus();
+          Alert.alert('Success', 'Purchases restored successfully.');
+        } else {
+          console.error('Restore failed:', responseData);
+          Alert.alert('Error', 'Failed to restore purchases.');
+        }
+      } else {
+        Alert.alert('Info', 'No purchases found to restore.');
+      }
+    } catch (error) {
+      console.error('Restore failed:', error);
+      Alert.alert('Error', 'Failed to restore purchases. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  const handleCancelPlan = async () => {
+    try {
+      const url = Platform.OS === 'ios'
+        ? 'https://apps.apple.com/account/subscriptions'
+        : 'https://play.google.com/store/account/subscriptions';
+      await Linking.openURL(url);
+      Alert.alert('Info', 'You have been redirected to manage your subscriptions.');
+    } catch (error) {
+      console.error('Failed to open subscription management:', error);
+      Alert.alert('Error', 'Failed to open subscription management.');
+    }
+  };
 
-  CustomRadioButton = ({ selected, onPress }) => (
+  const CustomRadioButton = ({ selected, onPress }) => (
     <TouchableOpacity onPress={onPress} style={styles.radioOuter}>
       {selected && <View style={styles.radioInner} />}
     </TouchableOpacity>
   );
 
-  render() {
-    const {
-      subscriptions,
-      selectedPlan,
-      userSubscription,
-      loading,
-      loadingUserSub,
-    } = this.state;
-
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <Loading visible={loading || loadingUserSub} />
-        <View style={styles.container}>
-          <View style={styles.header}>
-            <TouchableOpacity onPress={() => goBack()}>
-              <Text style={styles.iconText}>←</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Manage Subscription Plan</Text>
-            <View />
-          </View>
-
-          <ScrollView contentContainerStyle={styles.scrollContent}>
-            {subscriptions?.length > 0 &&
-              subscriptions.map((plan, index) => {
-                const isSelected = selectedPlan === plan.productId;
-                return (
-                  <TouchableOpacity
-                    key={plan.productId}
-                    onPress={() => this.setState({ selectedPlan: plan.productId })}
-                    style={[styles.planCard, isSelected && styles.selectedCard]}
-                  >
-                    <View style={styles.cardHeader}>
-                      {plan.title == 'com.photomedthreemonth' && <Text style={styles.planTitle}>{"3-Month Premium Plan"}</Text>}
-                      {plan.title == 'com.photomedyearlyplan' && <Text style={styles.planTitle}>{"Annual Pro Subscription"}</Text>}
-                      {plan.title == 'com.photomedonemonth' && <Text style={styles.planTitle}>{"Monthly Access Plan"}</Text>}
-                      <Text style={styles.planPrice}>{plan.localizedPrice}</Text>
-                    </View>
-                    {plan.description == 'com.photomedthreemonth' && <Text style={styles.description}>. {"Enjoy full access to all features for 3 months"}</Text>}
-                    {plan.description == 'com.photomedyearlyplan' && <Text style={styles.description}>. {"Full app access for a year at a great value"}</Text>}
-                    {plan.description == 'com.photomedonemonth' && <Text style={styles.description}>. {"Access to all features for 1 month"}</Text>}
-                    <Text style={styles.planText}>• Everything in Standard Plan</Text>
-                    <Text style={styles.planText}>• Exclusive Content & Tips</Text>
-                    <View style={styles.radioWrapper}>
-                      <this.CustomRadioButton
-                        selected={isSelected}
-                        onPress={() => this.setState({ selectedPlan: plan.productId })}
-                      />
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-
-            {subscriptions?.length > 0 && (
-              <>
-                {userSubscription?.productId &&
-                  userSubscription?.productId === selectedPlan &&
-                  userSubscription?.isExpired === 'no' && (
-                    <TouchableOpacity onPress={() => { this.setState({ apiStatus: true }, () => { this.handleCancelSubscription() }) }} style={styles.restoreBtn}>
-                      <Text style={styles.restoreText}>Cancel Plan</Text>
-                    </TouchableOpacity>
-                  )}
-
-                {(userSubscription?.productId !== selectedPlan ||
-                  userSubscription?.isExpired === 'yes' ||
-                  !userSubscription?.productId) && (
-                    <TouchableOpacity onPress={() => { this.setState({ apiStatus: true }, () => { this.handleSubscription() }) }} style={styles.restoreBtn}>
-                      <Text style={styles.restoreText}>
-                        {userSubscription?.productId ? 'Upgrade Plan' : 'Buy Plan'}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-              </>
-            )}
-
-
-            <Text style={{ textAlign: 'center', marginHorizontal: 20, color: '#000',marginVertical:20 }}>Payment will be charged to iTunes Account at confirmation of purchase. Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period. Account will be charged for renewal within 24-hours prior to the end of the current period, and identify the cost of the renewal. Subscriptions may be managed by the user and auto-renewal may be turned off by going to the user's Account Settings after purchase. No cancellation of the current subscription is allowed during active subscription period. Any unused portion of a free trial period, if offered, will be forfeited when the user purchases a subscription to that publication, where applicable</Text>
-
-            <View style={{ flexDirection: 'row', marginHorizontal: 20, marginBottom: 20, marginVertical: 30, justifyContent: 'center' }}>
-              <Text onPress={() => navigate('Terms and Condition', { slug: 'terms-and-conditions', screenName: 'Terms and Conditions' })} style={{ color: '#32327C', marginRight: 10, textDecorationLine: 'underline' }}>Terms of Service</Text>
-              <Text onPress={() => navigate('Terms and Condition', { slug: 'privacy-policy', screenName: 'Privacy Policy' })} style={{ color: '#32327C', marginLeft: 10, textDecorationLine: 'underline' }}>Privacy Policy</Text>
-            </View>
-          </ScrollView>
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <Loading visible={isLoading} />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => goBack()}>
+            <Text style={styles.iconText}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Manage Subscription Plan</Text>
+          <View />
         </View>
-      </SafeAreaView>
-    );
-  }
+
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {subscriptions?.length > 0 &&
+            subscriptions.map((plan) => {
+              const isSelected = selectedPlan === plan.productId;
+              return (
+                <TouchableOpacity
+                  key={plan.productId}
+                  onPress={() => setSelectedPlan(plan.productId)}
+                  style={[styles.planCard, isSelected && styles.selectedCard]}
+                >
+                  <View style={styles.cardHeader}>
+                    {plan.productId === 'com.photomedthreemonth' && <Text style={styles.planTitle}>3-Month Premium Plan</Text>}
+                    {plan.productId === 'com.photomedyearlyplan' && <Text style={styles.planTitle}>Annual Pro Subscription</Text>}
+                    {plan.productId === 'com.photomedonemonth' && <Text style={styles.planTitle}>Monthly Access Plan</Text>}
+                    <Text style={styles.planPrice}>{plan.localizedPrice}</Text>
+                  </View>
+                  {plan.productId === 'com.photomedthreemonth' && <Text style={styles.planText}>• Enjoy full access to all features for 3 months</Text>}
+                  {plan.productId === 'com.photomedyearlyplan' && <Text style={styles.planText}>• Full app access for a year at a great value</Text>}
+                  {plan.productId === 'com.photomedonemonth' && <Text style={styles.planText}>• Access to all features for 1 month</Text>}
+                  <Text style={styles.planText}>• Everything in Standard Plan</Text>
+                  <Text style={styles.planText}>• Exclusive Content & Tips</Text>
+                  {currentSubscription?.productId === plan.productId && (
+                    <Text style={styles.planText}>
+                      Active until {new Date(currentSubscription.expirationDate).toLocaleDateString()}
+                    </Text>
+                  )}
+                  <View style={styles.radioWrapper}>
+                    <CustomRadioButton
+                      selected={isSelected}
+                      onPress={() => setSelectedPlan(plan.productId)}
+                    />
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+
+          {subscriptions?.length > 0 && (
+            <>
+              <TouchableOpacity style={styles.restoreBtn} onPress={handlePurchase}>
+                <Text style={styles.restoreText}>
+                  {selectedPlan === currentSubscription?.productId ? 'Update Plan' : 'Subscribe'}
+                </Text>
+              </TouchableOpacity>
+              {selectedPlan === currentSubscription?.productId && currentSubscription?.isExpired === false && (
+                <TouchableOpacity style={styles.restoreBtn} onPress={handleCancelPlan}>
+                  <Text style={styles.restoreText}>Cancel Plan</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity style={styles.restoreBtn} onPress={restorePurchases}>
+                <Text style={styles.restoreText}>Restore Purchases</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </ScrollView>
+      </View>
+    </SafeAreaView>
+  );
 }
 
-const mapStateToProps = (state) => ({
-  userId: state.auth?.userId,
-  token: state.auth?.user,
-});
-
-export default connect(mapStateToProps)(SubscriptionManage);
-
 const styles = StyleSheet.create({
-  // [Same styles from your original functional component]
   safeArea: {
     flex: 1,
     backgroundColor: '#fff',

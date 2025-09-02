@@ -316,9 +316,7 @@ const EditPatient = (props) => {
                     >
                         <Text style={{ color: COLORS.textColor, fontSize: 12, }}>{dob}</Text>
                     </TouchableOpacity>
-                    {
-                        <Text style={{ color: 'red', fontSize: 12, }}>{dob}</Text>
-                    }
+                   
                     <CountryPickerComp
                         isPickerOpen={isCountryPickerOpen}
                         closeCountryPicker={(val) => { setIsCountryPickerOpen(val) }}

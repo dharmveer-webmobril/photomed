@@ -10,7 +10,7 @@ export function validateEmail(email) {
   }
   
   export function validateNameLength(name) {
-    if (String(name.length) < 3 || String(name.length) >20) 
+    if (String(name.length) < 3 || String(name.length) >100) 
       return true
       else 
       return false

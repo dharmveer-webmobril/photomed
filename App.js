@@ -11,6 +11,7 @@ import {
 import { checkForUpdates } from './src/configs/helperFunction';
 import { decode as atob } from 'base-64';
 import Orientation from 'react-native-orientation-locker';
+import { IAPProvider } from './src/configs/IAPContext';
 
 if (!global.atob) {
   global.atob = atob;
@@ -56,8 +57,10 @@ const App = () => {
 
   return (
     <Provider store={store}>
-      <StatusBar backgroundColor={'white'} barStyle={'dark-content'} />
-      <AppNavigator />
+      <IAPProvider>
+        <StatusBar backgroundColor={'white'} barStyle={'dark-content'} />
+        <AppNavigator />
+      </IAPProvider>
     </Provider>
   );
 
