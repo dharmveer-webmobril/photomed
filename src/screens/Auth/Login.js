@@ -26,7 +26,7 @@ import { configUrl } from '../../configs/api';
 import { jwtDecode } from 'jwt-decode';
 import Orientation from 'react-native-orientation-locker';
 import { appleAuth, AppleButton } from '@invertase/react-native-apple-authentication';
- 
+
 const Login = () => {
 
     const navigation = useNavigation()
@@ -59,8 +59,8 @@ const Login = () => {
 
     const dispatch = useDispatch();
     const [loginMutation, { isLoading }] = useLoginMutation();
-    const [email, setEmail] = useState('')
-    const [password, setPassword] = useState('')
+    const [email, setEmail] = useState('jaya@mailinator.com')
+    const [password, setPassword] = useState('123456')
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isRemeberMe, setIsRemeberMe] = useState(false);
 
@@ -80,8 +80,8 @@ const Login = () => {
             setPassword(password1)
         } else {
             setIsRemeberMe(false)
-            setEmail('')
-            setPassword('')
+            setEmail('jaya@mailinator.com')
+            setPassword('123456')
         }
     }
     const togglePasswordVisibility = () => {
@@ -115,12 +115,7 @@ const Login = () => {
     const handleLogin = async () => {
         const fcmToken = await getData('fcmToken') || 'default_fcm_token'; // Default value if not set
         const device_id = await DeviceInfo.getUniqueId() || 'default_device_id'; // Default value if not set
-
-
-        console.log('fcmToken', fcmToken);
-
         const device_type = getPlatformValue();
-        console.log('device_id', device_id);
         // setIsRemeberOn
         if (!isConnected) {
             Toast.show('No internet connection. Please try again.');
@@ -130,10 +125,8 @@ const Login = () => {
         try {
             const loginApiResponse = await loginMutation({ email, password, device_id, device_type, fcmToken });
             console.log('loginApiResponse', loginApiResponse);
-
             if (loginApiResponse.data?.succeeded) {
                 if (loginApiResponse.data.ResponseBody.is_verified == false) {
-                    Toast.show(loginApiResponse.data.ResponseBody.otp);
                     navigate(ScreenName.OTP_VERIFICATION, { screenName: ScreenName.SIGN_UP, userToken: loginApiResponse.data.ResponseBody.token, email, email })
                 } else {
                     if (isRemeberMe) {
@@ -147,8 +140,6 @@ const Login = () => {
                             isRemeberOn: false,
                         }))
                     }
-                    console.log(loginApiResponse.data.ResponseBody, 'loginApiResponse.data.ResponseBody');
-
                     Toast.show(loginApiResponse.data.ResponseMessage);
                     dispatch(saveUserData(loginApiResponse.data.ResponseBody.token));
                     dispatch(setUserId(loginApiResponse.data.ResponseBody.id));

@@ -24,15 +24,19 @@ export const userApi = commonApi.injectEndpoints({
       }),
     }),
     verifyEmail: builder.mutation({
-      query: ({ token, ...verifyOtpData }) => ({
-        url: 'verifyotp',
-        method: 'POST',
-        body: verifyOtpData,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }),
+      query: ({ token, data }) => {
+        console.log("📤 verifyEmail request:", { token, data });
+
+        return {
+          url: "verifyuser",
+          method: "POST",
+          body: data,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        };
+      },
     }),
     currentUserProfile: builder.query({
       query: ({ token }) => ({
@@ -98,7 +102,7 @@ export const userApi = commonApi.injectEndpoints({
       }),
     }),
     changePassword: builder.mutation({
-      query: ({token,...changePasswordData}) => ({
+      query: ({ token, ...changePasswordData }) => ({
         url: 'changepassword',
         method: 'POST',
         body: changePasswordData,

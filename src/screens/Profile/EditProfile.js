@@ -18,6 +18,7 @@ import { validateNameLength } from '../../components/Validation';
 import Loading from '../../components/Loading';
 import Toast from 'react-native-simple-toast'
 import { logout } from '../../redux/slices/authSlice';
+import ImageWithLoader from '../../components/ImageWithLoader';
 
 
 const windowWidth = Dimensions.get('window').width;
@@ -28,10 +29,10 @@ const EditProfile = (props) => {
     const dispatch = useDispatch()
     const token = useSelector((state) => state?.auth?.user);
     // console.log('token',token);
-    
+
 
     const [full_name, setFullName] = useState(user?.full_name);
-    const [mobile, setMobile] = useState(user?.mobile == 0 ? '' : user?.mobile );
+    const [mobile, setMobile] = useState(user?.mobile == 0 ? '' : user?.mobile);
     const [profileImage, setProfileImage] = useState(null); // State to store selected image
     const [visible, setIsVisible] = useState(false);
 
@@ -40,7 +41,7 @@ const EditProfile = (props) => {
     if (error?.data?.isDeleted || error?.data?.status === 2) {
         dispatch(logout());
         // console.log(error?.data?.isDeleted,error?.data?.status)
-      }
+    }
 
     const chooseImage = () => {
         ImageCropPicker.openPicker({
@@ -116,7 +117,7 @@ const EditProfile = (props) => {
         if (user?.profile) {
             return { uri: configUrl.imageUrl + user.profile }; // Existing profile image
         }
-        return { uri: configUrl.defaultUser }; // Default image
+        return imagePath.no_user_img; // Default image
     };
 
     return (
@@ -129,7 +130,7 @@ const EditProfile = (props) => {
                 onPressCancel={() => setIsVisible(false)}
             />
             <View style={styles.profileContainer}>
-                <Image source={getProfileImage()} style={styles.userIcon} />
+                <ImageWithLoader uri={getProfileImage()} style={styles.userIcon} />
                 <TouchableOpacity
                     onPress={() => setIsVisible(true)}
                     style={styles.editIconContainer}
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
         width: 80,
         borderRadius: 80,
         borderColor: COLORS.primary,
-        borderWidth: 2,
+        // borderWidth: 2,
     },
     editIconContainer: {
         borderRadius: 25,

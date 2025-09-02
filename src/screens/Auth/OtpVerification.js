@@ -13,7 +13,7 @@ import { navigate } from '../../navigators/NavigationService'
 import { useRequestCodeMutation, useVerifyEmailMutation } from '../../redux/api/user'
 import Loading from '../../components/Loading'
 import { useDispatch, useSelector } from 'react-redux'
-import { saveUserData } from '../../redux/slices/authSlice'
+import { saveUserData, setUserId } from '../../redux/slices/authSlice'
 import Toast from 'react-native-simple-toast'
 import FONTS from '../../styles/fonts'
 
@@ -30,6 +30,7 @@ const OtpVerification = (props) => {
     const input = useRef(null);
     const [timer, setTimer] = useState(30);
     const [canResend, setCanResend] = useState(false);
+    // console.log('props.route.params.userToken', props.route.params.userToken);
 
     const clearInput = () => {
         if (input.current) {
@@ -58,15 +59,19 @@ const OtpVerification = (props) => {
             return;
         }
         try {
-            const response = await verifyEmailMutation({ token, otp: otpInput });
+            const data = {
+                email,
+                otp:otpInput
+            }
+            const response = await verifyEmailMutation({ token, data: data });
             console.log('response:-------', response);
-            
+
             if (response.data?.succeeded) {
                 Toast.show(response.data.ResponseMessage);
                 if (preScreen == ScreenName.SIGN_UP) {
-                    console.log('response.data',response.data);
+                    console.log('response.data', response.data);
                     dispatch(saveUserData(response.data.ResponseBody.token))
-                    dispatch(saveUserData(response.data.ResponseBody?.id))
+                    dispatch(setUserId(response.data.ResponseBody?.id))
                 } else {
                     navigate(ScreenName.UPDATE_PASSWORD, { token: response.data.ResponseBody.token });
                 }

@@ -1,5 +1,5 @@
 import { FlatList, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import WrapperContainer from '../../components/WrapperContainer'
 import commonStyles from '../../styles/commonStyles'
 import { imagePath } from '../../configs/imagePath'
@@ -18,11 +18,13 @@ import Toast from 'react-native-simple-toast'
 import { useFocusEffect } from '@react-navigation/native'
 import DropboxIcon from '../../assets/SvgIcons/DropboxIcon'
 import GoogleDriveIcon from '../../assets/SvgIcons/GoogleDriveIcon'
+import ImageWithLoader from '../../components/ImageWithLoader'
 
 
 const Profile = (props) => {
   const [logoutVisible, setLogoutVisible] = useState(false)
   const [deleteVisible, setDeleteVisible] = useState(false)
+  const [userImage, setUserImage] = useState('')
   const dispatch = useDispatch()
   const token = useSelector((state) => state.auth?.user);
   const provider = useSelector((state) => state.auth.cloudType);
@@ -42,10 +44,15 @@ const Profile = (props) => {
   }
 
   useFocusEffect(
-    React.useCallback(() => {
+    useCallback(() => {
       refetch(); // Refetch data when screen comes into focus
     }, [refetch])
   );
+  useEffect(() => {
+    if (userDetail?.ResponseBody?.profile) {
+      setUserImage(userDetail?.ResponseBody?.profile)
+    }
+  }, [userDetail])
 
 
   const handleDeleteAccount = async () => {
@@ -142,10 +149,7 @@ const Profile = (props) => {
         subTitle={'Are you sure you want to Delete \n your account? This action can not be undone.'}
         visible={deleteVisible} />
       <View style={styles.profileContainer}>
-        <Image
-          source={{ uri: user?.profile ? configUrl.imageUrl + user?.profile : configUrl.defaultUser }}
-          style={styles.userIcon}
-        />
+        <ImageWithLoader uri={userImage ? { uri: configUrl.imageUrl + userImage } : imagePath.no_user_img} style={styles.userIcon} />
         <TouchableOpacity onPress={() => navigate(ScreenName.EDIT_PROFILE, { user })}
           style={styles.editIconContainer}>
           <Image source={imagePath.edit} />
@@ -195,7 +199,7 @@ export default Profile
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    paddingVertical:20
+    paddingVertical: 20
   },
   profileContainer: {
     justifyContent: 'center',
@@ -205,7 +209,7 @@ const styles = StyleSheet.create({
     width: 80,
     borderRadius: 80,
     borderColor: COLORS.primary,
-    borderWidth: 2
+    // borderWidth: 2
   },
   editIconContainer: {
     borderRadius: 25,

@@ -26,6 +26,9 @@ import { CountryPicker, countryCodes } from "react-native-country-codes-picker";
 const AddPatient = () => {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth?.user);
+
+  console.log('tokentokentoken',token);
+  
   const [visible, setIsVisible] = useState(false);
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
