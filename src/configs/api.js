@@ -628,50 +628,6 @@ export async function ensureDropboxFolderExists(folderPath, accessToken) {
   }
 }
 
-export async function uploadFilesToDropbox(
-  filePathArray,
-  accessToken,
-  userId,
-  uploadedFrom,
-  uploadDate
-) {
-  try {
-    if (!filePathArray || !filePathArray.length) {
-      throw new Error("No files to upload");
-    }
-
-    // Upload each file and then set properties
-    const uploadedFiles = await Promise.all(
-      filePathArray.map(async (file) => {
-        const filePath = await uploadFileToDropbox(
-          file,
-          accessToken,
-          userId,
-          uploadedFrom,
-          uploadDate
-        ); // Pass uploadedFrom and uploadDate here
-        // Now set the properties for the file
-        return filePath;
-      })
-    );
-
-    // Fetch public URLs for each uploaded file
-    const uploadedImages = await Promise.all(
-      uploadedFiles.map(async (file) => {
-        const publicUrl = await getDropboxFileUrl(
-          file.path_display,
-          accessToken
-        );
-        return { ...file, publicUrl };
-      })
-    );
-
-    return uploadedImages;
-  } catch (error) {
-    console.error("Failed to upload files to Dropbox:", error);
-    throw error;
-  }
-}
 
 export async function uploadFileToDropbox(
   file,
@@ -1018,9 +974,7 @@ export async function createOrGetCategoryFolder(
   }
 }
 
-// export const generateUniqueKey = () => {
-//   return uuid.v4().replace(/\D/g, "").slice(0, 5); // Get first 5 digits
-// };
+ 
 export const generateUniqueKey = () => {
   return uuidv4().replace(/\D/g, "").slice(0, 5);
 };

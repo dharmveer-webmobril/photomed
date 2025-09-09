@@ -27,8 +27,8 @@ const AddPatient = () => {
   const dispatch = useDispatch();
   const token = useSelector((state) => state.auth?.user);
 
-  console.log('tokentokentoken',token);
-  
+  console.log('tokentokentoken', token);
+
   const [visible, setIsVisible] = useState(false);
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
@@ -101,11 +101,12 @@ const AddPatient = () => {
 
   const validateFields = () => {
     if (name?.trim()?.length <= 0) {
-      Toast.show("Please enter your full name");
+      Toast.show("Please enter your name");
       return false;
     }
+
     if (validateNameLength(name.trim())) {
-      Toast.show("Full name must be between 3 and 100 characters.");
+      Toast.show("Name must be 50 characters long and contain letters only.");
       return false;
     }
     if (dob.trim() === "") {
@@ -132,7 +133,7 @@ const AddPatient = () => {
     return true;
   };
 
-
+  const cleanName = name?.trim()
   const handleSave = async () => {
     if (!isConnected) {
       Toast.show("No internet connection. Please try again.");
@@ -141,7 +142,7 @@ const AddPatient = () => {
     if (!validateFields()) {
       return;
     }
-    const patientData = { full_name: name, dob, mobile: (phone && phone.trim()) ? `${countryCode}-${phone}` : phone, email };
+    const patientData = { full_name: cleanName, dob, mobile: (phone && phone.trim()) ? `${countryCode}-${phone}` : phone, email };
     try {
       const response = await addPatient({ token, patientData }).unwrap();
       // Toast.show(response.ResponseMessage);

@@ -732,6 +732,8 @@ export const commonApi = createApi({
           );
 
           const rawResponse = await response.text();
+          console.log("rawResponse 735-----", metadata);
+          
           if (response.ok) {
             const responseData = JSON.parse(rawResponse);
             return { data: responseData };

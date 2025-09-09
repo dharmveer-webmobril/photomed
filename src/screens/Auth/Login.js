@@ -59,8 +59,8 @@ const Login = () => {
 
     const dispatch = useDispatch();
     const [loginMutation, { isLoading }] = useLoginMutation();
-    const [email, setEmail] = useState('jaya@mailinator.com')
-    const [password, setPassword] = useState('123456')
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [isRemeberMe, setIsRemeberMe] = useState(false);
 
@@ -80,8 +80,8 @@ const Login = () => {
             setPassword(password1)
         } else {
             setIsRemeberMe(false)
-            setEmail('jaya@mailinator.com')
-            setPassword('123456')
+            setEmail('')
+            setPassword('')
         }
     }
     const togglePasswordVisibility = () => {
@@ -277,6 +277,7 @@ const Login = () => {
                     textContentType="emailAddress"
                     keyboardType="email-address"
                     placeholder="Email" leftIcon={imagePath.email} />
+                    
                 <AppTextInput
                     value={password}
                     secureTextEntry={!isPasswordVisible}
@@ -330,25 +331,7 @@ const Login = () => {
                     }}
                     onPress={() => onAppleButtonPress()}
                 />}
-                {/* <LoginButton
-                    onLoginFinished={
-                    (error, result) => {
-                        if (error) {
-                        console.log("login has error: " + result.error);
-                        } else if (result.isCancelled) {
-                        console.log("login is cancelled.");
-                        } else {
-                        AccessToken.getCurrentAccessToken().then(
-                            (data) => {
-                            console.log(data.accessToken.toString())
-                            }
-                        )
-                        }
-                    }
-                    }
-                    onLogoutFinished={() => console.log("logout.")}
-                    
-                /> */}
+                 
                 <Text style={styles.infoTxt}>
                     Don’t have an account?{' '}
                     <Text
