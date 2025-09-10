@@ -155,24 +155,34 @@ const AddPatient = () => {
     }
   };
 
-  const handleDateChange = () => {
-    // console.log("Selected date: ", selectedDate);
-    if (selected instanceof Date && !isNaN(selected)) {
-      setDatePickerVisibility(false);
-      // Avoid unnecessary updates
-      if (selected !== datePickerValue) {
-        setDatePickerValue(selected);
-        // Format the date as DD-MM-YYYY
-        const day = String(selected.getDate()).padStart(2, "0");
-        const month = String(selected.getMonth() + 1).padStart(2, "0");
-        const year = selected.getFullYear();
-        const formattedDate = `${day}-${month}-${year}`;
+  // const handleDateChange = () => {
+  //   // console.log("Selected date: ", selectedDate);
+  //   if (selected instanceof Date && !isNaN(selected)) {
+  //     setDatePickerVisibility(false);
+  //     // Avoid unnecessary updates
+  //     if (selected !== datePickerValue) {
+  //       setDatePickerValue(selected);
+  //       // Format the date as DD-MM-YYYY
+  //       const day = String(selected.getDate()).padStart(2, "0");
+  //       const month = String(selected.getMonth() + 1).padStart(2, "0");
+  //       const year = selected.getFullYear();
+  //       const formattedDate = `${day}-${month}-${year}`;
 
-        setDob(formattedDate);
-      }
-    } else {
-      setDatePickerVisibility(false);
-    }
+  //       setDob(formattedDate);
+  //     }
+  //   } else {
+  //     setDatePickerVisibility(false);
+  //   }
+  // };
+
+  const handleDateChange = (date) => {
+    setDatePickerValue(date);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    const formattedDate = `${day}-${month}-${year}`;
+    setDob(formattedDate);
+    setDatePickerVisibility(false);
   };
   const onPhoneInputChange = (val) => {
     if (val && val?.length > 0) {
@@ -205,9 +215,9 @@ const AddPatient = () => {
             const today = new Date();
             if (date > today) {
               Toast.show("You can’t select a future date");
+              setDatePickerVisibility(false)
               return;
             }
-            setDatePickerVisibility(false)
             handleDateChange(date)
           }}
           mode="date"

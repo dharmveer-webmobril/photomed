@@ -498,7 +498,7 @@
 				CODE_SIGN_ENTITLEMENTS = PhotoMed/PhotoMed.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 37;
+				CURRENT_PROJECT_VERSION = 39;
 				DEVELOPMENT_TEAM = XFJA234M9Y;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = PhotoMed/Info.plist;
@@ -533,7 +533,7 @@
 				CODE_SIGN_ENTITLEMENTS = PhotoMed/PhotoMed.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 37;
+				CURRENT_PROJECT_VERSION = 39;
 				DEVELOPMENT_TEAM = XFJA234M9Y;
 				INFOPLIST_FILE = PhotoMed/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (

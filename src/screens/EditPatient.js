@@ -172,24 +172,34 @@ const EditPatient = (props) => {
         }
     };
 
-    const handleDateChange = () => {
-        console.log('Selected date: ', selected);
-        if (selected instanceof Date && !isNaN(selected)) {
-            setDatePickerVisibility(false);
-            // Avoid unnecessary updates
-            if (selected !== datePickerValue) {
-                setDatePickerValue(selected);
-                // Format the date as DD-MM-YYYY
-                const day = String(selected.getDate()).padStart(2, '0');
-                const month = String(selected.getMonth() + 1).padStart(2, '0');
-                const year = selected.getFullYear();
-                const formattedDate = `${day}-${month}-${year}`;
+    // const handleDateChange = () => {
+    //     console.log('Selected date: ', selected);
+    //     if (selected instanceof Date && !isNaN(selected)) {
+    //         setDatePickerVisibility(false);
+    //         // Avoid unnecessary updates
+    //         if (selected !== datePickerValue) {
+    //             setDatePickerValue(selected);
+    //             // Format the date as DD-MM-YYYY
+    //             const day = String(selected.getDate()).padStart(2, '0');
+    //             const month = String(selected.getMonth() + 1).padStart(2, '0');
+    //             const year = selected.getFullYear();
+    //             const formattedDate = `${day}-${month}-${year}`;
 
-                setDob(formattedDate);
-            }
-        } else {
-            setDatePickerVisibility(false);
-        }
+    //             setDob(formattedDate);
+    //         }
+    //     } else {
+    //         setDatePickerVisibility(false);
+    //     }
+    // };
+
+    const handleDateChange = (date) => {
+        setDatePickerValue(date);
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+        const formattedDate = `${day}-${month}-${year}`;
+        setDob(formattedDate);
+        setDatePickerVisibility(false);
     };
 
     const getProfileImage = () => {
@@ -225,13 +235,11 @@ const EditPatient = (props) => {
             height: windowHeight,
             cropping: true,
             mediaType: 'photo',
-        })
-            .then(image => {
+        }).then(image => {
                 // console.log('Camera Image:', image);
                 setProfileImage(image.path); // Store captured image
                 setModal(false)
-            })
-            .catch(e => console.log('Error capturing image:', e));
+         }).catch(e => console.log('Error capturing image:', e));
     };
 
 
@@ -297,9 +305,9 @@ const EditPatient = (props) => {
                             const today = new Date();
                             if (date > today) {
                                 Toast.show("You can’t select a future date");
+                                setDatePickerVisibility(false)
                                 return;
                             }
-                            setDatePickerVisibility(false)
                             handleDateChange(date)
                         }}
                         mode="date"
@@ -316,7 +324,7 @@ const EditPatient = (props) => {
                     >
                         <Text style={{ color: COLORS.textColor, fontSize: 12, }}>{dob}</Text>
                     </TouchableOpacity>
-                   
+
                     <CountryPickerComp
                         isPickerOpen={isCountryPickerOpen}
                         closeCountryPicker={(val) => { setIsCountryPickerOpen(val) }}
