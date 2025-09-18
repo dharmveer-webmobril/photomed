@@ -84,11 +84,11 @@ const Profile = (props) => {
       screenName: ScreenName.CHANGE_PASSWORD,
     }] : []),
 
-    // ...(Platform.OS == 'ios' ? [{
-    //   id: 8,
-    //   name: 'Manage Subscription',
-    //   screenName: ScreenName.SUB_MANAGE,
-    // }] : []),
+    ...(Platform.OS == 'ios' ? [{
+      id: 8,
+      name: 'Manage Subscription',
+      screenName: ScreenName.SUB_MANAGE,
+    }] : []),
 
     {
       id: 4,
@@ -119,7 +119,7 @@ const Profile = (props) => {
     if (screen == ScreenName.EDIT_PROFILE) {
       navigate(screen, { user })
     } else if (screen == ScreenName.SUB_MANAGE) {
-      navigate(screen, { token: token })
+      navigate(screen, { token: token,from:'profile' })
     } else {
       navigate(screen, { slug: slug, screenName: name })
     }

@@ -168,6 +168,8 @@ class SubscriptionManage extends Component {
   };
 
   fetchUserSubscription = async () => {
+    console.log('this.props.route.params.tokenthis.props.route.params.token',this.props.route.params.token);
+    alert('this.props.route.params.token'+this.props.route.params.token);
     try {
       this.setState({ loadingUserSub: true });
       let userSub = await validateSubscription(this.props.route.params.token);

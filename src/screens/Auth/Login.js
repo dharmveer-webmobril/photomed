@@ -143,6 +143,7 @@ const Login = () => {
                     Toast.show(loginApiResponse.data.ResponseMessage);
                     dispatch(saveUserData(loginApiResponse.data.ResponseBody.token));
                     dispatch(setUserId(loginApiResponse.data.ResponseBody.id));
+                    dispatch(updateSubscription(loginApiResponse.data.ResponseBody.subscription));
                 }
             } else {
                 Toast.show(loginApiResponse?.data?.ResponseMessage || loginApiResponse.error?.data?.ResponseMessage || 'Something went wrong. Please try again.');
