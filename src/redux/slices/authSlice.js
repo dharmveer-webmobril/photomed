@@ -28,6 +28,7 @@ export const authSlice = createSlice({
       state.patientId = null;
       state.patientName = null;
       state.cloudType = null;
+      state.subscription = null;
       // state.isRemeberOn = false
       // state.email = null,
       // state.password = null

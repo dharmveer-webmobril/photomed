@@ -61,7 +61,7 @@ const AppNavigator = () => {
 
   const getProfile = async () => {
     try {
-      const res = await fetch("http://photomedpro.com/api/getprofile", {
+      const res = await fetch("https://photomedpro.com:10049/api/getprofile", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -83,6 +83,10 @@ const AppNavigator = () => {
   useEffect(() => {
     if (token) {
       getProfile();
+    }else{
+      setTimeout(async () => {
+        await BootSplash.hide({ fade: true });
+      }, 2500);
     }
   }, [token, accessToken]);
 
@@ -134,14 +138,14 @@ const AppNavigator = () => {
           ) : needsSubscription ? (
             // Step 3: Connected, but no subscription
             <IAPProvider>
-              <SubscriptionManage />
+              <SubscriptionManage page="normal" />
             </IAPProvider>
           ) : (
             // Step 4: All good → main app
             <MainStack />
           )}
 
-          
+
           {/* {token && accessToken ? (
             <MainStack />
           ) : token ? (

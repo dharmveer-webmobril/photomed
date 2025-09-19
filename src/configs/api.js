@@ -17,7 +17,7 @@ import { BASEURL, DROPBOX_CLIENT_ID, DROPBOX_CLIENT_SECRET, GOOGLE_CLIENT_ID, GO
 import Config from 'react-native-config';
 
 export const configUrl = {
-  imageUrl: "http://photomedpro.com/",
+  imageUrl: "https://photomedpro.com:10049/",
   BASE_URL: BASEURL || Config.BASEURL,
   defaultUser: "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
   DROPBOX_CLIENT_ID: DROPBOX_CLIENT_ID || Config.DROPBOX_CLIENT_ID,
@@ -1542,3 +1542,39 @@ export const validateSubscription1 = async (token, receipt, platform = Platform.
 //   }
 
 // }
+
+
+// api/subscription.js
+export const getMySubscriptionDetails = async (token, userId) => {
+  if (!token) {
+    console.error("Authentication token missing. Please log in again.");
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      "https://photomedpro.com:10049/api/check-user-subscription",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ userId }),
+      }
+    );
+
+    const responseData = await response.json();
+
+    if (response.ok && responseData?.transactionId) {
+      console.log("✅ Subscription details:", responseData);
+      return responseData;
+    } else {
+      console.error("❌ Failed to fetch subscription details:", responseData);
+      return null;
+    }
+  } catch (error) {
+    console.error("⚠️ Error fetching subscription details:", error);
+    return null;
+  }
+};

@@ -5,7 +5,7 @@ import { atob, btoa } from "react-native-quick-base64";
 // Define the API
 export const commonApi = createApi({
   baseQuery: fetchBaseQuery({
-    baseUrl: "http://photomedpro.com/api/",
+    baseUrl: "https://photomedpro.com:10049/api/",
   }),
   tagTypes: [
     "Patient",

@@ -208,7 +208,7 @@ const MainStack = () => {
       >
         {() => (
           <IAPProvider>
-            <SubscriptionManage />
+            <SubscriptionManage page="profile"/>
           </IAPProvider>
         )}
       </Stack.Screen>

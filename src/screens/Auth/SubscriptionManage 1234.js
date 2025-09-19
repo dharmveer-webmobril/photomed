@@ -9,273 +9,101 @@ import {
   Alert,
   Platform,
 } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Loading from "../../components/Loading";
 import { useDispatch, useSelector } from "react-redux";
-import { goBack, navigate } from "../../navigators/NavigationService";
+import { useIAP } from "../../configs/IAPContext";
+import { goBack } from "../../navigators/NavigationService";
 import {
-  initConnection,
-  getSubscriptions,
-  requestSubscription,
   getAvailablePurchases,
-  purchaseUpdatedListener,
-  purchaseErrorListener,
+  requestSubscription,
+  acknowledgePurchaseAndroid,
   finishTransaction,
-  endConnection,
 } from "react-native-iap";
 import { getMySubscriptionDetails } from "../../configs/api";
 import { updateSubscription } from "../../redux/slices/authSlice";
-import { useIAP } from "../../configs/IAPContext";
-import AccountPopUp from "../../components/AccountPopUp";
-const subscriptionSkus = [
-  "com.photomedonemonth",
-  "com.photomedthreemonth",
-  "com.photomedyearlyplan",
-];
+// import { useRoute } from "@react-navigation/native";
 
 export default function SubscriptionManage(params) {
   const token = useSelector((state) => state.auth.user);
   const userId = useSelector((state) => state.auth.userId);
   const dispatch = useDispatch();
+
   const { subscriptions, fetchSubscriptions } = useIAP();
   const [selectedPlan, setSelectedPlan] = useState("");
   const [isGetSubLoading, setIsGetSubLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState(null);
-  const [logoutVisible, setLogoutVisible] = useState(false);
 
   const from = params?.page || "asd";
 
-  // Fetch current subscription from backend
+  useEffect(() => {
+    currentSubscription?.productId &&
+      setSelectedPlan(currentSubscription.productId);
+  }, [currentSubscription]);
+
   useEffect(() => {
     const fetchSubscription = async () => {
-      if (!token || !userId) {
-        Alert.alert(
-          "Error",
-          "Authentication token or user ID missing. Please log in again."
-        );
-        return;
+      setIsGetSubLoading(true);
+      const data =
+        token && userId && (await getMySubscriptionDetails(token, userId));
+      if (data) {
+        setCurrentSubscription(data);
       }
-      try {
-        setIsGetSubLoading(true); // Show loading only during API call
-        const data = await getMySubscriptionDetails(token, userId);
-        setSelectedPlan(data?.productId || "");
-        console.log("Current subscription data:", data);
-
-        if (data) setCurrentSubscription(data);
-      } catch (e) {
-        console.error("fetchSubscription error:", e);
-        Alert.alert("Error", "Failed to fetch subscription details.");
-      } finally {
-        setIsGetSubLoading(false); // Always reset loading state
-      }
+      setIsGetSubLoading(false);
     };
+
     fetchSubscription();
   }, [token, userId]);
 
-  // Load subscriptions from IAP
+  useEffect(() => {
+    getMySubscriptionDetails();
+  }, []);
+
   useEffect(() => {
     const loadSubscriptions = async () => {
-      if (!token || !userId) {
+      if (!token) {
         Alert.alert(
           "Error",
-          "Authentication token or user ID missing. Please log in again."
+          "Authentication token missing. Please log in again."
         );
         return;
       }
+      setIsLoading(true);
       try {
-        setIsLoading(true); // Show loading only during fetch
         await fetchSubscriptions();
+        // await checkSubscriptionStatus();
       } catch (error) {
         console.error("Error loading subscriptions:", error);
         Alert.alert("Error", "Failed to load subscriptions. Please try again.");
       } finally {
-        setIsLoading(false); // Always reset loading state
+        setIsLoading(false);
       }
     };
     loadSubscriptions();
   }, [token, userId, fetchSubscriptions]);
 
-  // Initialize IAP and set up purchase listeners
-  // useEffect(() => {
-  //   let purchaseUpdateSubscription;
-  //   let purchaseErrorSubscription;
-  //   let mounted = true;
-
-  //   const initIAP = async () => {
-  //     // Note: Commented-out code retained as per original. Uncomment if needed.
-  //     // try {
-  //     //   console.log("🔄 Initializing IAP connection...");
-  //     //   await initConnection();
-  //     //
-  //     //   if (!mounted) return;
-  //     //
-  //     //   const subs = await getSubscriptions({
-  //     //     skus: subscriptionSkus,
-  //     //   });
-  //     //
-  //     //   if (mounted) {
-  //     //     console.log("✅ Available subscriptions:", subs);
-  //     //     setSubscriptions(subs);
-  //     //   }
-  //     // } catch (error) {
-  //     //   console.error("IAP init error:", error);
-  //     // }
-
-  //     // Purchase listener
-  //     purchaseUpdateSubscription = purchaseUpdatedListener(async (purchase) => {
-  //       if (!purchase?.transactionReceipt) return;
-
-  //       try {
-  //         setIsLoading(true); // Show loading during verification
-  //         const response = await fetch(
-  //           "https://photomedpro.com:10049/api/verify-inapp-receipt",
-  //           {
-  //             method: "POST",
-  //             headers: {
-  //               "Content-Type": "application/json",
-  //               Authorization: `Bearer ${token}`,
-  //             },
-  //             body: JSON.stringify({
-  //               receipt: purchase.transactionReceipt,
-  //               platform: Platform.OS,
-  //               transactionId: purchase.transactionId,
-  //               userId,
-  //             }),
-  //           }
-  //         );
-
-  //         const responseData = await response.json();
-  //         console.log("verify-inapp-receipt response:", responseData);
-
-  //         if (response.ok && responseData.success) {
-  //           const expData = {
-  //             expirationDate: responseData?.expirationDate,
-  //             hasSubscription: true,
-  //             isActive: responseData?.isActive,
-  //             isExpired: responseData?.isExpired,
-  //             productId: responseData?.productId || purchase.productId,
-  //             success: responseData?.success,
-  //             transactionId:
-  //               responseData?.transactionId || purchase.transactionId,
-  //           };
-
-  //           setCurrentSubscription(expData);
-  //           dispatch(updateSubscription(expData));
-  //           await finishTransaction({ purchase, isConsumable: false });
-  //           Alert.alert("Success", "Purchase verified and activated!");
-  //         } else {
-  //           Alert.alert("Error", "Purchase verification failed.");
-  //         }
-  //       } catch (error) {
-  //         console.error("purchaseUpdatedListener error:", error);
-  //         Alert.alert("Error", "Purchase verification failed.");
-  //       } finally {
-  //         setIsLoading(false); // Always reset loading state
-  //       }
-  //     });
-
-  //     purchaseErrorSubscription = purchaseErrorListener((error) => {
-  //       console.error("purchaseErrorListener:", error);
-  //       Alert.alert("Error", "Purchase failed. Please try again.");
-  //       setIsLoading(false); // Reset loading on error
-  //     });
-  //   };
-
-  //   initIAP();
-
-  //   return () => {
-  //     mounted = false;
-  //     if (purchaseUpdateSubscription) purchaseUpdateSubscription.remove();
-  //     if (purchaseErrorSubscription) purchaseErrorSubscription.remove();
-  //   };
-  // }, [token, userId, dispatch]);
-
-
-  // inside SubscriptionManage
-const iapListenersAdded = useRef(false);
-
-useEffect(() => {
-  if (iapListenersAdded.current) return; // Already added, do nothing
-
-  let purchaseUpdateSubscription;
-  let purchaseErrorSubscription;
-
-  const initIAP = async () => {
+  const finishTransaction1 = async (purchase) => {
     try {
-      await initConnection();
-
-      purchaseUpdateSubscription = purchaseUpdatedListener(async (purchase) => {
-        if (!purchase?.transactionReceipt) return;
-
-        try {
-          setIsLoading(true);
-          const response = await fetch(
-            "https://photomedpro.com:10049/api/verify-inapp-receipt",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                receipt: purchase.transactionReceipt,
-                platform: Platform.OS,
-                transactionId: purchase.transactionId,
-                userId,
-              }),
-            }
-          );
-
-          const data = await response.json();
-          if (response.ok && data.success) {
-            const expData = {
-              expirationDate: data?.expirationDate,
-              hasSubscription: true,
-              isActive: data?.isActive,
-              isExpired: data?.isExpired,
-              productId: data?.productId || purchase.productId,
-              success: data?.success,
-              transactionId: data?.transactionId || purchase.transactionId,
-            };
-            setCurrentSubscription(expData);
-            dispatch(updateSubscription(expData));
-            await finishTransaction({ purchase, isConsumable: false });
-          } else {
-            Alert.alert("Error", "Purchase verification failed.");
-          }
-        } catch (e) {
-          console.error("purchaseUpdatedListener error:", e);
-          Alert.alert("Error", "Purchase verification failed.");
-        } finally {
-          setIsLoading(false);
-        }
-      });
-
-      purchaseErrorSubscription = purchaseErrorListener((error) => {
-        console.error("purchaseErrorListener:", error);
-        Alert.alert("Error", "Purchase failed. Please try again.");
-        setIsLoading(false);
-      });
-
-      iapListenersAdded.current = true; // Mark listener as added
-    } catch (e) {
-      console.error("IAP init error:", e);
+      await finishTransaction({ purchase, isConsumable: false });
+    } catch (err) {
+      console.warn("Finish transaction error:", err);
     }
   };
 
-  initIAP();
-
-  return () => {
-    if (purchaseUpdateSubscription) purchaseUpdateSubscription.remove();
-    if (purchaseErrorSubscription) purchaseErrorSubscription.remove();
-    iapListenersAdded.current = false; // Reset on unmount
-    endConnection(); // Optional: end IAP connection
+  const acknowledgePurchaseAndroid1 = async (
+    token,
+    developerPayload,
+    purchase
+  ) => {
+    try {
+      await acknowledgePurchaseAndroid({ token, developerPayload });
+      await finishTransaction(purchase);
+    } catch (err) {
+      console.warn("Acknowledge purchase error:", err);
+    }
   };
-}, [token, userId, dispatch]);
 
-
-  // Start purchase
   const handlePurchase = async () => {
     if (!selectedPlan) {
       Alert.alert("Error", "Please select a plan.");
@@ -288,18 +116,80 @@ useEffect(() => {
       );
       return;
     }
+
+    setIsLoading(true);
     try {
-      setIsLoading(true); // Show loading during purchase
-      await requestSubscription({ sku: selectedPlan });
+      // Start purchase
+      const purchase = await requestSubscription({ sku: selectedPlan });
+
+      if (purchase?.transactionReceipt) {
+        // Verify with backend
+        const response = await fetch(
+          "https://photomedpro.com:10049/api/verify-inapp-receipt",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              receipt: purchase.transactionReceipt,
+              platform: Platform.OS,
+              transactionId: purchase.transactionId,
+              userId,
+            }),
+          }
+        );
+
+        const responseData = await response.json();
+        console.log("verify-inapp-receipt response:", responseData);
+
+        if (response.ok && responseData.success) {
+          let expData = {
+            expirationDate: responseData?.expirationDate,
+            hasSubscription: true,
+            isActive: responseData?.isActive,
+            isExpired: responseData?.isExpired,
+            productId: responseData?.productId || purchase.productId,
+            success: responseData?.success,
+            transactionId:
+              responseData?.transactionId || purchase.transactionId,
+          };
+
+          console.log("expData--------", expData);
+
+          // update local state
+          setCurrentSubscription(expData);
+
+          // update redux
+          dispatch(updateSubscription(expData));
+
+          // Acknowledge purchase
+
+          if (Platform.OS === "ios") {
+            await finishTransaction1(purchase);
+          } else {
+            await acknowledgePurchaseAndroid1(
+              purchase.purchaseToken,
+              purchase.developerPayloadAndroid,
+              purchase
+            );
+          }
+          Alert.alert("Success", "Purchase verified and activated!");
+        } else {
+          Alert.alert("Error", "Purchase verification failed.");
+        }
+      } else {
+        Alert.alert("Error", "Purchase failed. No receipt received.");
+      }
     } catch (error) {
-      console.error("Purchase start error:", error);
-      Alert.alert("Error", "Failed to start purchase.");
+      console.error("Purchase failed:", error);
+      Alert.alert("Error", "Failed to complete purchase. Please try again.");
     } finally {
-      setIsLoading(false); // Always reset loading state
+      setIsLoading(false);
     }
   };
 
-  // Restore purchases
   const restorePurchases = async () => {
     if (!token) {
       Alert.alert(
@@ -308,14 +198,13 @@ useEffect(() => {
       );
       return;
     }
+    setIsLoading(true);
     try {
-      setIsLoading(true); // Show loading during restore
       const purchases = await getAvailablePurchases();
       if (purchases.length > 0) {
         const latest = purchases.sort(
           (a, b) => new Date(b.transactionDate) - new Date(a.transactionDate)
         )[0];
-
         const response = await fetch(
           "https://photomedpro.com:10049/api/verify-inapp-receipt",
           {
@@ -333,22 +222,11 @@ useEffect(() => {
         );
         const responseData = await response.json();
         console.log("restorePurchases response:", responseData);
-
-        if (response.ok && responseData.success) {
-          const expData = {
-            expirationDate: responseData?.expirationDate,
-            hasSubscription: true,
-            isActive: responseData?.isActive,
-            isExpired: responseData?.isExpired,
-            productId: responseData?.productId,
-            success: responseData?.success,
-            transactionId: responseData?.transactionId,
-          };
-
-          setCurrentSubscription(expData);
-          dispatch(updateSubscription(expData));
+        if (response.ok) {
+          await checkSubscriptionStatus();
           Alert.alert("Success", "Purchases restored successfully.");
         } else {
+          console.error("Restore failed:", responseData);
           Alert.alert("Error", "Failed to restore purchases.");
         }
       } else {
@@ -356,32 +234,30 @@ useEffect(() => {
       }
     } catch (error) {
       console.error("Restore failed:", error);
-      Alert.alert("Error", "Failed to restore purchases.");
+      Alert.alert("Error", "Failed to restore purchases. Please try again.");
     } finally {
-      setIsLoading(false); // Always reset loading state
+      setIsLoading(false);
     }
   };
 
-  // Cancel plan
-  const handleCancelPlan = async () => {
-    try {
-      const url =
-        Platform.OS === "ios"
-          ? "itms-apps://apps.apple.com/account/subscriptions"
-          : "https://play.google.com/store/account/subscriptions?package=com.photomedPro.com";
+ const handleCancelPlan = async () => {
+  try {
+    const url =
+      Platform.OS === "ios"
+        ? "itms-apps://apps.apple.com/account/subscriptions"
+        : "https://play.google.com/store/account/subscriptions?package=com.photomedPro.com";
+        
+    await Linking.openURL(url);
+    Alert.alert(
+      "Info",
+      "You have been redirected to manage your subscriptions."
+    );
+  } catch (error) {
+    console.error("Failed to open subscription management:", error);
+    Alert.alert("Error", "Failed to open subscription management.");
+  }
+};
 
-      await Linking.openURL(url);
-      Alert.alert(
-        "Info",
-        "You have been redirected to manage your subscriptions."
-      );
-    } catch (error) {
-      console.error("Failed to open subscription management:", error);
-      Alert.alert("Error", "Failed to open subscription management.");
-    }
-  };
-
-  // UI helpers
   const CustomRadioButton = ({ selected, onPress }) => (
     <TouchableOpacity onPress={onPress} style={styles.radioOuter}>
       {selected && <View style={styles.radioInner} />}
@@ -390,35 +266,18 @@ useEffect(() => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <AccountPopUp
-        title={"Logout"}
-        onPressCancel={() => setLogoutVisible(false)}
-        onPressSuccess={() => dispatch(logout())}
-        subTitle={
-          "Are you sure you want to logout from Photomed Pro? this will end your current session."
-        }
-        visible={logoutVisible}
-      />
       <Loading visible={isLoading || isGetSubLoading} />
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
-              if (from === "profile") goBack();
+              from == "profile" && goBack();
             }}
           >
-            {from === "profile" && <Text style={styles.iconText}>←</Text>}
+            {from == "profile" && <Text style={styles.iconText}>←</Text>}
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Manage Subscription Plan</Text>
-          <TouchableOpacity
-            onPress={() => {
-              if (from !== "profile") setLogoutVisible(true);
-            }}
-          >
-            {from !== "profile" && (
-              <Text style={styles.iconTextRight}>Logout</Text>
-            )}
-          </TouchableOpacity>
+          <View />
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -522,7 +381,7 @@ useEffect(() => {
             </>
           )}
           <Text style={{ color: "#000", marginTop: 10 }}>
-            Note: If your payment was deducted but the plan was not activated,
+            Note:- If your payment was deducted but the plan was not activated,
             click the Restore Button to restore your plan.
           </Text>
 
@@ -610,12 +469,6 @@ const styles = StyleSheet.create({
   },
   iconText: {
     fontSize: 20,
-    fontWeight: "600",
-    color: "#000",
-  },
-  iconTextRight: {
-    fontSize: 20,
-    marginRight: 20,
     fontWeight: "600",
     color: "#000",
   },

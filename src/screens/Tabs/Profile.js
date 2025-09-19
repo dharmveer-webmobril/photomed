@@ -159,12 +159,12 @@ const Profile = (props) => {
       {provider == 'google' ? (
         <View style={styles.providerStyle}>
           <GoogleDriveIcon />
-          <Text style={styles.providerTxt}>{'Connected Via ' + provider.charAt(0).toUpperCase() + provider.slice(1)}</Text>
+          <Text style={styles.providerTxt}>{'Connected Via ' + provider?.charAt(0)?.toUpperCase() + provider?.slice(1)}</Text>
         </View>
       ) : (
         <View style={styles.providerStyle}>
           <DropboxIcon />
-          <Text style={styles.providerTxt}>{'Connected Via ' + provider.charAt(0).toUpperCase() + provider.slice(1)}</Text>
+          <Text style={styles.providerTxt}>{'Connected Via ' + provider?.charAt(0)?.toUpperCase() + provider?.slice(1)}</Text>
         </View>
       )}
       <View style={{ flex: 1, marginBottom: verticalScale(50) }}>

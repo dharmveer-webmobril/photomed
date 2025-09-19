@@ -1,17 +1,23 @@
-import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
-import { Platform } from 'react-native';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
+import { Platform } from "react-native";
 import {
   initConnection,
   endConnection,
   getSubscriptions,
-  purchaseUpdatedListener,
-  purchaseErrorListener,
   flushFailedPurchasesCachedAsPendingAndroid,
   getAvailablePurchases,
   finishTransaction,
-} from 'react-native-iap';
-import { useSelector } from 'react-redux';
-import { debounce } from 'lodash';
+} from "react-native-iap";
+import { useDispatch, useSelector } from "react-redux";
+import { debounce } from "lodash";
+import { updateSubscription } from "../redux/slices/authSlice";
 
 const IAPContext = createContext({
   subscriptions: [],
@@ -27,13 +33,21 @@ export const IAPProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
 
-  const processedTransactionsRef = useRef(new Set());
   const isFetchingRef = useRef(false);
   const isCheckingRef = useRef(false);
 
-  const androidSKUs = ['com.photomedthreemonth', 'com.photomedonemonth', 'com.photomedyearlyplan'];
-  const iosSKUs = ['com.photomedthreemonth', 'com.photomedonemonth', 'com.photomedyearlyplan'];
+  const androidSKUs = [
+    "com.photomedthreemonth",
+    "com.photomedonemonth",
+    "com.photomedyearlyplan",
+  ];
+  const iosSKUs = [
+    "com.photomedthreemonth",
+    "com.photomedonemonth",
+    "com.photomedyearlyplan",
+  ];
 
   const token = useSelector((state) => state.auth.user);
   const userId = useSelector((state) => state.auth.userId);
@@ -44,12 +58,12 @@ export const IAPProvider = ({ children }) => {
     isFetchingRef.current = true;
     setLoading(true);
     try {
-      const skus = Platform.OS === 'android' ? androidSKUs : iosSKUs;
+      const skus = Platform.OS === "android" ? androidSKUs : iosSKUs;
       const products = await getSubscriptions({ skus });
-      console.log('Subscriptions fetched:', products);
+      console.log("Subscriptions fetched:", products);
       setSubscriptions(products);
     } catch (err) {
-      console.error('Error fetching subscriptions:', err);
+      console.error("Error fetching subscriptions:", err);
     } finally {
       isFetchingRef.current = false;
       setLoading(false);
@@ -63,56 +77,63 @@ export const IAPProvider = ({ children }) => {
       isCheckingRef.current = true;
       setLoading(true);
       try {
-        // Make sure we flush Android pending purchases first
-        if (Platform.OS === 'android') await flushFailedPurchasesCachedAsPendingAndroid();
+        if (Platform.OS === "android") {
+          await flushFailedPurchasesCachedAsPendingAndroid();
+        }
 
         const purchases = await getAvailablePurchases();
-        console.log('Available purchases:', purchases);
+        console.log("Available purchases:", purchases);
 
         if (purchases.length === 0) {
           setCurrentSubscription(null);
           return;
         }
 
-        // Take the latest purchase
         const latestPurchase = purchases.sort(
           (a, b) => new Date(b.transactionDate) - new Date(a.transactionDate)
         )[0];
 
         const { transactionReceipt, productId } = latestPurchase;
 
-        // Verify with backend
-        const response = await fetch('http://photomedpro.com/api/check-inapp-subscription', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            receipt: transactionReceipt,
-            platform: Platform.OS,
-            userId,
-          }),
-        });
+        const response = await fetch(
+          "https://photomedpro.com:10049/api/check-inapp-subscription",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              receipt: transactionReceipt,
+              platform: Platform.OS,
+              userId,
+            }),
+          }
+        );
 
         const data = await response.json();
-        console.log('Subscription check response:', data);
+        console.log("Subscription check response:", data);
 
-        setCurrentSubscription({
+        const expData = {
           productId,
           expirationDate: data.expirationDate,
           isActive: data.isActive,
           isExpired: data.isExpired,
-        });
+          hasSubscription: !!data.expirationDate,
+          success: data.success,
+          transactionId: data.transactionId,
+        };
 
-        // Finish transaction to acknowledge purchase
+        setCurrentSubscription(expData);
+        dispatch(updateSubscription(expData));
+
         try {
           await finishTransaction({ purchase: latestPurchase });
         } catch (err) {
-          console.error('Error finishing restored transaction:', err);
+          console.error("Error finishing restored transaction:", err);
         }
       } catch (err) {
-        console.error('Error checking subscription:', err);
+        console.error("Error checking subscription:", err);
         setCurrentSubscription(null);
       } finally {
         isCheckingRef.current = false;
@@ -126,91 +147,30 @@ export const IAPProvider = ({ children }) => {
   const initializeIAP = useCallback(async () => {
     setLoading(true);
     try {
-      if (Platform.OS === 'android') {
+      if (Platform.OS === "android") {
         await flushFailedPurchasesCachedAsPendingAndroid();
       }
 
       const connected = await initConnection();
-      console.log('IAP connected:', connected);
+      console.log("IAP connected:", connected);
       setIsConnected(connected);
 
       if (connected) {
         await fetchSubscriptions();
-        await checkSubscriptionStatus();
       }
     } catch (err) {
-      console.error('IAP initialization error:', err);
+      console.error("IAP initialization error:", err);
     } finally {
       setLoading(false);
     }
   }, [fetchSubscriptions]);
 
-  // Listen to new purchases
   useEffect(() => {
     initializeIAP();
-
-    const purchaseSub = purchaseUpdatedListener(async (purchase) => {
-      const { transactionReceipt, transactionId, productId } = purchase;
-      console.log('transactionReceipt--------', productId);
-
-      if (processedTransactionsRef.current.has(transactionId)) return;
-      processedTransactionsRef.current.add(transactionId);
-
-      setLoading(true);
-      try {
-        if (!token) return;
-
-        const response = await fetch('http://photomedpro.com/api/verify-inapp-receipt', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            receipt: transactionReceipt,
-            platform: Platform.OS,
-            transactionId,
-            userId,
-          }),
-        });
-
-        const responseData = await response.json();
-        console.log('verify-inapp-receipt response:', responseData);
-
-        if (response.ok && responseData.success) {
-          // Update current subscription
-          setCurrentSubscription({
-            productId: responseData.productId || productId,
-            expirationDate: responseData.expirationDate,
-            isActive: responseData.isActive,
-            isExpired: responseData.isExpired,
-          });
-
-          // Finish transaction
-          await finishTransaction({ purchase });
-        } else {
-          processedTransactionsRef.current.delete(transactionId);
-          console.error('Backend verification failed:', responseData);
-        }
-      } catch (err) {
-        processedTransactionsRef.current.delete(transactionId);
-        console.error('Error verifying purchase:', err);
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    const errorSub = purchaseErrorListener((error) => {
-      console.error('Purchase error:', error);
-      setLoading(false);
-    });
-
     return () => {
       endConnection();
-      purchaseSub.remove();
-      errorSub.remove();
     };
-  }, [initializeIAP, token, userId]);
+  }, [initializeIAP]);
 
   return (
     <IAPContext.Provider

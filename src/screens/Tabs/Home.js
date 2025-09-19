@@ -20,13 +20,18 @@ import { imagePath } from "../../configs/imagePath";
 import useTokenManagement from "../../configs/useTokenManagement";
 import {
   configUrl,
+  getMySubscriptionDetails,
   getUserPlans,
   validateReceiptData,
   validateSubscription,
 } from "../../configs/api";
 import { SwiperFlatList } from "react-native-swiper-flatlist";
 import COLORS from "../../styles/colors";
-import { height, moderateScale, verticalScale } from "../../styles/responsiveLayoute";
+import {
+  height,
+  moderateScale,
+  verticalScale,
+} from "../../styles/responsiveLayoute";
 import FONTS from "../../styles/fonts";
 import { navigate } from "../../navigators/NavigationService";
 import ScreenName from "../../configs/screenName";
@@ -53,7 +58,7 @@ import {
 } from "../../redux/slices/patientSlice";
 import Orientation from "react-native-orientation-locker";
 const { width } = Dimensions.get("window");
-import Swiper from 'react-native-swiper'
+import Swiper from "react-native-swiper";
 const Home = () => {
   const dispatch = useDispatch();
   const provider = useSelector((state) => state.auth.cloudType);
@@ -61,11 +66,7 @@ const Home = () => {
   GoogleSignin.configure({
     webClientId: configUrl.GOOGLE_CLIENT_ID,
     offlineAccess: false,
-    scopes: [
-      "email",
-      "profile",
-      "https://www.googleapis.com/auth/drive.file"
-    ],
+    scopes: ["email", "profile", "https://www.googleapis.com/auth/drive.file"],
   });
 
   const token = useSelector((state) => state.auth?.user);
@@ -81,7 +82,6 @@ const Home = () => {
     refetch: refetchBanner,
   } = useGetBannersQuery();
   const banners = banner?.ResponseBody;
-
 
   // const { data: profileData, isLoading: profileLoading, isError: err, error } = useGetUserProfileQuery({ token });
   // if (profileData) {
@@ -104,7 +104,7 @@ const Home = () => {
           text: "View Plans",
           style: "default",
           onPress: () => {
-            navigate('SubscriptionManage', { token: token });
+            navigate("SubscriptionManage", { token: token });
           },
         },
       ],
@@ -115,28 +115,41 @@ const Home = () => {
   async function getSubs() {
     try {
       if (token) {
-        setIsSubscriptionLoading(true)
-        let res = await validateSubscription(token)
+        setIsSubscriptionLoading(true);
+        let res = await validateSubscription(token);
         if (res?.succeeded) {
-          let subRes = res?.ResponseBody
-          if (subRes?.isExpired === 'yes') {
-            showSubscriptionAlert()
+          let subRes = res?.ResponseBody;
+          if (subRes?.isExpired === "yes") {
+            showSubscriptionAlert();
           }
           dispatch(setUserSubscription(subRes));
         } else {
-          showSubscriptionAlert()
+          showSubscriptionAlert();
         }
-        setIsSubscriptionLoading(false)
-
+        setIsSubscriptionLoading(false);
       }
     } catch (error) {
-      showSubscriptionAlert()
-      setIsSubscriptionLoading(false)
+      showSubscriptionAlert();
+      setIsSubscriptionLoading(false);
+    }
+  }
+  const userId = useSelector((state) => state.auth.userId);
+  async function getMySubscription() {
+    try {
+      if (token && userId) {
+        let res = await getMySubscriptionDetails(token, userId);
+        console.log("getMySubscriptionDetails res", res);
+        
+        dispatch(setUserSubscription(res));
+      }
+    } catch (error) {
+      console.log("getMySubscriptionDetails error", error);
     }
   }
 
   useFocusEffect(
     useCallback(() => {
+      getMySubscription();
       // Platform.OS == 'ios' && getSubs()
     }, [token])
   );
@@ -162,15 +175,19 @@ const Home = () => {
   // Debounce effect
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm); // Update API query only after delay
-    }, 500); // 500ms delay
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
     return () => {
-      clearTimeout(handler); // Cleanup timeout on each keystroke
+      clearTimeout(handler);
     };
   }, [searchTerm]);
 
   // API query runs only when debouncedSearchTerm changes
-  const { data: patientsData, isLoading, isError } = useSearchPatientQuery({
+  const {
+    data: patientsData,
+    isLoading,
+    isError,
+  } = useSearchPatientQuery({
     term: debouncedSearchTerm, // your search input value
     token: token, // your auth token
   });
@@ -187,7 +204,6 @@ const Home = () => {
   };
   const { width, height } = useWindowDimensions();
 
-
   const goPatientDetailPage = async (item) => {
     await removeData("patientFolderId");
     dispatch(setCurrentPatient(item));
@@ -195,21 +211,22 @@ const Home = () => {
   };
 
   const renderBannerItem = (item) => {
-
     const rawUrl = `${configUrl.imageUrl}${item?.profiles[0]}`;
     const formattedUrl = formatUrl(rawUrl);
     return (
       <View style={{ width: width }}>
-        <View style={{
-          borderRadius: 10,
-          borderColor: COLORS.blackColor,
-          borderWidth: 1,
-          marginHorizontal: 30,
-          paddingHorizontal: 8
-        }}>
+        <View
+          style={{
+            borderRadius: 10,
+            borderColor: COLORS.blackColor,
+            borderWidth: 1,
+            marginHorizontal: 30,
+            paddingHorizontal: 8,
+          }}
+        >
           <ImageWithLoader
             uri={formattedUrl}
-            resizeMode={'contain'}
+            resizeMode={"contain"}
             style={{
               width: width * 0.8,
               alignSelf: "center",
@@ -222,7 +239,6 @@ const Home = () => {
   };
 
   const renderItem = ({ item }) => {
-
     return (
       <TouchableOpacity
         onPress={() => goPatientDetailPage(item)}
@@ -230,7 +246,11 @@ const Home = () => {
         style={styles.cardContainer}
       >
         <ImageWithLoader
-          uri={item?.profileImage ? configUrl?.imageUrl + item?.profileImage: imagePath.no_user_img}
+          uri={
+            item?.profileImage
+              ? configUrl?.imageUrl + item?.profileImage
+              : imagePath.no_user_img
+          }
           style={styles.imgStyle}
         />
         <View style={[commonStyles.flexView, { flex: 1 }]}>
@@ -242,12 +262,10 @@ const Home = () => {
             )}
             {item?.email && <Text style={styles.subTitle}>{item.email}</Text>}
           </View>
-
         </View>
       </TouchableOpacity>
     );
   };
-
 
   return (
     <WrapperContainer
@@ -257,7 +275,7 @@ const Home = () => {
         visible={isSubscriptionModal}
         onViewPlans={() => {
           setIsSubscriptionModal(false);
-          navigate('SubscriptionManage', { token: token }); // Or your view plans screen
+          navigate("SubscriptionManage", { token: token }); // Or your view plans screen
         }}
       />
       <Loading visible={isSubscriptionLoading || isLoading} />
@@ -303,19 +321,16 @@ const Home = () => {
           contentContainerStyle={{ paddingBottom: 90 }}
           ListHeaderComponent={
             <View style={{ height: verticalScale(200) }}>
-              {
-                banners && banners.length > 0 &&
+              {banners && banners.length > 0 && (
                 <Swiper
                   dot=<View style={styles.paginationInActiveStyle} />
                   activeDot={<View style={styles.paginationActiveStyle} />}
                 >
-                  {
-                    banners.map((item) => {
-                      return renderBannerItem(item)
-                    })
-                  }
+                  {banners.map((item) => {
+                    return renderBannerItem(item);
+                  })}
                 </Swiper>
-              }
+              )}
             </View>
           }
           ListFooterComponent={<View style={{ height: verticalScale(40) }} />}
@@ -328,22 +343,22 @@ const Home = () => {
                     No matching patients found.
                   </Text>
                   <Text style={[styles.emptyText, { fontSize: 12 }]}>
-                    Try adjusting your search criteria or adding a new patient if they aren't in the list. You can also search using tags.
+                    Try adjusting your search criteria or adding a new patient
+                    if they aren't in the list. You can also search using tags.
                   </Text>
                 </>
               ) : (
                 // Default message when the list is empty from the API response
                 <>
-                  {
-                    !isLoading &&
+                  {!isLoading && (
                     <>
                       <Text style={styles.emptyText}>
                         You don't have any patients added yet.
                       </Text>
                       <Text style={[styles.emptyText, { fontSize: 12 }]}>
                         Start managing your patients by adding them here. Once
-                        added, you’ll be able to track their information and stay
-                        updated.
+                        added, you’ll be able to track their information and
+                        stay updated.
                       </Text>
                       <CustomBtn
                         onPress={() => navigate(ScreenName.ADD_PATIENT)}
@@ -356,7 +371,7 @@ const Home = () => {
                         title={"Add New Patient"}
                       />
                     </>
-                  }
+                  )}
                 </>
               )}
             </View>
