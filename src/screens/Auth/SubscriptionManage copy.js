@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component } from "react";
 import {
   View,
   Text,
@@ -9,11 +9,17 @@ import {
   Platform,
   Alert,
   Linking,
-} from 'react-native';
-import { connect } from 'react-redux';
-import { getUserPlans, addSubscriptions, validateReceiptData, validateSubscription1, validateSubscription } from '../../configs/api';
-import Loading from '../../components/Loading';
-import { goBack, navigate } from '../../navigators/NavigationService';
+} from "react-native";
+import { connect } from "react-redux";
+import {
+  getUserPlans,
+  addSubscriptions,
+  validateReceiptData,
+  validateSubscription1,
+  validateSubscription,
+} from "../../configs/api";
+import Loading from "../../components/Loading";
+import { goBack, navigate } from "../../navigators/NavigationService";
 
 import {
   initConnection,
@@ -25,17 +31,25 @@ import {
   finishTransaction,
   requestSubscription,
   getSubscriptions,
-} from 'react-native-iap';
-import ScreenName from '../../configs/screenName';
+} from "react-native-iap";
+import ScreenName from "../../configs/screenName";
+
 const itemSkus = Platform.select({
-  ios: ['com.photomedthreemonth', 'com.photomedonemonth', 'com.photomedyearlyplan'],
-  android: ['com.photomedPro.com'],
+  ios: [
+    "com.photomedthreemonth",
+    "com.photomedonemonth",
+    "com.photomedyearlyplan",
+  ],
+  android: [
+    "com.photomedthreemonth",
+    "com.photomedonemonth",
+    "com.photomedyearlyplan",
+  ],
 });
 
 class SubscriptionManage extends Component {
-
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
       subscriptions: [],
       selectedPlan: null,
@@ -47,11 +61,7 @@ class SubscriptionManage extends Component {
     };
   }
 
-
-
   async componentDidMount() {
-
-
     this.fetchUserSubscription();
     this.initializeIap();
     // this.props.navigation.addListener('focus', () => {
@@ -59,7 +69,7 @@ class SubscriptionManage extends Component {
 
     await initConnection()
       .then(() => {
-        if (Platform.OS == 'android') {
+        if (Platform.OS == "android") {
           flushFailedPurchasesCachedAsPendingAndroid();
         } else {
           /**
@@ -76,49 +86,51 @@ class SubscriptionManage extends Component {
           //      console.log('75dfddf')
           //  })
         }
-      }).then(() => {
+      })
+      .then(() => {
         this.purchaseUpdateSubscription = purchaseUpdatedListener(
           async (purchase) => {
             try {
-              console.log('Processing purchase:', purchase);
-              console.log('apistatus:', this.state.apiStatus);
+              console.log("Processing purchase:", purchase);
+              console.log("apistatus:", this.state.apiStatus);
 
               const receipt = purchase.transactionReceipt
                 ? purchase.transactionReceipt
                 : JSON.stringify({
-                  purchaseToken: purchase.purchaseToken,
-                  productId: purchase.productId,
-                  packageName: 'com.photoMedPro.com',
-                });
+                    purchaseToken: purchase.purchaseToken,
+                    productId: purchase.productId,
+                    packageName: "com.photoMedPro.com",
+                  });
 
               if (this.state.apiStatus) {
                 await this.addSubscriptionToBackend(purchase);
-                this.setState({ apiStatus: false })
+                this.setState({ apiStatus: false });
               }
 
-              if (Platform.OS === 'ios') {
+              if (Platform.OS === "ios") {
                 await this.finishTransaction(purchase);
               } else {
-                await this.acknowledgePurchaseAndroid(purchase.purchaseToken, purchase.developerPayloadAndroid, purchase);
+                await this.acknowledgePurchaseAndroid(
+                  purchase.purchaseToken,
+                  purchase.developerPayloadAndroid,
+                  purchase
+                );
               }
               this.setState({ loading: false });
             } catch (err) {
               this.setState({ loading: false, apiStatus: false });
-              console.warn('Purchase processing error:', err);
-              Alert.alert('Error', 'Failed to process purchase.');
+              console.warn("Purchase processing error:", err);
+              Alert.alert("Error", "Failed to process purchase.");
             }
-          },
+          }
         );
 
-        this.purchaseErrorSubscription = purchaseErrorListener(
-          (error) => {
-            this.setState({ loading: false });
-            console.log('purchaseErrorListener', error);
-          },
-        );
+        this.purchaseErrorSubscription = purchaseErrorListener((error) => {
+          this.setState({ loading: false });
+          console.log("purchaseErrorListener", error);
+        });
       });
   }
-
 
   componentWillUnmount() {
     if (this.purchaseUpdateSubscription) {
@@ -134,7 +146,6 @@ class SubscriptionManage extends Component {
     endConnection();
   }
 
-
   initializeIap = async () => {
     try {
       this.setState({ loading: true });
@@ -144,7 +155,7 @@ class SubscriptionManage extends Component {
 
       this.setState({ subscriptions: subs, loading: false });
     } catch (err) {
-      Alert.alert('Error', 'Failed to initialize in-app purchases.');
+      Alert.alert("Error", "Failed to initialize in-app purchases.");
     } finally {
       this.setState({ loading: false });
     }
@@ -154,7 +165,7 @@ class SubscriptionManage extends Component {
     try {
       await finishTransaction({ purchase, isConsumable: false });
     } catch (err) {
-      console.warn('Finish transaction error:', err);
+      console.warn("Finish transaction error:", err);
     }
   };
 
@@ -163,13 +174,16 @@ class SubscriptionManage extends Component {
       await acknowledgePurchaseAndroid({ token, developerPayload });
       await this.finishTransaction(purchase);
     } catch (err) {
-      console.warn('Acknowledge purchase error:', err);
+      console.warn("Acknowledge purchase error:", err);
     }
   };
 
   fetchUserSubscription = async () => {
-    console.log('this.props.route.params.tokenthis.props.route.params.token',this.props.route.params.token);
-    alert('this.props.route.params.token'+this.props.route.params.token);
+    console.log(
+      "this.props.route.params.tokenthis.props.route.params.token",
+      this.props.route.params.token
+    );
+    alert("this.props.route.params.token" + this.props.route.params.token);
     try {
       this.setState({ loadingUserSub: true });
       let userSub = await validateSubscription(this.props.route.params.token);
@@ -182,46 +196,44 @@ class SubscriptionManage extends Component {
         }
       }
     } catch (err) {
-      console.log('Error', 'Failed to fetch subscription details.', err);
-      Alert.alert('Error', 'Failed to fetch subscription details.');
+      console.log("Error", "Failed to fetch subscription details.", err);
+      Alert.alert("Error", "Failed to fetch subscription details.");
     } finally {
       this.setState({ loadingUserSub: false });
     }
   };
 
-
   handleSubscription = async () => {
     const { selectedPlan } = this.state;
     const { userId } = this.props;
-    if (!selectedPlan) return Alert.alert('Error', 'Select a plan before proceeding.');
-    if (!userId) return Alert.alert('Error', 'Please log in to continue.');
+    if (!selectedPlan)
+      return Alert.alert("Error", "Select a plan before proceeding.");
+    if (!userId) return Alert.alert("Error", "Please log in to continue.");
 
     try {
       this.setState({ loading: true });
       await requestSubscription({ sku: selectedPlan });
     } catch (err) {
-      Alert.alert('Purchase Error', err.message);
+      Alert.alert("Purchase Error", err.message);
       this.setState({ apiStatus: false });
     }
-  }
-
+  };
 
   handleCancelSubscription = async () => {
     const { selectedPlan } = this.state;
     const url =
-      Platform.OS === 'android'
+      Platform.OS === "android"
         ? `https://play.google.com/store/account/subscriptions?sku=${selectedPlan}&package=com.photomedPro.com`
-        : 'https://apps.apple.com/account/subscriptions';
+        : "https://apps.apple.com/account/subscriptions";
 
     try {
       const canOpen = await Linking.canOpenURL(url);
       if (canOpen) await Linking.openURL(url);
-      else Alert.alert('Error', 'Unable to open subscription settings.');
+      else Alert.alert("Error", "Unable to open subscription settings.");
     } catch (err) {
-      Alert.alert('Error', 'Failed to open subscription settings.');
+      Alert.alert("Error", "Failed to open subscription settings.");
     }
   };
-
 
   addSubscriptionToBackend = async (purchase) => {
     const { token } = this.props;
@@ -233,23 +245,24 @@ class SubscriptionManage extends Component {
         startDate: purchase.transactionDate,
         endDate: purchase.transactionDate,
         platform: Platform.OS,
-        receiptData: Platform.OS === 'ios' ? purchase.transactionReceipt : purchase.purchaseToken,
+        receiptData:
+          Platform.OS === "ios"
+            ? purchase.transactionReceipt
+            : purchase.purchaseToken,
         status: 1,
       };
-      this.setState({ loading: true })
+      this.setState({ loading: true });
       await addSubscriptions(token, data);
       await this.fetchUserSubscription();
       this.setState({ apiStatus: false, loading: false });
-      Alert.alert('Success', 'Subscription added successfully.');
-      navigate(ScreenName.HOME)
+      Alert.alert("Success", "Subscription added successfully.");
+      navigate(ScreenName.HOME);
     } catch (err) {
-      Alert.alert('Error', 'Failed to save subscription to backend.');
+      Alert.alert("Error", "Failed to save subscription to backend.");
     } finally {
       this.setState({ apiStatus: false, loading: false });
     }
   };
-
-
 
   CustomRadioButton = ({ selected, onPress }) => (
     <TouchableOpacity onPress={onPress} style={styles.radioOuter}>
@@ -285,24 +298,58 @@ class SubscriptionManage extends Component {
                 return (
                   <TouchableOpacity
                     key={plan.productId}
-                    onPress={() => this.setState({ selectedPlan: plan.productId })}
+                    onPress={() =>
+                      this.setState({ selectedPlan: plan.productId })
+                    }
                     style={[styles.planCard, isSelected && styles.selectedCard]}
                   >
                     <View style={styles.cardHeader}>
-                      {plan.title == 'com.photomedthreemonth' && <Text style={styles.planTitle}>{"3-Month Premium Plan"}</Text>}
-                      {plan.title == 'com.photomedyearlyplan' && <Text style={styles.planTitle}>{"Annual Pro Subscription"}</Text>}
-                      {plan.title == 'com.photomedonemonth' && <Text style={styles.planTitle}>{"Monthly Access Plan"}</Text>}
-                      <Text style={styles.planPrice}>{plan.localizedPrice}</Text>
+                      {plan.title == "com.photomedthreemonth" && (
+                        <Text style={styles.planTitle}>
+                          {"3-Month Premium Plan"}
+                        </Text>
+                      )}
+                      {plan.title == "com.photomedyearlyplan" && (
+                        <Text style={styles.planTitle}>
+                          {"Annual Pro Subscription"}
+                        </Text>
+                      )}
+                      {plan.title == "com.photomedonemonth" && (
+                        <Text style={styles.planTitle}>
+                          {"Monthly Access Plan"}
+                        </Text>
+                      )}
+                      <Text style={styles.planPrice}>
+                        {plan.localizedPrice}
+                      </Text>
                     </View>
-                    {plan.description == 'com.photomedthreemonth' && <Text style={styles.description}>. {"Enjoy full access to all features for 3 months"}</Text>}
-                    {plan.description == 'com.photomedyearlyplan' && <Text style={styles.description}>. {"Full app access for a year at a great value"}</Text>}
-                    {plan.description == 'com.photomedonemonth' && <Text style={styles.description}>. {"Access to all features for 1 month"}</Text>}
-                    <Text style={styles.planText}>• Everything in Standard Plan</Text>
-                    <Text style={styles.planText}>• Exclusive Content & Tips</Text>
+                    {plan.description == "com.photomedthreemonth" && (
+                      <Text style={styles.description}>
+                        . {"Enjoy full access to all features for 3 months"}
+                      </Text>
+                    )}
+                    {plan.description == "com.photomedyearlyplan" && (
+                      <Text style={styles.description}>
+                        . {"Full app access for a year at a great value"}
+                      </Text>
+                    )}
+                    {plan.description == "com.photomedonemonth" && (
+                      <Text style={styles.description}>
+                        . {"Access to all features for 1 month"}
+                      </Text>
+                    )}
+                    <Text style={styles.planText}>
+                      • Everything in Standard Plan
+                    </Text>
+                    <Text style={styles.planText}>
+                      • Exclusive Content & Tips
+                    </Text>
                     <View style={styles.radioWrapper}>
                       <this.CustomRadioButton
                         selected={isSelected}
-                        onPress={() => this.setState({ selectedPlan: plan.productId })}
+                        onPress={() =>
+                          this.setState({ selectedPlan: plan.productId })
+                        }
                       />
                     </View>
                   </TouchableOpacity>
@@ -313,30 +360,100 @@ class SubscriptionManage extends Component {
               <>
                 {userSubscription?.productId &&
                   userSubscription?.productId === selectedPlan &&
-                  userSubscription?.isExpired === 'no' && (
-                    <TouchableOpacity onPress={() => { this.setState({ apiStatus: true }, () => { this.handleCancelSubscription() }) }} style={styles.restoreBtn}>
+                  userSubscription?.isExpired === "no" && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        this.setState({ apiStatus: true }, () => {
+                          this.handleCancelSubscription();
+                        });
+                      }}
+                      style={styles.restoreBtn}
+                    >
                       <Text style={styles.restoreText}>Cancel Plan</Text>
                     </TouchableOpacity>
                   )}
 
                 {(userSubscription?.productId !== selectedPlan ||
-                  userSubscription?.isExpired === 'yes' ||
+                  userSubscription?.isExpired === "yes" ||
                   !userSubscription?.productId) && (
-                    <TouchableOpacity onPress={() => { this.setState({ apiStatus: true }, () => { this.handleSubscription() }) }} style={styles.restoreBtn}>
-                      <Text style={styles.restoreText}>
-                        {userSubscription?.productId ? 'Upgrade Plan' : 'Buy Plan'}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
+                  <TouchableOpacity
+                    onPress={() => {
+                      this.setState({ apiStatus: true }, () => {
+                        this.handleSubscription();
+                      });
+                    }}
+                    style={styles.restoreBtn}
+                  >
+                    <Text style={styles.restoreText}>
+                      {userSubscription?.productId
+                        ? "Upgrade Plan"
+                        : "Buy Plan"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </>
             )}
 
+            <Text
+              style={{
+                textAlign: "center",
+                marginHorizontal: 20,
+                color: "#000",
+                marginVertical: 20,
+              }}
+            >
+              Payment will be charged to iTunes Account at confirmation of
+              purchase. Subscription automatically renews unless auto-renew is
+              turned off at least 24-hours before the end of the current period.
+              Account will be charged for renewal within 24-hours prior to the
+              end of the current period, and identify the cost of the renewal.
+              Subscriptions may be managed by the user and auto-renewal may be
+              turned off by going to the user's Account Settings after purchase.
+              No cancellation of the current subscription is allowed during
+              active subscription period. Any unused portion of a free trial
+              period, if offered, will be forfeited when the user purchases a
+              subscription to that publication, where applicable
+            </Text>
 
-            <Text style={{ textAlign: 'center', marginHorizontal: 20, color: '#000',marginVertical:20 }}>Payment will be charged to iTunes Account at confirmation of purchase. Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period. Account will be charged for renewal within 24-hours prior to the end of the current period, and identify the cost of the renewal. Subscriptions may be managed by the user and auto-renewal may be turned off by going to the user's Account Settings after purchase. No cancellation of the current subscription is allowed during active subscription period. Any unused portion of a free trial period, if offered, will be forfeited when the user purchases a subscription to that publication, where applicable</Text>
-
-            <View style={{ flexDirection: 'row', marginHorizontal: 20, marginBottom: 20, marginVertical: 30, justifyContent: 'center' }}>
-              <Text onPress={() => navigate('Terms and Condition', { slug: 'terms-and-conditions', screenName: 'Terms and Conditions' })} style={{ color: '#32327C', marginRight: 10, textDecorationLine: 'underline' }}>Terms of Service</Text>
-              <Text onPress={() => navigate('Terms and Condition', { slug: 'privacy-policy', screenName: 'Privacy Policy' })} style={{ color: '#32327C', marginLeft: 10, textDecorationLine: 'underline' }}>Privacy Policy</Text>
+            <View
+              style={{
+                flexDirection: "row",
+                marginHorizontal: 20,
+                marginBottom: 20,
+                marginVertical: 30,
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                onPress={() =>
+                  navigate("Terms and Condition", {
+                    slug: "terms-and-conditions",
+                    screenName: "Terms and Conditions",
+                  })
+                }
+                style={{
+                  color: "#32327C",
+                  marginRight: 10,
+                  textDecorationLine: "underline",
+                }}
+              >
+                Terms of Service
+              </Text>
+              <Text
+                onPress={() =>
+                  navigate("Terms and Condition", {
+                    slug: "privacy-policy",
+                    screenName: "Privacy Policy",
+                  })
+                }
+                style={{
+                  color: "#32327C",
+                  marginLeft: 10,
+                  textDecorationLine: "underline",
+                }}
+              >
+                Privacy Policy
+              </Text>
             </View>
           </ScrollView>
         </View>
@@ -356,68 +473,68 @@ const styles = StyleSheet.create({
   // [Same styles from your original functional component]
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   container: {
     flex: 1,
     paddingHorizontal: 16,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 15,
   },
   iconText: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   scrollContent: {
     paddingVertical: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   planCard: {
-    backgroundColor: '#fff',
-    width: '96%',
+    backgroundColor: "#fff",
+    width: "96%",
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
     marginHorizontal: 10,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
-    position: 'relative',
+    position: "relative",
   },
   selectedCard: {
-    backgroundColor: '#e0e0f3',
+    backgroundColor: "#e0e0f3",
   },
   cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: 12,
   },
   planTitle: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   planPrice: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   planText: {
     fontSize: 14,
-    color: '#555',
+    color: "#555",
     marginBottom: 4,
   },
   radioWrapper: {
-    position: 'absolute',
+    position: "absolute",
     right: 16,
     bottom: 16,
   },
@@ -426,31 +543,31 @@ const styles = StyleSheet.create({
     width: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#32327C',
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderColor: "#32327C",
+    alignItems: "center",
+    justifyContent: "center",
   },
   radioInner: {
     height: 10,
     width: 10,
     borderRadius: 5,
-    backgroundColor: '#32327C',
+    backgroundColor: "#32327C",
   },
   restoreBtn: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     marginTop: 14,
     paddingVertical: 12,
     borderWidth: 1.5,
-    borderColor: '#32327C',
+    borderColor: "#32327C",
     borderRadius: 10,
-    width: '96%',
+    width: "96%",
   },
   restoreText: {
-    color: '#32327C',
+    color: "#32327C",
     fontSize: 16,
     marginLeft: 8,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

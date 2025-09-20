@@ -19,16 +19,13 @@ import {
 } from "react-native";
 import COLORS from "../styles/colors";
 import imagePaths from "../assets/images";
-import SubscriptionManage from "../screens/Auth/SubscriptionManage";
-import { IAPProvider } from "../configs/IAPContext";
-import BootSplash from "react-native-bootsplash";
-import { updateSubscription } from "../redux/slices/authSlice";
 
 const AppNavigator = () => {
   const dispatch = useDispatch();
   const isConnected = useSelector((state) => state.network.isConnected);
   const accessToken = useSelector((state) => state.auth.accessToken);
   const token = useSelector((state) => state?.auth?.user);
+  const userId = useSelector((state) => state.auth.userId);
 
   const linking = {
     prefixes: ["com.photomedPro.com://"],
@@ -46,50 +43,9 @@ const AppNavigator = () => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       dispatch(setNetworkStatus(state.isConnected));
     });
-
     return () => unsubscribe();
   }, [dispatch]);
-
-  const subscription = useSelector((state) => state?.auth?.subscription);
-  const needsSubscription =
-    token &&
-    accessToken &&
-    (!subscription?.hasSubscription || !subscription?.isActive);
-
-    console.log('subscription--', subscription, needsSubscription);
-    
-
-  const getProfile = async () => {
-    try {
-      const res = await fetch("https://photomedpro.com:10049/api/getprofile", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await res.json();
-      console.log("profile data", data.ResponseBody);
-      console.log(" subscription profile data", data.ResponseBody);
-       dispatch(updateSubscription(data.subscription));
-    } catch (error) {
-    } finally {
-      setTimeout(async () => {
-        await BootSplash.hide({ fade: true });
-      }, 200);
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
-      getProfile();
-    }else{
-      setTimeout(async () => {
-        await BootSplash.hide({ fade: true });
-      }, 2500);
-    }
-  }, [token, accessToken]);
-
+ 
   return (
     <>
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -129,30 +85,13 @@ const AppNavigator = () => {
           </SafeAreaView>
         </Modal>
         <NavigationContainer linking={linking} ref={navigationRef}>
-          {!token ? (
-            // Step 1: Not logged in
-            <AuthStack />
-          ) : !accessToken ? (
-            // Step 2: Logged in but not connected to cloud
-            <ConnectCloud />
-          ) : needsSubscription ? (
-            // Step 3: Connected, but no subscription
-            <IAPProvider>
-              <SubscriptionManage page="normal" />
-            </IAPProvider>
-          ) : (
-            // Step 4: All good → main app
-            <MainStack />
-          )}
-
-
-          {/* {token && accessToken ? (
+          {token && accessToken ? (
             <MainStack />
           ) : token ? (
             <ConnectCloud />
           ) : (
             <AuthStack />
-          )} */}
+          )}
         </NavigationContainer>
       </GestureHandlerRootView>
     </>

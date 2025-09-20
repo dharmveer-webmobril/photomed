@@ -27,11 +27,24 @@ import { getMySubscriptionDetails } from "../../configs/api";
 import { updateSubscription } from "../../redux/slices/authSlice";
 import { useIAP } from "../../configs/IAPContext";
 import AccountPopUp from "../../components/AccountPopUp";
-const subscriptionSkus = [
-  "com.photomedonemonth",
-  "com.photomedthreemonth",
-  "com.photomedyearlyplan",
-];
+
+const SUBSCRIPTION_SKUS = Platform.select({
+  ios: [
+    "com.photomedyearlyplan",
+    "com.photomedthreemonth",
+    "com.photomedonemonth",
+  ],
+  android: [
+    "com.photomedthreemonth",
+    "com.photomedyearlyplan",
+    "com.photomedonemonth",
+  ],
+});
+const PLAN_PRIORITY = {
+  "com.photomedonemonth": 1, // lowest
+  "com.photomedthreemonth": 2,
+  "com.photomedyearlyplan": 3, // highest
+};
 
 export default function SubscriptionManage(params) {
   const token = useSelector((state) => state.auth.user);
@@ -46,6 +59,63 @@ export default function SubscriptionManage(params) {
 
   const from = params?.page || "asd";
 
+  // Common function to verify receipt and update subscription
+  const verifyReceipt = async (purchase, actionType = "purchase") => {
+    if (!purchase?.transactionReceipt) {
+      console.log("No transaction receipt, skipping...");
+      throw new Error("No transaction receipt provided.");
+    }
+
+    try {
+      setIsLoading(true);
+      console.log(`Processing ${actionType}:`, purchase);
+      const response = await fetch(
+        "https://photomedpro.com:10049/api/verify-inapp-receipt",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            receipt: purchase.transactionReceipt,
+            platform: Platform.OS,
+            transactionId: purchase.transactionId,
+            userId,
+          }),
+        }
+      );
+
+      const data = await response.json();
+      console.log(`${actionType} response:`, data);
+
+      if (response.ok && data.success) {
+        const expData = {
+          expirationDate: data?.expirationDate,
+          hasSubscription: true,
+          isActive: data?.isActive,
+          isExpired: data?.isExpired,
+          productId: data?.productId || purchase.productId,
+          success: data?.success,
+          transactionId: data?.transactionId || purchase.transactionId,
+        };
+
+        setCurrentSubscription(expData);
+        dispatch(updateSubscription(expData));
+        await finishTransaction({ purchase, isConsumable: false });
+        Alert.alert("Success", `${actionType} verified and activated!`);
+        return expData;
+      } else {
+        throw new Error("Verification failed.");
+      }
+    } catch (error) {
+      console.error(`${actionType} error:`, error);
+      throw new Error(`Failed to verify ${actionType.toLowerCase()}.`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Fetch current subscription from backend
   useEffect(() => {
     const fetchSubscription = async () => {
@@ -57,17 +127,16 @@ export default function SubscriptionManage(params) {
         return;
       }
       try {
-        setIsGetSubLoading(true); // Show loading only during API call
+        setIsGetSubLoading(true);
         const data = await getMySubscriptionDetails(token, userId);
         setSelectedPlan(data?.productId || "");
         console.log("Current subscription data:", data);
-
         if (data) setCurrentSubscription(data);
       } catch (e) {
         console.error("fetchSubscription error:", e);
         Alert.alert("Error", "Failed to fetch subscription details.");
       } finally {
-        setIsGetSubLoading(false); // Always reset loading state
+        setIsGetSubLoading(false);
       }
     };
     fetchSubscription();
@@ -84,196 +153,73 @@ export default function SubscriptionManage(params) {
         return;
       }
       try {
-        setIsLoading(true); // Show loading only during fetch
+        setIsLoading(true);
         await fetchSubscriptions();
       } catch (error) {
         console.error("Error loading subscriptions:", error);
         Alert.alert("Error", "Failed to load subscriptions. Please try again.");
       } finally {
-        setIsLoading(false); // Always reset loading state
+        setIsLoading(false);
       }
     };
     loadSubscriptions();
   }, [token, userId, fetchSubscriptions]);
 
-  // Initialize IAP and set up purchase listeners
-  // useEffect(() => {
-  //   let purchaseUpdateSubscription;
-  //   let purchaseErrorSubscription;
-  //   let mounted = true;
+  // IAP listeners
+  const iapListenersAdded = useRef(false);
 
-  //   const initIAP = async () => {
-  //     // Note: Commented-out code retained as per original. Uncomment if needed.
-  //     // try {
-  //     //   console.log("🔄 Initializing IAP connection...");
-  //     //   await initConnection();
-  //     //
-  //     //   if (!mounted) return;
-  //     //
-  //     //   const subs = await getSubscriptions({
-  //     //     skus: subscriptionSkus,
-  //     //   });
-  //     //
-  //     //   if (mounted) {
-  //     //     console.log("✅ Available subscriptions:", subs);
-  //     //     setSubscriptions(subs);
-  //     //   }
-  //     // } catch (error) {
-  //     //   console.error("IAP init error:", error);
-  //     // }
+  useEffect(() => {
+    if (iapListenersAdded.current) return;
 
-  //     // Purchase listener
-  //     purchaseUpdateSubscription = purchaseUpdatedListener(async (purchase) => {
-  //       if (!purchase?.transactionReceipt) return;
+    let purchaseUpdateSubscription;
+    let purchaseErrorSubscription;
+    let mounted = true;
 
-  //       try {
-  //         setIsLoading(true); // Show loading during verification
-  //         const response = await fetch(
-  //           "https://photomedpro.com:10049/api/verify-inapp-receipt",
-  //           {
-  //             method: "POST",
-  //             headers: {
-  //               "Content-Type": "application/json",
-  //               Authorization: `Bearer ${token}`,
-  //             },
-  //             body: JSON.stringify({
-  //               receipt: purchase.transactionReceipt,
-  //               platform: Platform.OS,
-  //               transactionId: purchase.transactionId,
-  //               userId,
-  //             }),
-  //           }
-  //         );
+    const initIAP = async () => {
+      try {
+        console.log("🔄 Initializing IAP connection...");
+        await initConnection();
+        console.log("✅ IAP connection initialized");
 
-  //         const responseData = await response.json();
-  //         console.log("verify-inapp-receipt response:", responseData);
+        if (!mounted) return;
 
-  //         if (response.ok && responseData.success) {
-  //           const expData = {
-  //             expirationDate: responseData?.expirationDate,
-  //             hasSubscription: true,
-  //             isActive: responseData?.isActive,
-  //             isExpired: responseData?.isExpired,
-  //             productId: responseData?.productId || purchase.productId,
-  //             success: responseData?.success,
-  //             transactionId:
-  //               responseData?.transactionId || purchase.transactionId,
-  //           };
-
-  //           setCurrentSubscription(expData);
-  //           dispatch(updateSubscription(expData));
-  //           await finishTransaction({ purchase, isConsumable: false });
-  //           Alert.alert("Success", "Purchase verified and activated!");
-  //         } else {
-  //           Alert.alert("Error", "Purchase verification failed.");
-  //         }
-  //       } catch (error) {
-  //         console.error("purchaseUpdatedListener error:", error);
-  //         Alert.alert("Error", "Purchase verification failed.");
-  //       } finally {
-  //         setIsLoading(false); // Always reset loading state
-  //       }
-  //     });
-
-  //     purchaseErrorSubscription = purchaseErrorListener((error) => {
-  //       console.error("purchaseErrorListener:", error);
-  //       Alert.alert("Error", "Purchase failed. Please try again.");
-  //       setIsLoading(false); // Reset loading on error
-  //     });
-  //   };
-
-  //   initIAP();
-
-  //   return () => {
-  //     mounted = false;
-  //     if (purchaseUpdateSubscription) purchaseUpdateSubscription.remove();
-  //     if (purchaseErrorSubscription) purchaseErrorSubscription.remove();
-  //   };
-  // }, [token, userId, dispatch]);
-
-
-  // inside SubscriptionManage
-const iapListenersAdded = useRef(false);
-
-useEffect(() => {
-  if (iapListenersAdded.current) return; // Already added, do nothing
-
-  let purchaseUpdateSubscription;
-  let purchaseErrorSubscription;
-
-  const initIAP = async () => {
-    try {
-      await initConnection();
-
-      purchaseUpdateSubscription = purchaseUpdatedListener(async (purchase) => {
-        if (!purchase?.transactionReceipt) return;
-
-        try {
-          setIsLoading(true);
-          const response = await fetch(
-            "https://photomedpro.com:10049/api/verify-inapp-receipt",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({
-                receipt: purchase.transactionReceipt,
-                platform: Platform.OS,
-                transactionId: purchase.transactionId,
-                userId,
-              }),
-            }
-          );
-
-          const data = await response.json();
-          if (response.ok && data.success) {
-            const expData = {
-              expirationDate: data?.expirationDate,
-              hasSubscription: true,
-              isActive: data?.isActive,
-              isExpired: data?.isExpired,
-              productId: data?.productId || purchase.productId,
-              success: data?.success,
-              transactionId: data?.transactionId || purchase.transactionId,
-            };
-            setCurrentSubscription(expData);
-            dispatch(updateSubscription(expData));
-            await finishTransaction({ purchase, isConsumable: false });
-          } else {
-            Alert.alert("Error", "Purchase verification failed.");
+        purchaseUpdateSubscription = purchaseUpdatedListener(async (purchase) => {
+          try {
+            await verifyReceipt(purchase, "Purchase");
+          } catch (error) {
+            Alert.alert("Error", error.message || "Purchase verification failed.");
           }
-        } catch (e) {
-          console.error("purchaseUpdatedListener error:", e);
-          Alert.alert("Error", "Purchase verification failed.");
-        } finally {
+        });
+
+        purchaseErrorSubscription = purchaseErrorListener((error) => {
+          console.error("purchaseErrorListener:", error);
+          Alert.alert("Error", `Purchase failed: ${error.message || "Unknown error"}`);
           setIsLoading(false);
-        }
-      });
+        });
 
-      purchaseErrorSubscription = purchaseErrorListener((error) => {
-        console.error("purchaseErrorListener:", error);
-        Alert.alert("Error", "Purchase failed. Please try again.");
-        setIsLoading(false);
-      });
+        iapListenersAdded.current = true;
+      } catch (e) {
+        console.error("IAP init error:", e);
+        Alert.alert("Error", "Failed to initialize IAP connection.");
+      }
+    };
 
-      iapListenersAdded.current = true; // Mark listener as added
-    } catch (e) {
-      console.error("IAP init error:", e);
-    }
-  };
+    initIAP();
 
-  initIAP();
-
-  return () => {
-    if (purchaseUpdateSubscription) purchaseUpdateSubscription.remove();
-    if (purchaseErrorSubscription) purchaseErrorSubscription.remove();
-    iapListenersAdded.current = false; // Reset on unmount
-    endConnection(); // Optional: end IAP connection
-  };
-}, [token, userId, dispatch]);
-
+    return () => {
+      mounted = false;
+      if (purchaseUpdateSubscription) {
+        purchaseUpdateSubscription.remove();
+        console.log("🗑️ Removed purchaseUpdateSubscription");
+      }
+      if (purchaseErrorSubscription) {
+        purchaseErrorSubscription.remove();
+        console.log("🗑️ Removed purchaseErrorSubscription");
+      }
+      iapListenersAdded.current = false;
+      endConnection().then(() => console.log("🗑️ IAP connection ended"));
+    };
+  }, [token, userId, dispatch]);
 
   // Start purchase
   const handlePurchase = async () => {
@@ -282,83 +228,59 @@ useEffect(() => {
       return;
     }
     if (!token) {
-      Alert.alert(
-        "Error",
-        "Authentication token missing. Please log in again."
-      );
+      Alert.alert("Error", "Authentication token missing. Please log in again.");
       return;
     }
     try {
-      setIsLoading(true); // Show loading during purchase
+      setIsLoading(true);
+
+      const res = await getMySubscriptionDetails(token, userId);
+      console.log("getMySubscriptionDetails res", res);
+
+      if (res && res?.productId && res?.isExpired === false) {
+        const currentPlanPriority = PLAN_PRIORITY[res.productId];
+        const selectedPlanPriority = PLAN_PRIORITY[selectedPlan];
+
+        if (selectedPlanPriority < currentPlanPriority) {
+          Alert.alert(
+            "Alert",
+            "You already have a higher plan. You can only purchase a lower plan after your current subscription expires or is cancelled.\n\n👉 To manage your subscription, please go to your App Store/Google Play account."
+          );
+          return;
+        }
+      }
+
       await requestSubscription({ sku: selectedPlan });
     } catch (error) {
       console.error("Purchase start error:", error);
       Alert.alert("Error", "Failed to start purchase.");
     } finally {
-      setIsLoading(false); // Always reset loading state
+      setIsLoading(false);
     }
   };
 
   // Restore purchases
   const restorePurchases = async () => {
     if (!token) {
-      Alert.alert(
-        "Error",
-        "Authentication token missing. Please log in again."
-      );
+      Alert.alert("Error", "Authentication token missing. Please log in again.");
       return;
     }
     try {
-      setIsLoading(true); // Show loading during restore
+      setIsLoading(true);
       const purchases = await getAvailablePurchases();
       if (purchases.length > 0) {
         const latest = purchases.sort(
           (a, b) => new Date(b.transactionDate) - new Date(a.transactionDate)
         )[0];
-
-        const response = await fetch(
-          "https://photomedpro.com:10049/api/verify-inapp-receipt",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              receipt: latest.transactionReceipt,
-              platform: Platform.OS,
-              userId,
-            }),
-          }
-        );
-        const responseData = await response.json();
-        console.log("restorePurchases response:", responseData);
-
-        if (response.ok && responseData.success) {
-          const expData = {
-            expirationDate: responseData?.expirationDate,
-            hasSubscription: true,
-            isActive: responseData?.isActive,
-            isExpired: responseData?.isExpired,
-            productId: responseData?.productId,
-            success: responseData?.success,
-            transactionId: responseData?.transactionId,
-          };
-
-          setCurrentSubscription(expData);
-          dispatch(updateSubscription(expData));
-          Alert.alert("Success", "Purchases restored successfully.");
-        } else {
-          Alert.alert("Error", "Failed to restore purchases.");
-        }
+        await verifyReceipt(latest, "Restore");
       } else {
         Alert.alert("Info", "No purchases found to restore.");
       }
     } catch (error) {
       console.error("Restore failed:", error);
-      Alert.alert("Error", "Failed to restore purchases.");
+      Alert.alert("Error", error.message || "Failed to restore purchases.");
     } finally {
-      setIsLoading(false); // Always reset loading state
+      setIsLoading(false);
     }
   };
 
@@ -371,10 +293,7 @@ useEffect(() => {
           : "https://play.google.com/store/account/subscriptions?package=com.photomedPro.com";
 
       await Linking.openURL(url);
-      Alert.alert(
-        "Info",
-        "You have been redirected to manage your subscriptions."
-      );
+      Alert.alert("Info", "You have been redirected to manage your subscriptions.");
     } catch (error) {
       console.error("Failed to open subscription management:", error);
       Alert.alert("Error", "Failed to open subscription management.");
