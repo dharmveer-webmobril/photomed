@@ -47,7 +47,7 @@ import CustomBtn from "../../components/CustomBtn";
 import Toast from "react-native-simple-toast";
 import CrossIcon from "../../assets/SvgIcons/CrossIcon";
 import ImageWithLoader from "../../components/ImageWithLoader";
-import { logout } from "../../redux/slices/authSlice";
+import { logout, updateSubscription } from "../../redux/slices/authSlice";
 import { removeData } from "../../configs/helperFunction";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -140,7 +140,7 @@ const Home = () => {
         let res = await getMySubscriptionDetails(token, userId);
         console.log("getMySubscriptionDetails res", res);
         
-        dispatch(setUserSubscription(res));
+        dispatch(updateSubscription(res));
       }
     } catch (error) {
       console.log("getMySubscriptionDetails error", error);

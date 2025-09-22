@@ -29,7 +29,10 @@ import { navigate } from "../navigators/NavigationService";
 import ScreenName from "../configs/screenName";
 import Loading from "../components/Loading";
 import CustomBtn from "../components/CustomBtn";
-import Animated, { useAnimatedStyle, useSharedValue } from "react-native-reanimated";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+} from "react-native-reanimated";
 import Slider from "@react-native-community/slider";
 import GhostIcon from "../assets/SvgIcons/GhostIcon";
 import CrossIcon from "../assets/SvgIcons/CrossIcon";
@@ -52,13 +55,16 @@ import DeleteImagePopUp from "../components/DeleteImagePopUp";
 import { useFocusEffect } from "@react-navigation/native";
 import { Image as CompressImage } from "react-native-compressor";
 import SelectedGridOverlay from "../components/SelectedGridOverlay";
-import { setCurrentPatient, setPatientImages } from "../redux/slices/patientSlice";
+import {
+  setCurrentPatient,
+  setPatientImages,
+} from "../redux/slices/patientSlice";
 import FastImage from "react-native-fast-image";
 const windowWidth = Dimensions.get("window").width;
 const windowHeight = Dimensions.get("window").height;
 // import ImageResizer from 'react-native-image-resizer';
-
-import { combinedData, askForDermoScopy } from '../utils';
+import { showSubscriptionAlert } from "../configs/common/showSubscriptionAlert";
+import { combinedData, askForDermoScopy } from "../utils";
 
 const CameraGrid = (props) => {
   const dispatch = useDispatch();
@@ -133,9 +139,7 @@ const CameraGrid = (props) => {
         ? setImages(props.route.params?.imageData)
         : setImageUrls(props.route.params?.imageData);
     }
-
   }, [props.route.params]);
-
 
   useFocusEffect(
     useCallback(() => {
@@ -163,41 +167,41 @@ const CameraGrid = (props) => {
     }
   };
 
-  const activePatient = useSelector((state) => state.patient?.currentActivePatient);
-
+  const activePatient = useSelector(
+    (state) => state.patient?.currentActivePatient
+  );
 
   const capturePhoto = async () => {
-
-    if (loacalImageArr.length >= 5) return false
+    if (loacalImageArr.length >= 5) return false;
     if (cameraRef.current !== null) {
       let photo = await cameraRef.current.takePhoto({
         quality: 0.5,
         skipMetadata: true,
       });
 
-
       let fileJson = {};
 
-      if (!photo.path.startsWith('file://')) {
+      if (!photo.path.startsWith("file://")) {
         photo.path = `file://${photo.path}`;
       }
 
-      provider === "google" ? fileJson.webContentLink = photo.path : fileJson.publicUrl = photo.path
+      provider === "google"
+        ? (fileJson.webContentLink = photo.path)
+        : (fileJson.publicUrl = photo.path);
       let uniqueKey = generateUniqueKey();
       let imageName = `${patientName}_${uniqueKey}.jpg`;
       fileJson.path = photo.path;
       fileJson.uri = photo.path;
       fileJson.type = "image/jpeg";
       fileJson.name = imageName;
-      console.log('loacalImageArr 207', fileJson);
-
+      console.log("loacalImageArr 207", fileJson);
 
       if (selectedCategory == 7) {
         askForDermoScopy(
           () => makrCircleFun(fileJson),
           () => campareFun(fileJson)
         );
-        return
+        return;
       }
       setImageSource(photo.path);
       setLocalImageArr((prevImages) => [fileJson, ...prevImages]);
@@ -209,17 +213,17 @@ const CameraGrid = (props) => {
   };
 
   const makrCircleFun = (image) => {
-    let imgs = provider === 'google' ? images : imageUrls;
-    navigate('MarkableImage', { image, images: imgs }); // 👈 send captured image
+    let imgs = provider === "google" ? images : imageUrls;
+    navigate("MarkableImage", { image, images: imgs }); // 👈 send captured image
   };
 
   const campareFun = (image) => {
     setImageSource(image.path);
-    let imgs = provider === 'google' ? images : imageUrls;
-    console.log('imgsimgs', imgs);
+    let imgs = provider === "google" ? images : imageUrls;
+    console.log("imgsimgs", imgs);
 
     // setLocalImageArr((prevImages) => [image, ...prevImages]);
-    navigate('CollageDermoscopy', { image, images: imgs }); // 👈 send captured image
+    navigate("CollageDermoscopy", { image, images: imgs }); // 👈 send captured image
   };
 
   const updatePatientImage = async (imgData) => {
@@ -231,51 +235,64 @@ const CameraGrid = (props) => {
       maxHeight: 1200,
       quality: 0.1,
     });
-    formData.append('profile', {
+    formData.append("profile", {
       uri: imgUri,
       name: imgData.name || "profile.jpg",
       type: imgData.type || "image/jpeg",
     });
 
     fetch(`${configUrl.BASE_URL}updatepatient/${id}`, {
-      method: 'PUT',
+      method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
+        "Content-Type": "multipart/form-data",
       },
       body: formData,
     })
-      .then(response => response.json())
-      .then(json => {
-        if (json?.ResponseBody?.profileImage) dispatch(setCurrentPatient(json?.ResponseBody));
+      .then((response) => response.json())
+      .then((json) => {
+        if (json?.ResponseBody?.profileImage)
+          dispatch(setCurrentPatient(json?.ResponseBody));
       })
-      .catch(error => {
-        console.error('upload error--------', error);
+      .catch((error) => {
+        console.error("upload error--------", error);
       });
   };
 
   useEffect(() => {
-    if (capturedImages.length > 0 && capturedImages.length == loacalImageArr.length) {
+    if (
+      capturedImages.length > 0 &&
+      capturedImages.length == loacalImageArr.length
+    ) {
       navigate(ScreenName.IMAGE_VIEWER, {
         preData: capturedImages,
         ScreenName: "camera",
       });
-      setLocalImageArr([])
+      setLocalImageArr([]);
       setCapturedImages([]);
-      setImageSource('')
+      setImageSource("");
     }
   }, [capturedImages]);
 
-  const _chooseFile = async () => {
-    console.log('activePatient', activePatient);
+  const subscription = useSelector((state) => state.auth?.subscription);
+  const needSubscription = !subscription?.hasSubscription || !subscription?.isActive || subscription?.isExpired;
 
+  const _chooseFile = async () => {
+    console.log("activePatient", activePatient);
+    if (susbcription) {
+      showSubscriptionAlert(navigate);
+      return;
+    }
     if (loacalImageArr?.length <= 0) {
-      Alert.alert("Validation Error", "Please capture at least one image first.");
+      Alert.alert(
+        "Validation Error",
+        "Please capture at least one image first."
+      );
       return;
     }
     try {
-      setLoading(true)
-      console.log('loacalImageArr length', loacalImageArr.length)
+      setLoading(true);
+      console.log("loacalImageArr length", loacalImageArr.length);
 
       if (provider == "google") {
         await checkAndRefreshGoogleAccessToken(accessToken);
@@ -303,9 +320,7 @@ const CameraGrid = (props) => {
         setCapturedImages((prevImages) => [...prevImages, ...uploadedImages]);
         dispatch(setPatientImages(imgss));
         saveImageCount(imgss?.length || 0);
-
       } else {
-
         // Dropbox upload======================
         for (let file of loacalImageArr) {
           let result = await uploadFileToDropbox({
@@ -326,16 +341,15 @@ const CameraGrid = (props) => {
         }
       }
       if (!activePatient?.profileImage) {
-        await updatePatientImage(loacalImageArr[0])
+        await updatePatientImage(loacalImageArr[0]);
       }
-      setLoading(false)
-
+      setLoading(false);
     } catch (error) {
-      setLoading(false)
-      Alert.alert('Something went wrong,Please try again later')
-      console.log('verrorerror', error);
+      setLoading(false);
+      Alert.alert("Something went wrong,Please try again later");
+      console.log("verrorerror", error);
     }
-  }
+  };
 
   const device = useCameraDevice(isFrontCamera ? "front" : "back");
   let { width } = useWindowDimensions();
@@ -349,7 +363,7 @@ const CameraGrid = (props) => {
   let height = width * aspectRatios[aspectRatio];
 
   function getHeight() {
-    return (Platform.OS === 'ios' && aspectRatio === '1:1' && !Platform.isPad)
+    return Platform.OS === "ios" && aspectRatio === "1:1" && !Platform.isPad
       ? height + verticalScale(70)
       : height;
   }
@@ -401,7 +415,7 @@ const CameraGrid = (props) => {
 
       // Create an array with the last captured image and the ghost image
       const updatedImages = [lastCapturedImage, ghostImage];
-      console.log(updatedImages, lastCapturedImage, ghostImage, 'asdasdas');
+      console.log(updatedImages, lastCapturedImage, ghostImage, "asdasdas");
 
       // Update the state
       // setCapturedImages([...capturedImages, ghostImage]);
@@ -416,14 +430,12 @@ const CameraGrid = (props) => {
     if (arr.length > 0) {
       setImageSource(arr[arr.length - 1].path);
     } else {
-      setImageSource('');
+      setImageSource("");
     }
     setLocalImageArr(arr);
-    setDeletePopup(false)
-    setSelectedImgIndex(-1)
-  }
-
-
+    setDeletePopup(false);
+    setSelectedImgIndex(-1);
+  };
 
   return (
     <WrapperContainer wrapperStyle={{ flex: 1 }}>
@@ -432,7 +444,9 @@ const CameraGrid = (props) => {
       <DeleteImagePopUp
         title={`Delete photo`}
         onPressCancel={() => setDeletePopup(false)}
-        onPressDelete={() => { onLocalImageRemove() }}
+        onPressDelete={() => {
+          onLocalImageRemove();
+        }}
         visible={deletedPopup}
       />
 
@@ -449,13 +463,23 @@ const CameraGrid = (props) => {
         <View style={{ flex: 1 }}>
           <View
             style={[
-              { width: width, height: getHeight() > windowHeight ? windowHeight : getHeight(), alignItems: "center", overflow: "hidden" },
+              {
+                width: width,
+                height: getHeight() > windowHeight ? windowHeight : getHeight(),
+                alignItems: "center",
+                overflow: "hidden",
+              },
             ]}
           >
             <Camera
               ref={cameraRef}
               style={[
-                { alignItems: "center", overflow: "hidden" }, { width: width, height: getHeight() > windowHeight ? windowHeight : getHeight() }
+                { alignItems: "center", overflow: "hidden" },
+                {
+                  width: width,
+                  height:
+                    getHeight() > windowHeight ? windowHeight : getHeight(),
+                },
               ]}
               device={device}
               isActive={true}
@@ -484,12 +508,15 @@ const CameraGrid = (props) => {
 
           {/* Overlay Image */}
           {ghostImage && (
-            <Animated.View style={[styles.overlayImage, { width, height }, animatedStyle]}>
+            <Animated.View
+              style={[styles.overlayImage, { width, height }, animatedStyle]}
+            >
               <FastImage
                 source={{
-                  uri: provider == "google"
-                    ? ghostImage?.webContentLink
-                    : ghostImage?.publicUrl,
+                  uri:
+                    provider == "google"
+                      ? ghostImage?.webContentLink
+                      : ghostImage?.publicUrl,
                 }}
                 style={[styles.overlayImage, { width, height }, animatedStyle]}
               />
@@ -499,33 +526,37 @@ const CameraGrid = (props) => {
       )}
       {/* Footer View */}
       <View style={{ marginBottom: 10 }}>
-
-        {
-          loacalImageArr.length > 0 && <View style={{ flexDirection: "row", justifyContent: 'center' }}>
-            {
-              loacalImageArr.map((item, index) => {
-                return <TouchableOpacity onLongPress={() => { setDeletePopup(true); setSelectedImgIndex(index) }} style={{
-                  height: 30,
-                  width: 30,
-                  borderRadius: 5,
-                  marginHorizontal: 6,
-                  overflow: 'hidden'
-                }}>
+        {loacalImageArr.length > 0 && (
+          <View style={{ flexDirection: "row", justifyContent: "center" }}>
+            {loacalImageArr.map((item, index) => {
+              return (
+                <TouchableOpacity
+                  onLongPress={() => {
+                    setDeletePopup(true);
+                    setSelectedImgIndex(index);
+                  }}
+                  style={{
+                    height: 30,
+                    width: 30,
+                    borderRadius: 5,
+                    marginHorizontal: 6,
+                    overflow: "hidden",
+                  }}
+                >
                   <Image
                     style={{
-                      height: '100%',
-                      width: '100%',
+                      height: "100%",
+                      width: "100%",
                     }}
                     source={{
                       uri: item.path,
                     }}
                   />
                 </TouchableOpacity>
-              })
-
-            }
+              );
+            })}
           </View>
-        }
+        )}
         {activeAspectRatio && (
           <View style={[styles.controls]}>
             <TouchableOpacity
@@ -552,8 +583,12 @@ const CameraGrid = (props) => {
         <View
           style={[
             commonStyles.flexView,
-            { alignSelf: "center", marginTop: verticalScale(10), width: Platform.isPad ? '12%' : '20%', justifyContent: Platform.isPad ? 'center' : 'space-between' },
-
+            {
+              alignSelf: "center",
+              marginTop: verticalScale(10),
+              width: Platform.isPad ? "12%" : "20%",
+              justifyContent: Platform.isPad ? "center" : "space-between",
+            },
           ]}
         >
           <View style={{ justifyContent: "center", alignItems: "center" }}>
@@ -563,7 +598,7 @@ const CameraGrid = (props) => {
                 styles.actionBtn,
                 {
                   backgroundColor: activeZoom ? COLORS.primary : COLORS.white,
-                  alignItems: "center"
+                  alignItems: "center",
                 },
               ]}
             >
@@ -573,33 +608,35 @@ const CameraGrid = (props) => {
                 width={19.13}
               />
             </TouchableOpacity>
-            <Text style={[styles.txtStyle,]}>2x</Text>
+            <Text style={[styles.txtStyle]}>2x</Text>
           </View>
-          {!Platform.isPad && <View style={{ justifyContent: "center", alignItems: "center" }}>
-            <TouchableOpacity
-              disabled={
-                selectedCategory == 1 || selectedCategory == 6 ? false : true
-              }
-              onPress={() => changeAspectRatio("1:1")}
-              style={[
-                styles.actionBtn,
-                {
-                  backgroundColor: activeAspectRatio
-                    ? COLORS.primary
-                    : COLORS.white,
-                },
-              ]}
-            >
-              <ScaleIcon
-                tintColor={
-                  activeAspectRatio ? COLORS.whiteColor : COLORS.primary
+          {!Platform.isPad && (
+            <View style={{ justifyContent: "center", alignItems: "center" }}>
+              <TouchableOpacity
+                disabled={
+                  selectedCategory == 1 || selectedCategory == 6 ? false : true
                 }
-                height={19.13}
-                width={19.13}
-              />
-            </TouchableOpacity>
-            <Text style={styles.txtStyle}>{aspectRatio}</Text>
-          </View>}
+                onPress={() => changeAspectRatio("1:1")}
+                style={[
+                  styles.actionBtn,
+                  {
+                    backgroundColor: activeAspectRatio
+                      ? COLORS.primary
+                      : COLORS.white,
+                  },
+                ]}
+              >
+                <ScaleIcon
+                  tintColor={
+                    activeAspectRatio ? COLORS.whiteColor : COLORS.primary
+                  }
+                  height={19.13}
+                  width={19.13}
+                />
+              </TouchableOpacity>
+              <Text style={styles.txtStyle}>{aspectRatio}</Text>
+            </View>
+          )}
         </View>
 
         {/* Camera Capture Buttons */}
@@ -612,13 +649,16 @@ const CameraGrid = (props) => {
           <TouchableOpacity
             disabled={loacalImageArr?.length < 1 ? true : false}
             onPress={() => {
-              _chooseFile()
+              _chooseFile();
             }}
             style={[styles.actionBtn, { height: 42, width: 42 }]}
           >
             <Image
               style={{
-                height: 42, width: 42, borderRadius: 10, zIndex: 10
+                height: 42,
+                width: 42,
+                borderRadius: 10,
+                zIndex: 10,
               }}
               source={{
                 uri: `file://'${imageSource}`,
@@ -626,7 +666,11 @@ const CameraGrid = (props) => {
             />
             <Image
               style={{
-                height: 22, width: 22, borderRadius: 8, position: 'absolute', zIndex: 999
+                height: 22,
+                width: 22,
+                borderRadius: 8,
+                position: "absolute",
+                zIndex: 999,
               }}
               source={require(`../assets/images/upload_arrow.png`)}
             />

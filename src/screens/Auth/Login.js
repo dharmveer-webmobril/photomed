@@ -77,9 +77,12 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isRemeberMe, setIsRemeberMe] = useState(false);
-
+  const removeSubscription = () => {
+    dispatch(updateSubscription(null));
+  };
   useFocusEffect(
     useCallback(() => {
+      removeSubscription();
       checkRemeberMe();
     }, [])
   );

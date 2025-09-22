@@ -9,7 +9,11 @@ import {
 import React, { useCallback, useEffect, useState } from "react";
 import WrapperContainer from "../components/WrapperContainer";
 import commonStyles from "../styles/commonStyles";
-import { height, moderateScale, verticalScale } from "../styles/responsiveLayoute";
+import {
+  height,
+  moderateScale,
+  verticalScale,
+} from "../styles/responsiveLayoute";
 import { imagePath } from "../configs/imagePath";
 import CustomBtn from "../components/CustomBtn";
 import PatientImageList from "../components/PatientImageList";
@@ -53,14 +57,13 @@ import { storeData } from "../configs/helperFunction";
 import { setPatientImages } from "../redux/slices/patientSlice";
 const { width } = Dimensions.get("window");
 import uuid from "react-native-uuid";
-import { Colors } from "react-native/Libraries/NewAppScreen";
+import { showSubscriptionAlert } from "../configs/common/showSubscriptionAlert";
 import { useGoogleDriveImages } from "../configs/hooks/getDriveImages";
 const PatientDetails = (props) => {
   const dispatch = useDispatch();
   const [selectedImages, setSelectedImages] = useState([]);
   const [images, setImages] = useState([]);
   const preData = props?.route?.params?.item;
-
 
   const fullId = preData._id;
   const trimmedId = fullId.slice(0, 5);
@@ -90,7 +93,6 @@ const PatientDetails = (props) => {
   const [updatePatient] = useUpdatePatientMutation();
   const [patientProfileImages, setPatientProfileImages] = useState("");
 
-
   const [deleteImage, { isLoading: deleteImageLoading }] =
     useDeleteImageMutation();
 
@@ -105,7 +107,8 @@ const PatientDetails = (props) => {
   });
 
   const [uploadFileToDropbox] = useUploadFileToDropboxMutation();
-  const [deleteFile, { isLoading: loaded }] = useDeleteFileFromDropboxMutation();
+  const [deleteFile, { isLoading: loaded }] =
+    useDeleteFileFromDropboxMutation();
 
   const toggleImageSelection = (items, type = "default") => {
     const isGoogle = provider === "google";
@@ -122,7 +125,9 @@ const PatientDetails = (props) => {
 
       if (type === "default") {
         if (isSelected) {
-          newSelectedImages = newSelectedImages.filter((img) => img !== imagePath);
+          newSelectedImages = newSelectedImages.filter(
+            (img) => img !== imagePath
+          );
           newCollageImages = newCollageImages.filter(
             (img) => getImagePath(img) !== imagePath
           );
@@ -132,8 +137,12 @@ const PatientDetails = (props) => {
         }
       } else {
         if (shouldRemove) {
-          newSelectedImages = newSelectedImages.filter((img) => img !== imagePath);
-          newCollageImages = newCollageImages.filter((img) => getImagePath(img) !== imagePath);
+          newSelectedImages = newSelectedImages.filter(
+            (img) => img !== imagePath
+          );
+          newCollageImages = newCollageImages.filter(
+            (img) => getImagePath(img) !== imagePath
+          );
         } else {
           if (!isSelected) {
             newSelectedImages.push(imagePath);
@@ -186,7 +195,10 @@ const PatientDetails = (props) => {
       setSelectionMode(true);
     }
   };
-  const { fetchGoogleDriveImages: fetchGoogleDriveImages1, loading: dajhbdjha } = useGoogleDriveImages();
+  const {
+    fetchGoogleDriveImages: fetchGoogleDriveImages1,
+    loading: dajhbdjha,
+  } = useGoogleDriveImages();
   // useEffect(() => {
   //   fetchGoogleDriveImages1(accessToken, patientName, trimmedId, (count) => {
   //   });
@@ -203,14 +215,12 @@ const PatientDetails = (props) => {
         return;
       }
 
-
       // Step 2: Locate the patient folder inside "PhotoMed"
       const patientFolderId = await getFolderId(
         preData.full_name + trimmedId,
         accessToken,
         photoMedFolderId
       );
-
 
       if (!patientFolderId) {
         console.error("Patient folder not found");
@@ -241,7 +251,6 @@ const PatientDetails = (props) => {
           return { ...image, publicUrl };
         })
       );
-
 
       publicImages?.length &&
         publicImages?.length &&
@@ -293,42 +302,6 @@ const PatientDetails = (props) => {
       setCollageImage([]);
     }, [accessToken, provider])
   );
-
-  const _chooseFile = async () => {
-    // navigate('MarkableImage')
-    try {
-      // Step 1: Select and map files
-      const fileDetails = await ImageCropPicker.openPicker({
-        multiple: true,
-        mediaType: "photo",
-        cropping: true,
-      });
-
-      const mappedFileDetails = fileDetails.map((file) => ({
-        uri: file.path,
-        type: file.mime,
-        name: file.filename || `${patientName}${Date.now()}.jpg`,
-      }));
-
-      setLoading(true);
-
-      // Step 2: Determine upload provider and process accordingly
-      if (provider === "google") {
-        // await ensureValidToken();
-        await checkAndRefreshGoogleAccessToken(accessToken);
-        await handleGoogleDriveUpload(mappedFileDetails);
-      } else {
-        await ensureValidAccessToken(accessToken);
-        await handleDropboxUpload(mappedFileDetails);
-      }
-    } catch (error) {
-      console.error("Error during file selection or upload:", error);
-      // Optionally, handle user cancellation or display a message
-      Toast.show(error.message || "User has cancelled the flow");
-    } finally {
-      setLoading(false); // Ensure loading is stopped regardless of success or error
-    }
-  };
 
   // Separate function for Google Drive uploads
   const handleGoogleDriveUpload = async (files) => {
@@ -434,12 +407,16 @@ const PatientDetails = (props) => {
     }
   };
 
-  const activePatient = useSelector((state) => state.patient?.currentActivePatient);
+  const activePatient = useSelector(
+    (state) => state.patient?.currentActivePatient
+  );
 
   useEffect(() => {
     setPatientProfileImages();
     if (activePatient?.profileImage) {
-      setPatientProfileImages({uri:configUrl.imageUrl + activePatient?.profileImage}); // Existing profile image
+      setPatientProfileImages({
+        uri: configUrl.imageUrl + activePatient?.profileImage,
+      }); // Existing profile image
     } else {
       setPatientProfileImages(imagePath.no_user_img);
     }
@@ -471,13 +448,95 @@ const PatientDetails = (props) => {
     }
   };
 
-  const CommonComp = ({ IconComponent, title, onPress, commonContainer = null, titleStyle = null }) => {
+  const subscription = useSelector((state) => state.auth?.subscription);
+  const needSubscription = !subscription?.hasSubscription || !subscription?.isActive || subscription?.isExpired;
+  console.log('needSubscriptionneedSubscriptionneedSubscription', needSubscription, subscription);
+
+
+  const _chooseFile = async () => {
+    if (needSubscription ) {
+      showSubscriptionAlert(navigate);
+      return;
+    }
+    // navigate('MarkableImage')
+    try {
+      // Step 1: Select and map files
+      const fileDetails = await ImageCropPicker.openPicker({
+        multiple: true,
+        mediaType: "photo",
+        cropping: true,
+      });
+
+      const mappedFileDetails = fileDetails.map((file) => ({
+        uri: file.path,
+        type: file.mime,
+        name: file.filename || `${patientName}${Date.now()}.jpg`,
+      }));
+
+      setLoading(true);
+
+      // Step 2: Determine upload provider and process accordingly
+      if (provider === "google") {
+        // await ensureValidToken();
+        await checkAndRefreshGoogleAccessToken(accessToken);
+        await handleGoogleDriveUpload(mappedFileDetails);
+      } else {
+        await ensureValidAccessToken(accessToken);
+        await handleDropboxUpload(mappedFileDetails);
+      }
+    } catch (error) {
+      console.error("Error during file selection or upload:", error);
+      // Optionally, handle user cancellation or display a message
+      Toast.show(error.message || "User has cancelled the flow");
+    } finally {
+      setLoading(false); // Ensure loading is stopped regardless of success or error
+    }
+  };
+
+  const btnCollage = (type) => {
+    if (needSubscription) {
+      showSubscriptionAlert(navigate);
+      return;
+    }
+    type == "withSelectedImage"
+      ? navigate(ScreenName.COLLAGE_ADD, {
+          images: collageImages,
+          preData: preData,
+        })
+      : navigate(ScreenName.COLLAGE_ADD, { preData: preData });
+  };
+  const btnAddTag = () => {
+    if (needSubscription) {
+      showSubscriptionAlert(navigate);
+      return;
+    }
+    navigate(ScreenName.IMAGE_DETAILS, {
+      images: collageImages,
+    });
+  };
+
+  const CommonComp = ({
+    IconComponent,
+    title,
+    onPress,
+    commonContainer = null,
+    titleStyle = null,
+  }) => {
     return (
       <View style={{ justifyContent: "center", alignItems: "center" }}>
-        <TouchableOpacity onPress={onPress} style={[styles.commonContainer, commonContainer]}>
+        <TouchableOpacity
+          onPress={onPress}
+          style={[styles.commonContainer, commonContainer]}
+        >
           {IconComponent && <IconComponent />}
         </TouchableOpacity>
-        <Text style={[styles.title, { fontSize: 10, color: COLORS.primary }, titleStyle]}>
+        <Text
+          style={[
+            styles.title,
+            { fontSize: 10, color: COLORS.primary },
+            titleStyle,
+          ]}
+        >
           {title}
         </Text>
       </View>
@@ -490,10 +549,12 @@ const PatientDetails = (props) => {
         <TouchableOpacity onPress={() => goBack()} style={{ marginLeft: 10 }}>
           <Image
             style={styles.backIcon}
-            source={require('../assets/images/icons/backIcon.png')}
+            source={require("../assets/images/icons/backIcon.png")}
           />
         </TouchableOpacity>
-        <Text style={{ fontSize: 15, color: '#424242', marginLeft: -30 }}>Patient Details</Text>
+        <Text style={{ fontSize: 15, color: "#424242", marginLeft: -30 }}>
+          Patient Details
+        </Text>
         <View />
       </View>
       <DeleteImagePopUp
@@ -506,7 +567,12 @@ const PatientDetails = (props) => {
       />
       <Loading visible={isLoading || loading || deleteImageLoading || loaded} />
       <View style={[commonStyles.shadowContainer, styles.cardContainer]}>
-        <View style={[commonStyles.flexView, { justifyContent: "space-between", width: "100%" }]}>
+        <View
+          style={[
+            commonStyles.flexView,
+            { justifyContent: "space-between", width: "100%" },
+          ]}
+        >
           <View style={commonStyles.flexView}>
             <Image
               source={patientProfileImages}
@@ -523,7 +589,6 @@ const PatientDetails = (props) => {
               )}
             </View>
           </View>
-
         </View>
         <CustomBtn
           onPress={() =>
@@ -584,7 +649,7 @@ const PatientDetails = (props) => {
             handleImagePress={(item, index, allData) => {
               handleImagePress(item, index, allData);
             }}
-            toggleImageSelection={(item, type = 'default') => {
+            toggleImageSelection={(item, type = "default") => {
               toggleImageSelection(item, type);
             }}
           />
@@ -618,12 +683,7 @@ const PatientDetails = (props) => {
               )}
               {selectedImages?.length > 0 && selectedImages?.length <= 3 && (
                 <CustomBtn
-                  onPress={() =>
-                    navigate(ScreenName.COLLAGE_ADD, {
-                      images: collageImages,
-                      preData: preData,
-                    })
-                  }
+                  onPress={() => btnCollage("withSelectedImage")}
                   titleStyle={{ fontSize: 10 }}
                   btnStyle={styles.bottomButtonsContainer}
                   title={"Add Collage"}
@@ -633,9 +693,7 @@ const PatientDetails = (props) => {
                 <>
                   <CustomBtn
                     onPress={() => {
-                      navigate(ScreenName.IMAGE_DETAILS, {
-                        images: collageImages,
-                      });
+                      btnAddTag();
                     }}
                     titleStyle={{ fontSize: 10 }}
                     btnStyle={styles.bottomButtonsContainer}
@@ -661,9 +719,7 @@ const PatientDetails = (props) => {
             ]}
           >
             <CommonComp
-              onPress={() =>
-                navigate(ScreenName.COLLAGE_ADD, { preData: preData })
-              }
+              onPress={() => btnCollage("")}
               title={"Collage"}
               IconComponent={CollegeIcon}
             />
@@ -679,7 +735,6 @@ const PatientDetails = (props) => {
               title={"Import"}
               IconComponent={importIcon}
             />
-
           </View>
         </View>
       )}
@@ -691,7 +746,10 @@ export default PatientDetails;
 
 const styles = StyleSheet.create({
   headerContainer: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
   },
   backIcon: { height: 40, width: 40 },
   cardContainer: {
@@ -775,6 +833,9 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   filterButton: {
-    paddingHorizontal: 10, paddingVertical: 5, backgroundColor: COLORS.primary, borderRadius: 10
-  }
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+  },
 });

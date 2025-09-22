@@ -19,6 +19,9 @@ import {
 } from "react-native";
 import COLORS from "../styles/colors";
 import imagePaths from "../assets/images";
+import BootSplash from "react-native-bootsplash";
+import { getMySubscriptionDetails } from "../configs/api";
+import { updateSubscription } from "../redux/slices/authSlice";
 
 const AppNavigator = () => {
   const dispatch = useDispatch();
@@ -43,9 +46,33 @@ const AppNavigator = () => {
     const unsubscribe = NetInfo.addEventListener((state) => {
       dispatch(setNetworkStatus(state.isConnected));
     });
+
     return () => unsubscribe();
   }, [dispatch]);
- 
+
+  const getProfile = async () => {
+    try {
+      let res = await getMySubscriptionDetails(token, userId);
+      console.log("getMySubscriptionDetails res", res);
+      dispatch(updateSubscription(res));
+    } catch (error) {
+    } finally {
+      setTimeout(async () => {
+        await BootSplash.hide({ fade: true });
+      }, 200);
+    }
+  };
+
+  useEffect(() => {
+    if (token && userId) {
+      getProfile();
+    } else {
+      setTimeout(async () => {
+        await BootSplash.hide({ fade: true });
+      }, 2500);
+    }
+  }, [token, accessToken]);
+
   return (
     <>
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -85,6 +112,22 @@ const AppNavigator = () => {
           </SafeAreaView>
         </Modal>
         <NavigationContainer linking={linking} ref={navigationRef}>
+          {/* {!token ? (
+            // Step 1: Not logged in
+            <AuthStack />
+          ) : !accessToken ? (
+            // Step 2: Logged in but not connected to cloud
+            <ConnectCloud />
+          ) : needsSubscription ? (
+            // Step 3: Connected, but no subscription
+            <IAPProvider>
+              <SubscriptionManage page="normal" />
+            </IAPProvider>
+          ) : (
+            // Step 4: All good → main app
+            <MainStack />
+          )} */}
+
           {token && accessToken ? (
             <MainStack />
           ) : token ? (
