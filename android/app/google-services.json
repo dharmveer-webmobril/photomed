@@ -12,7 +12,28 @@
           "package_name": "com.photomedPro.com"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "944528607298-39nqp9jdla1o321g0lgtpk1qggdl4uh4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.photomedPro.com",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "944528607298-r3e1e9ro36fn3r36h6qum2het2to6sss.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.photomedPro.com",
+            "certificate_hash": "bb311243586653d91647d656ed8a02ce6fea7d48"
+          }
+        },
+        {
+          "client_id": "944528607298-q2cbq7r9cdkck7oss6dng5v0q046ct61.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDtWqh56MUz0T6EgA3BscZNFhygOL2s5Lc"
@@ -20,7 +41,20 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "944528607298-q2cbq7r9cdkck7oss6dng5v0q046ct61.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "944528607298-0corq3bvlrmuqe4kfhh0rbtlc8irpfbf.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.photomedPro.com",
+                "app_store_id": "6737267001"
+              }
+            }
+          ]
         }
       }
     }

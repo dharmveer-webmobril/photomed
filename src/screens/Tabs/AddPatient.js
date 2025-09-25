@@ -1,11 +1,10 @@
-import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React, { useEffect, useMemo, useState } from "react";
+import {  StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, {  useMemo, useState } from "react";
 import WrapperContainer from "../../components/WrapperContainer";
 import commonStyles from "../../styles/commonStyles";
 import AppTextInput from "../../components/AppTextInput";
 import CountryPickerComp from '../../components/CountryPickerComp'
 import CustomBtn from "../../components/CustomBtn";
-import DatePickerModal from "../../components/DatePickerModal";
 import { goBack } from "../../navigators/NavigationService";
 import RecordAddedPopUp from "../../components/RecordAddedPopUp";
 import COLORS from "../../styles/colors";
@@ -19,7 +18,7 @@ import { logout } from "../../redux/slices/authSlice";
 import ConsentPopUp from "../../components/ConsentPopUp";
 import { useFocusEffect } from "@react-navigation/native";
 import DatePicker from 'react-native-date-picker'
-import { CountryPicker, countryCodes } from "react-native-country-codes-picker";
+import {  countryCodes } from "react-native-country-codes-picker";
 
 
 
@@ -35,7 +34,7 @@ const AddPatient = () => {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const today = new Date();
+  
   const maxDate = useMemo(() => {
     return new Date()
   }, []);

@@ -27,6 +27,7 @@ const PLAN_PRIORITY = {
   "com.photomedthreemonth": 2,
   "com.photomedyearlyplan": 3, // highest
 };
+
 export default function SubscriptionManage(params) {
   const token = useSelector((state) => state.auth.user);
   const userId = useSelector((state) => state.auth.userId);
@@ -48,10 +49,6 @@ export default function SubscriptionManage(params) {
   useEffect(() => {
     const fetchSubscription = async () => {
       setIsGetSubLoading(true);
-      // if (token && userId) {
-      //   setIsGetSubLoading(true);
-      //   return;
-      // }
       const data =
         token && userId && (await getMySubscriptionDetails(token, userId));
       if (data) {
@@ -78,10 +75,10 @@ export default function SubscriptionManage(params) {
       }
       setIsLoading(true);
       try {
-        fetchSubscriptions();
-        // await checkSubscriptionStatus();
+        await fetchSubscriptions();
+        console.log("Subscriptions fetched:", JSON.stringify(subscriptions, null, 2));
       } catch (error) {
-        console.error("Error loading subscriptions:", error);
+        console.error("Error loading subscriptions:", error.message, error);
         Alert.alert("Error", "Failed to load subscriptions. Please try again.");
       } finally {
         setIsLoading(false);
@@ -93,8 +90,9 @@ export default function SubscriptionManage(params) {
   const finishTransaction1 = async (purchase) => {
     try {
       await finishTransaction({ purchase, isConsumable: false });
+      console.log("Transaction finished:", purchase.transactionId);
     } catch (err) {
-      console.warn("Finish transaction error:", err);
+      console.warn("Finish transaction error:", err.message, err);
     }
   };
 
@@ -104,54 +102,112 @@ export default function SubscriptionManage(params) {
     purchase
   ) => {
     try {
-      await acknowledgePurchaseAndroid({ token, developerPayload });
-      await finishTransaction(purchase);
+      await acknowledgePurchaseAndroid({ purchaseToken: token, developerPayload });
+      await finishTransaction1(purchase);
     } catch (err) {
-      console.warn("Acknowledge purchase error:", err);
+      console.warn("Acknowledge purchase error:", err.message, err);
     }
   };
 
   const handlePurchase = async () => {
-    //  const purchases = await getAvailablePurchases();
-    //  console.log("Available purchases:", purchases);
-    //  return
     try {
       setIsLoading(true);
 
+      // Verify user authentication
+      if (!token) {
+        Alert.alert("Error", "Authentication token missing. Please log in again.");
+        return;
+      }
+
+      // Verify selected plan
+      if (!selectedPlan) {
+        Alert.alert("Error", "Please select a plan.");
+        return;
+      }
+
+      // Check current subscription status
       let res = await getMySubscriptionDetails(token, userId);
-      console.log("getMySubscriptionDetails res", res);
+      console.log("getMySubscriptionDetails res:", JSON.stringify(res, null, 2));
 
       if (res && res?.productId && res?.isExpired === false) {
         const currentPlanPriority = PLAN_PRIORITY[res.productId];
         const selectedPlanPriority = PLAN_PRIORITY[selectedPlan];
 
-        // If selected plan is less than current active plan → block
+        // Block if selected plan is lower than current active plan
         if (selectedPlanPriority < currentPlanPriority) {
           Alert.alert(
             "Alert",
-            "You already have a higher plan. You can only purchase a lower plan after your current subscription expires or is cancelled.\n\n👉 To manage your subscription, please go to your App Store/Google Play account."
+            "You already have a higher plan. You can only purchase a lower plan after your current subscription expires or is cancelled.\n\n👉 To manage your subscription, please go to your Google Play account."
           );
           return;
         }
       }
-      if (!selectedPlan) {
-        Alert.alert("Error", "Please select a plan.");
-        return;
-      }
-      if (!token) {
-        Alert.alert(
-          "Error",
-          "Authentication token missing. Please log in again."
-        );
-        return;
+
+      let purchaseParams;
+      if (Platform.OS === "android") {
+        // Android: Handle base plan purchase
+        const subscription = subscriptions.find(s => s.productId === selectedPlan);
+        if (!subscription) {
+          console.error("Subscription not found for productId:", selectedPlan);
+          Alert.alert("Error", "Selected subscription plan not found.");
+          return;
+        }
+
+        console.log("Selected subscription:", JSON.stringify(subscription, null, 2));
+
+        const offerDetails = subscription.subscriptionOfferDetails?.[0];
+        if (!offerDetails || !offerDetails.basePlanId) {
+          console.error("No base plan found for subscription:", selectedPlan);
+          Alert.alert("Error", "No valid base plan found for this subscription.");
+          return;
+        }
+
+        purchaseParams = {
+          sku: selectedPlan,
+          subscriptionOffers: [
+            {
+              sku: selectedPlan,
+              basePlanId: offerDetails.basePlanId,
+              offerToken: offerDetails?.offerToken || undefined, // Include offerToken if available
+            },
+          ],
+        };
+      } else {
+        // iOS: Use the existing SKU-based approach
+        purchaseParams = { sku: selectedPlan };
       }
 
-      // Start purchase
-      const purchase = await requestSubscription({ sku: selectedPlan });
-      console.log("purchasepurchasepurchase", purchase);
+      console.log("Purchase request params:", JSON.stringify(purchaseParams, null, 2));
 
-      if (purchase?.transactionReceipt) {
-        // Verify with backend
+      // Initiate subscription purchase
+      const purchase = await requestSubscription(purchaseParams);
+      console.log("Purchase response:", JSON.stringify(purchase, null, 2));
+
+      if (purchase) {
+        let bodyData;
+        if (Platform.OS === "android") {
+          const purchaseData = Array.isArray(purchase) ? purchase[0] : purchase;
+          bodyData = JSON.stringify({
+            receipt: {
+              purchaseToken: purchaseData.purchaseToken || "",
+              subscriptionId: purchaseData.productId || "",
+              packageName: "com.photomedPro.com",
+            },
+            platform: "android",
+            userId,
+          });
+        } else {
+          bodyData = JSON.stringify({
+            receipt: purchase.transactionReceipt,
+            platform: Platform.OS,
+            transactionId: purchase.transactionId,
+            userId,
+          });
+        }
+
+        console.log("Purchase verification body:", bodyData);
+
+        // Verify purchase with backend
         const response = await fetch(
           "https://photomedpro.com:10049/api/verify-inapp-receipt",
           {
@@ -160,61 +216,57 @@ export default function SubscriptionManage(params) {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({
-              receipt: purchase.transactionReceipt,
-              platform: Platform.OS,
-              transactionId: purchase.transactionId,
-              userId,
-            }),
+            body: bodyData,
           }
         );
 
         const responseData = await response.json();
-        console.log("verify-inapp-receipt response: 123", responseData);
+        console.log("verify-inapp-receipt response:", JSON.stringify(responseData, null, 2));
 
         if (response.ok && responseData.success) {
           // Acknowledge purchase
-
           if (Platform.OS === "ios") {
             await finishTransaction1(purchase);
           } else {
+            const purchaseData = Array.isArray(purchase) ? purchase[0] : purchase;
             await acknowledgePurchaseAndroid1(
-              purchase.purchaseToken,
-              purchase.developerPayloadAndroid,
-              purchase
+              purchaseData.purchaseToken,
+              purchaseData.developerPayloadAndroid,
+              purchaseData
             );
           }
 
+          // Prepare subscription data
           let expData = {
             expirationDate: responseData?.expirationDate,
             hasSubscription: true,
             isActive: responseData?.isActive,
             isExpired: responseData?.isExpired,
-            productId: responseData?.productId || purchase.productId,
+            productId: responseData?.productId || (Array.isArray(purchase) ? purchase[0].productId : purchase.productId),
             success: responseData?.success,
-            transactionId:
-              responseData?.transactionId || purchase.transactionId,
+            transactionId: responseData?.transactionId || (Array.isArray(purchase) ? purchase[0].transactionId : purchase.transactionId),
           };
 
-          console.log("expDatab 176--------", expData);
-          // update local state
-          setCurrentSubscription(expData);
+          console.log("expData:", JSON.stringify(expData, null, 2));
 
-          // update redux
+          // Update local state and redux
+          setCurrentSubscription(expData);
           dispatch(updateSubscription(expData));
+
           if (from === "profile") {
             goBack();
           }
           Alert.alert("Success", "Purchase verified and activated!");
         } else {
+          console.error("Purchase verification failed:", responseData);
           Alert.alert("Error", "Purchase verification failed.");
         }
       } else {
         Alert.alert("Error", "Purchase failed. No receipt received.");
       }
     } catch (error) {
-      console.error("Purchase failed:", error, error?.code);
-      Alert.alert("Error", "Failed to complete purchase. Please try again.");
+      console.error("Purchase failed:", error.message, error.code, error);
+      Alert.alert("Error", `Failed to complete purchase: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -222,19 +274,49 @@ export default function SubscriptionManage(params) {
 
   const restorePurchases = async () => {
     if (!token) {
-      Alert.alert(
-        "Error",
-        "Authentication token missing. Please log in again."
-      );
+      Alert.alert("Error", "Authentication token missing. Please log in again.");
       return;
     }
+
     setIsLoading(true);
     try {
+      console.log("Starting restore purchases for platform:", Platform.OS);
+
+      // Fetch available purchases
       const purchases = await getAvailablePurchases();
+      console.log("Available purchases:", JSON.stringify(purchases, null, 2));
+
       if (purchases.length > 0) {
-        const latest = purchases.sort(
+        // Sort by most recent purchase
+        const latestPurchase = purchases.sort(
           (a, b) => new Date(b.transactionDate) - new Date(a.transactionDate)
         )[0];
+        console.log("Latest purchase:", JSON.stringify(latestPurchase, null, 2));
+
+        // Prepare body data for backend verification
+        let bodyData;
+        if (Platform.OS === "android") {
+          bodyData = JSON.stringify({
+            receipt: {
+              purchaseToken: latestPurchase.purchaseToken || "",
+              subscriptionId: latestPurchase.productId || "",
+              packageName: "com.photomedPro.com",
+            },
+            platform: "android",
+            userId,
+          });
+        } else {
+          bodyData = JSON.stringify({
+            receipt: latestPurchase.transactionReceipt,
+            platform: Platform.OS,
+            transactionId: latestPurchase.transactionId,
+            userId,
+          });
+        }
+
+        console.log("Restore verification body:", bodyData);
+
+        // Verify purchase with backend
         const response = await fetch(
           "https://photomedpro.com:10049/api/verify-inapp-receipt",
           {
@@ -243,47 +325,60 @@ export default function SubscriptionManage(params) {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({
-              receipt: latest.transactionReceipt,
-              platform: Platform.OS,
-              userId,
-            }),
+            body: bodyData,
           }
         );
+
         const responseData = await response.json();
+        console.log("Backend verification response:", JSON.stringify(responseData, null, 2));
 
-        console.log("restorePurchases response:", responseData);
-        if (response.ok) {
-          if (responseData) {
-            let expData = {
-              expirationDate: responseData?.expirationDate,
-              hasSubscription: true,
-              isActive: responseData?.isActive,
-              isExpired: responseData?.isExpired,
-              productId: responseData?.productId || purchase?.productId,
-              success: responseData?.success,
-              transactionId:
-                responseData?.transactionId || purchase?.transactionId,
-            };
-
-            console.log("expData 145--------", expData);
-            // update local state
-            setCurrentSubscription(expData);
-            // update redux
-            dispatch(updateSubscription(expData));
+        if (response.ok && responseData.success) {
+          // Acknowledge purchase on Android if not already acknowledged
+          if (Platform.OS === "android" && !latestPurchase.isAcknowledgedAndroid) {
+            try {
+              await acknowledgePurchaseAndroid({
+                purchaseToken: latestPurchase.purchaseToken,
+                developerPayload: latestPurchase.developerPayloadAndroid,
+              });
+              console.log("Purchase acknowledged successfully for:", latestPurchase.transactionId);
+              await finishTransaction({ purchase: latestPurchase, isConsumable: false });
+              console.log("Transaction finished for:", latestPurchase.transactionId);
+            } catch (ackError) {
+              console.warn("Acknowledge or finish transaction error:", ackError.message, ackError);
+            }
+          } else if (Platform.OS === "ios") {
+            await finishTransaction({ purchase: latestPurchase, isConsumable: false });
+            console.log("Transaction finished for iOS:", latestPurchase.transactionId);
           }
-          //  await checkSubscriptionStatus();
+
+          // Prepare subscription data
+          const expData = {
+            expirationDate: responseData?.expirationDate,
+            hasSubscription: true,
+            isActive: responseData?.isActive,
+            isExpired: responseData?.isExpired,
+            productId: responseData?.productId || latestPurchase.productId,
+            success: responseData?.success,
+            transactionId: responseData?.transactionId || latestPurchase.transactionId,
+          };
+
+          console.log("Restored subscription data:", JSON.stringify(expData, null, 2));
+
+          // Update local state and redux
+          setCurrentSubscription(expData);
+          dispatch(updateSubscription(expData));
+
           Alert.alert("Success", "Purchases restored successfully.");
         } else {
-          console.error("Restore failed:", responseData);
-          Alert.alert("Error", "Failed to restore purchases.");
+          console.error("Backend verification failed:", responseData);
+          Alert.alert("Error", "Failed to verify restored purchase with server.");
         }
       } else {
         Alert.alert("Info", "No purchases found to restore.");
       }
     } catch (error) {
-      console.error("Restore failed:", error);
-      Alert.alert("Error", "Failed to restore purchases. Please try again.");
+      console.error("Restore failed:", error.message, error.code, error);
+      Alert.alert("Error", `Failed to restore purchases: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -317,10 +412,10 @@ export default function SubscriptionManage(params) {
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
-              from == "profile" && goBack();
+              from === "profile" && goBack();
             }}
           >
-            {from == "profile" && <Text style={styles.iconText}>←</Text>}
+            {from === "profile" && <Text style={styles.iconText}>←</Text>}
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Manage Subscription Plan</Text>
           <View />
@@ -560,10 +655,12 @@ const styles = StyleSheet.create({
   planTitle: {
     fontSize: 16,
     fontWeight: "600",
+    color: "#000"
   },
   planPrice: {
     fontSize: 16,
     fontWeight: "600",
+    color: "#000"
   },
   planText: {
     fontSize: 14,
