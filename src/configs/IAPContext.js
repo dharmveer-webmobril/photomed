@@ -60,7 +60,7 @@ export const IAPProvider = ({ children }) => {
     try {
       const skus = Platform.OS === "android" ? androidSKUs : iosSKUs;
       const products = await getSubscriptions({ skus });
-      console.log("Subscriptions fetched:", products);
+  console.log("Subscriptions fetched:\n", JSON.stringify(products, null, 2));
       setSubscriptions(products);
     } catch (err) {
       console.error("Error fetching subscriptions:", err);

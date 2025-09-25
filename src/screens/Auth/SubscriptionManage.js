@@ -22,7 +22,6 @@ import {
 import { getMySubscriptionDetails } from "../../configs/api";
 import { updateSubscription } from "../../redux/slices/authSlice";
 
-
 const PLAN_PRIORITY = {
   "com.photomedonemonth": 1, // lowest
   "com.photomedthreemonth": 2,
@@ -339,6 +338,11 @@ export default function SubscriptionManage(params) {
           {subscriptions?.length > 0 &&
             subscriptions.map((plan) => {
               const isSelected = selectedPlan === plan.productId;
+
+              const androidPrice =
+                plan.subscriptionOfferDetails?.[0]?.pricingPhases
+                  ?.pricingPhaseList?.[0]?.formattedPrice || "N/A";
+
               return (
                 <TouchableOpacity
                   key={plan.productId}
@@ -357,7 +361,11 @@ export default function SubscriptionManage(params) {
                     {plan.productId === "com.photomedonemonth" && (
                       <Text style={styles.planTitle}>Monthly Access Plan</Text>
                     )}
-                    <Text style={styles.planPrice}>{plan.localizedPrice}</Text>
+                    <Text style={styles.planPrice}>
+                      {Platform.OS === "android"
+                        ? androidPrice
+                        : plan.localizedPrice}
+                    </Text>
                   </View>
                   {plan.productId === "com.photomedthreemonth" && (
                     <Text style={styles.planText}>
