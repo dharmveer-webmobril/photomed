@@ -89,6 +89,12 @@ android {
             appAuthRedirectScheme: 'io.identityserver.demo.auth'
         ]
         missingDimensionStrategy 'store', 'play'
+
+        externalNativeBuild {
+            cmake {
+                cppFlags "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON"
+            }
+        }
     }
     splits {
         abi {
