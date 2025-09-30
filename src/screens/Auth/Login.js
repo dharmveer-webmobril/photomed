@@ -277,6 +277,8 @@ const Login = () => {
           device_type,
           fcmToken,
         });
+        
+console.log('resultresultresult',result);
 
         if (result?.data?.succeeded) {
           dispatch(setUserId(result?.data?.ResponseBody?.userData?._id));

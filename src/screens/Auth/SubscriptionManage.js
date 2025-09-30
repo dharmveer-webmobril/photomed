@@ -101,8 +101,10 @@ export default function SubscriptionManage(params) {
     developerPayload,
     purchase
   ) => {
+    console.log('token--', token, 'developerPayload--', developerPayload, 'purchase', purchase);
+
     try {
-      await acknowledgePurchaseAndroid({ purchaseToken: token, developerPayload });
+      await acknowledgePurchaseAndroid({ token: token, developerPayload });
       await finishTransaction1(purchase);
     } catch (err) {
       console.warn("Acknowledge purchase error:", err.message, err);
@@ -530,72 +532,91 @@ export default function SubscriptionManage(params) {
               </TouchableOpacity>
             </>
           )}
-          <Text style={{ color: "#000", marginTop: 10 }}>
-            Note:- If your payment was deducted but the plan was not activated,
-            click the Restore Button to restore your plan.
-          </Text>
 
-          <Text
-            style={{
-              textAlign: "center",
-              marginHorizontal: 20,
-              color: "#000",
-              marginTop: 30,
-            }}
-          >
-            Payment will be charged to iTunes Account at confirmation of
-            purchase. Subscription automatically renews unless auto-renew is
-            turned off at least 24-hours before the end of the current period.
-            Account will be charged for renewal within 24-hours prior to the end
-            of the current period, and identify the cost of the renewal.
-            Subscriptions may be managed by the user and auto-renewal may be
-            turned off by going to the user's Account Settings after purchase.
-            No cancellation of the current subscription is allowed during active
-            subscription period. Any unused portion of a free trial period, if
-            offered, will be forfeited when the user purchases a subscription to
-            that publication, where applicable
-          </Text>
+          {
+            subscriptions?.length > 0 &&
+            <>
+              <Text style={{ color: "#000", marginTop: 10 }}>
+                Note:- If your payment was deducted but the plan was not activated,
+                click the Restore Button to restore your plan.
+              </Text>
 
-          <View
-            style={{
-              flexDirection: "row",
-              marginHorizontal: 20,
-              marginTop: 20,
-              marginBottom: 30,
-              justifyContent: "center",
-            }}
-          >
+              <Text
+                style={{
+                  textAlign: "center",
+                  marginHorizontal: 20,
+                  color: "#000",
+                  marginTop: 30,
+                }}
+              >
+                Payment will be charged to iTunes Account at confirmation of
+                purchase. Subscription automatically renews unless auto-renew is
+                turned off at least 24-hours before the end of the current period.
+                Account will be charged for renewal within 24-hours prior to the end
+                of the current period, and identify the cost of the renewal.
+                Subscriptions may be managed by the user and auto-renewal may be
+                turned off by going to the user's Account Settings after purchase.
+                No cancellation of the current subscription is allowed during active
+                subscription period. Any unused portion of a free trial period, if
+                offered, will be forfeited when the user purchases a subscription to
+                that publication, where applicable
+              </Text>
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  marginHorizontal: 20,
+                  marginTop: 20,
+                  marginBottom: 30,
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  onPress={() =>
+                    navigate("Terms and Condition", {
+                      slug: "terms-and-conditions",
+                      screenName: "Terms and Conditions",
+                    })
+                  }
+                  style={{
+                    color: "#32327C",
+                    marginRight: 10,
+                    textDecorationLine: "underline",
+                  }}
+                >
+                  Terms of Service
+                </Text>
+                <Text
+                  onPress={() =>
+                    navigate("Terms and Condition", {
+                      slug: "privacy-policy",
+                      screenName: "Privacy Policy",
+                    })
+                  }
+                  style={{
+                    color: "#32327C",
+                    marginLeft: 10,
+                    textDecorationLine: "underline",
+                  }}
+                >
+                  Privacy Policy
+                </Text>
+              </View>
+            </>
+          }
+          {
+            !isLoading && !isGetSubLoading && subscriptions?.length <= 0 &&
             <Text
-              onPress={() =>
-                navigate("Terms and Condition", {
-                  slug: "terms-and-conditions",
-                  screenName: "Terms and Conditions",
-                })
-              }
               style={{
                 color: "#32327C",
-                marginRight: 10,
-                textDecorationLine: "underline",
+                textAlign: "center",
+                fontSize: 14,
+                marginTop: 50
               }}
             >
-              Terms of Service
+              Data not found
             </Text>
-            <Text
-              onPress={() =>
-                navigate("Terms and Condition", {
-                  slug: "privacy-policy",
-                  screenName: "Privacy Policy",
-                })
-              }
-              style={{
-                color: "#32327C",
-                marginLeft: 10,
-                textDecorationLine: "underline",
-              }}
-            >
-              Privacy Policy
-            </Text>
-          </View>
+          }
         </ScrollView>
       </View>
     </SafeAreaView>

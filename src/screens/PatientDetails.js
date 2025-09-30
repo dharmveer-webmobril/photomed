@@ -449,7 +449,7 @@ const PatientDetails = (props) => {
   };
 
   const subscription = useSelector((state) => state.auth?.subscription);
-  const needSubscription = !subscription?.hasSubscription || !subscription?.isActive || subscription?.isExpired;
+  const needSubscription = !subscription?.hasSubscription ||  subscription?.isExpired  // || !subscription?.isActive;
   console.log('needSubscriptionneedSubscriptionneedSubscription', needSubscription, subscription);
 
 

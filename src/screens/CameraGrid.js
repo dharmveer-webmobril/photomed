@@ -279,7 +279,7 @@ const CameraGrid = (props) => {
 
   const _chooseFile = async () => {
     console.log("activePatient", activePatient);
-    if (susbcription) {
+    if (needSubscription) {
       showSubscriptionAlert(navigate);
       return;
     }
