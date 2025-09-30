@@ -12,7 +12,7 @@ import { checkForUpdates } from "./src/configs/helperFunction";
 import { decode as atob } from "base-64";
 import Orientation from "react-native-orientation-locker";
 import { IAPProvider } from "./src/configs/IAPContext";
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 if (!global.atob) {
   global.atob = atob;
 }
@@ -32,7 +32,7 @@ const App = () => {
   // }, []);
 
   useEffect(() => {
- 
+
     const init = async () => {
       try {
         await requestUserPermission();
@@ -52,12 +52,12 @@ const App = () => {
   }, []);
 
   return (
-    <Provider store={store}>
-      {/* <IAPProvider> */}
-      <StatusBar backgroundColor={"white"} barStyle={"dark-content"} />
-      <AppNavigator />
-      {/* </IAPProvider> */}
-    </Provider>
+    <SafeAreaView style={{ flex: 1 }}>
+      <Provider store={store}>
+        <StatusBar backgroundColor={"white"} barStyle={"dark-content"} />
+        <AppNavigator />
+      </Provider>
+    </SafeAreaView>
   );
 };
 
