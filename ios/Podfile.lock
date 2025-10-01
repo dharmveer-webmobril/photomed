@@ -8,34 +8,11 @@ PODS:
   - boost (1.84.0)
   - DoubleConversion (1.1.6)
   - FBLazyVector (0.75.4)
-  - Firebase (10.29.0):
-    - Firebase/Core (= 10.29.0)
-  - Firebase/Core (10.29.0):
-    - Firebase/CoreOnly
-    - FirebaseAnalytics (~> 10.29.0)
   - Firebase/CoreOnly (10.29.0):
     - FirebaseCore (= 10.29.0)
   - Firebase/Messaging (10.29.0):
     - Firebase/CoreOnly
     - FirebaseMessaging (~> 10.29.0)
-  - FirebaseAnalytics (10.29.0):
-    - FirebaseAnalytics/AdIdSupport (= 10.29.0)
-    - FirebaseCore (~> 10.0)
-    - FirebaseInstallations (~> 10.0)
-    - GoogleUtilities/AppDelegateSwizzler (~> 7.11)
-    - GoogleUtilities/MethodSwizzler (~> 7.11)
-    - GoogleUtilities/Network (~> 7.11)
-    - "GoogleUtilities/NSData+zlib (~> 7.11)"
-    - nanopb (< 2.30911.0, >= 2.30908.0)
-  - FirebaseAnalytics/AdIdSupport (10.29.0):
-    - FirebaseCore (~> 10.0)
-    - FirebaseInstallations (~> 10.0)
-    - GoogleAppMeasurement (= 10.29.0)
-    - GoogleUtilities/AppDelegateSwizzler (~> 7.11)
-    - GoogleUtilities/MethodSwizzler (~> 7.11)
-    - GoogleUtilities/Network (~> 7.11)
-    - "GoogleUtilities/NSData+zlib (~> 7.11)"
-    - nanopb (< 2.30911.0, >= 2.30908.0)
   - FirebaseCore (10.29.0):
     - FirebaseCoreInternal (~> 10.0)
     - GoogleUtilities/Environment (~> 7.12)
@@ -60,26 +37,6 @@ PODS:
     - nanopb (< 2.30911.0, >= 2.30908.0)
   - fmt (9.1.0)
   - glog (0.3.5)
-  - GoogleAppMeasurement (10.29.0):
-    - GoogleAppMeasurement/AdIdSupport (= 10.29.0)
-    - GoogleUtilities/AppDelegateSwizzler (~> 7.11)
-    - GoogleUtilities/MethodSwizzler (~> 7.11)
-    - GoogleUtilities/Network (~> 7.11)
-    - "GoogleUtilities/NSData+zlib (~> 7.11)"
-    - nanopb (< 2.30911.0, >= 2.30908.0)
-  - GoogleAppMeasurement/AdIdSupport (10.29.0):
-    - GoogleAppMeasurement/WithoutAdIdSupport (= 10.29.0)
-    - GoogleUtilities/AppDelegateSwizzler (~> 7.11)
-    - GoogleUtilities/MethodSwizzler (~> 7.11)
-    - GoogleUtilities/Network (~> 7.11)
-    - "GoogleUtilities/NSData+zlib (~> 7.11)"
-    - nanopb (< 2.30911.0, >= 2.30908.0)
-  - GoogleAppMeasurement/WithoutAdIdSupport (10.29.0):
-    - GoogleUtilities/AppDelegateSwizzler (~> 7.11)
-    - GoogleUtilities/MethodSwizzler (~> 7.11)
-    - GoogleUtilities/Network (~> 7.11)
-    - "GoogleUtilities/NSData+zlib (~> 7.11)"
-    - nanopb (< 2.30911.0, >= 2.30908.0)
   - GoogleDataTransport (9.4.1):
     - GoogleUtilities/Environment (~> 7.7)
     - nanopb (< 2.30911.0, >= 2.30908.0)
@@ -98,18 +55,6 @@ PODS:
     - GoogleToolboxForMac/Defines (= 4.2.1)
   - "GoogleToolboxForMac/NSData+zlib (4.2.1)":
     - GoogleToolboxForMac/Defines (= 4.2.1)
-  - GoogleUtilities (7.13.3):
-    - GoogleUtilities/AppDelegateSwizzler (= 7.13.3)
-    - GoogleUtilities/Environment (= 7.13.3)
-    - GoogleUtilities/ISASwizzler (= 7.13.3)
-    - GoogleUtilities/Logger (= 7.13.3)
-    - GoogleUtilities/MethodSwizzler (= 7.13.3)
-    - GoogleUtilities/Network (= 7.13.3)
-    - "GoogleUtilities/NSData+zlib (= 7.13.3)"
-    - GoogleUtilities/Privacy (= 7.13.3)
-    - GoogleUtilities/Reachability (= 7.13.3)
-    - GoogleUtilities/SwizzlerTestHelpers (= 7.13.3)
-    - GoogleUtilities/UserDefaults (= 7.13.3)
   - GoogleUtilities/AppDelegateSwizzler (7.13.3):
     - GoogleUtilities/Environment
     - GoogleUtilities/Logger
@@ -118,13 +63,8 @@ PODS:
   - GoogleUtilities/Environment (7.13.3):
     - GoogleUtilities/Privacy
     - PromisesObjC (< 3.0, >= 1.2)
-  - GoogleUtilities/ISASwizzler (7.13.3):
-    - GoogleUtilities/Privacy
   - GoogleUtilities/Logger (7.13.3):
     - GoogleUtilities/Environment
-    - GoogleUtilities/Privacy
-  - GoogleUtilities/MethodSwizzler (7.13.3):
-    - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
   - GoogleUtilities/Network (7.13.3):
     - GoogleUtilities/Logger
@@ -137,8 +77,6 @@ PODS:
   - GoogleUtilities/Reachability (7.13.3):
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
-  - GoogleUtilities/SwizzlerTestHelpers (7.13.3):
-    - GoogleUtilities/MethodSwizzler
   - GoogleUtilities/UserDefaults (7.13.3):
     - GoogleUtilities/Logger
     - GoogleUtilities/Privacy
@@ -1853,15 +1791,53 @@ PODS:
     - React-Core
   - RNIap (12.16.2):
     - React-Core
-  - RNImageCropPicker (0.41.6):
+  - RNImageCropPicker (0.51.0):
+    - DoubleConversion
+    - glog
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
     - React-RCTImage
-    - RNImageCropPicker/QBImagePickerController (= 0.41.6)
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - RNImageCropPicker/QBImagePickerController (= 0.51.0)
     - TOCropViewController (~> 2.7.4)
-  - RNImageCropPicker/QBImagePickerController (0.41.6):
+    - Yoga
+  - RNImageCropPicker/QBImagePickerController (0.51.0):
+    - DoubleConversion
+    - glog
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
     - React-RCTImage
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
     - TOCropViewController (~> 2.7.4)
+    - Yoga
   - RNMLKitFaceDetection (1.3.2):
     - GoogleMLKit/FaceDetection (= 6.0.0)
     - React
@@ -2024,13 +2000,9 @@ DEPENDENCIES:
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
-  - Firebase
-  - FirebaseCore
-  - FirebaseCoreInternal
   - fmt (from `../node_modules/react-native/third-party-podspecs/fmt.podspec`)
   - glog (from `../node_modules/react-native/third-party-podspecs/glog.podspec`)
   - GoogleMLKit/FaceDetection (= 6.0.0)
-  - GoogleUtilities
   - lottie-react-native (from `../node_modules/lottie-react-native`)
   - RCT-Folly (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
   - RCT-Folly/Fabric (from `../node_modules/react-native/third-party-podspecs/RCT-Folly.podspec`)
@@ -2129,13 +2101,11 @@ SPEC REPOS:
   trunk:
     - AppAuth
     - Firebase
-    - FirebaseAnalytics
     - FirebaseCore
     - FirebaseCoreExtension
     - FirebaseCoreInternal
     - FirebaseInstallations
     - FirebaseMessaging
-    - GoogleAppMeasurement
     - GoogleDataTransport
     - GoogleMLKit
     - GoogleSignIn
@@ -2358,7 +2328,6 @@ SPEC CHECKSUMS:
   DoubleConversion: 76ab83afb40bddeeee456813d9c04f67f78771b5
   FBLazyVector: 430e10366de01d1e3d57374500b1b150fe482e6d
   Firebase: cec914dab6fd7b1bd8ab56ea07ce4e03dd251c2d
-  FirebaseAnalytics: 23717de130b779aa506e757edb9713d24b6ffeda
   FirebaseCore: 30e9c1cbe3d38f5f5e75f48bfcea87d7c358ec16
   FirebaseCoreExtension: 705ca5b14bf71d2564a0ddc677df1fc86ffa600f
   FirebaseCoreInternal: df84dd300b561c27d5571684f389bf60b0a5c934
@@ -2366,7 +2335,6 @@ SPEC CHECKSUMS:
   FirebaseMessaging: 7b5d8033e183ab59eb5b852a53201559e976d366
   fmt: 4c2741a687cc09f0634a2e2c72a838b99f1ff120
   glog: 69ef571f3de08433d766d614c73a9838a06bf7eb
-  GoogleAppMeasurement: f9de05ee17401e3355f68e8fc8b5064d429f5918
   GoogleDataTransport: 6c09b596d841063d76d4288cc2d2f42cc36e1e2a
   GoogleMLKit: 97ac7af399057e99182ee8edfa8249e3226a4065
   GoogleSignIn: d4281ab6cf21542b1cfaff85c191f230b399d2db
@@ -2466,7 +2434,7 @@ SPEC CHECKSUMS:
   RNGestureHandler: aa8556b4da5e8b7a1c7f51c2901e8624398adecf
   RNGoogleSignin: c26dada63b1a357af4f6a87f93ee70268d420c0f
   RNIap: 2fba6c91f79fb7c71fcc44465f606061653caf01
-  RNImageCropPicker: 8e39c01f205e00d739c31e682f068aac315587bf
+  RNImageCropPicker: 3dee9d983f78771848dc2ad3dd3bf305666fc00f
   RNMLKitFaceDetection: c3d95579c042b8937a682a55b04659dc0c4812f8
   RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNReanimated: 17c7f50f19ed6fb9ada4d1cf49e4b1fbaac42613
@@ -2480,6 +2448,6 @@ SPEC CHECKSUMS:
   VisionCamera: 0ecfede218b2d989be3d504270b71f3d2384d95d
   Yoga: 055f92ad73f8c8600a93f0e25ac0b2344c3b07e6
 
-PODFILE CHECKSUM: bf0a8a7dc5827e02194f4a868b3da326bde616d7
+PODFILE CHECKSUM: 3f76ed3a22bff0b24079bd2a71689def84977954
 
 COCOAPODS: 1.16.2
