@@ -93,12 +93,12 @@ const Profile = (props) => {
     },
     ...(!user?.login_type
       ? [
-          {
-            id: 2,
-            name: "Change Password",
-            screenName: ScreenName.CHANGE_PASSWORD,
-          },
-        ]
+        {
+          id: 2,
+          name: "Change Password",
+          screenName: ScreenName.CHANGE_PASSWORD,
+        },
+      ]
       : []),
 
     // ...(Platform.OS == 'ios' ? [{
@@ -106,6 +106,7 @@ const Profile = (props) => {
     //   name: 'Manage Subscription',
     //   screenName: ScreenName.SUB_MANAGE,
     // }] : []),
+
     {
       id: 8,
       name: "Manage Subscription",
@@ -117,6 +118,11 @@ const Profile = (props) => {
       screenName: ScreenName.TERMS,
       slug: "privacy-policy",
     },
+    ...(Platform.OS == 'ios' ? [{
+      id: 8,
+      name: 'Terms of Use / EULA',
+      screenName: 'Terms of Use / EULA',
+    }] : []),
     {
       id: 5,
       name: "Legal Content",
@@ -136,11 +142,26 @@ const Profile = (props) => {
     },
   ];
 
+  const onPress = async () => {
+    try {
+      const supported = await Linking.canOpenURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/');
+      if (!supported) {
+        Alert.alert('Cannot open link', url);
+        return;
+      }
+      await Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/');
+    } catch (err) {
+      console.error('Failed to open URL:', err);
+      Alert.alert('Error', 'Unable to open link at the moment.');
+    }
+  };
   const navigateToNextScreen = (screen, slug, name) => {
     if (screen == ScreenName.EDIT_PROFILE) {
       navigate(screen, { user });
     } else if (screen == ScreenName.SUB_MANAGE) {
       navigate(screen, { token: token, from: "profile" });
+    } else if (screen == 'Terms of Use / EULA') {
+      onPress()
     } else {
       navigate(screen, { slug: slug, screenName: name });
     }
