@@ -6,6 +6,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Linking
 } from "react-native";
 import React, { useCallback, useEffect, useState } from "react";
 import WrapperContainer from "../../components/WrapperContainer";

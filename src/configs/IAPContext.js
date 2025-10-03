@@ -39,14 +39,14 @@ export const IAPProvider = ({ children }) => {
   const isCheckingRef = useRef(false);
 
   const androidSKUs = [
-    "com.photomedthreemonth",
-    "com.photomedonemonth",
-    "com.photomedyearlyplan",
+    "com.photomedthreemonth1",
+    "com.photomedonemonth1",
+    "com.photomedyearlyplan1",
   ];
   const iosSKUs = [
-    "com.photomedthreemonth",
-    "com.photomedonemonth",
-    "com.photomedyearlyplan",
+    "com.photomedthreemonth1",
+    "com.photomedonemonth1",
+    "com.photomedyearlyplan1",
   ];
 
   const token = useSelector((state) => state.auth.user);

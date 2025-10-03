@@ -23,9 +23,9 @@ import { getMySubscriptionDetails } from "../../configs/api";
 import { updateSubscription } from "../../redux/slices/authSlice";
 
 const PLAN_PRIORITY = {
-  "com.photomedonemonth": 1, // lowest
-  "com.photomedthreemonth": 2,
-  "com.photomedyearlyplan": 3, // highest
+  "com.photomedonemonth1": 1, // lowest
+  "com.photomedthreemonth1": 2,
+  "com.photomedyearlyplan1": 3, // highest
 };
 
 export default function SubscriptionManage(params) {
@@ -447,15 +447,15 @@ export default function SubscriptionManage(params) {
                   style={[styles.planCard, isSelected && styles.selectedCard]}
                 >
                   <View style={styles.cardHeader}>
-                    {plan.productId === "com.photomedthreemonth" && (
+                    {plan.productId === "com.photomedthreemonth1" && (
                       <Text style={styles.planTitle}>3-Month Premium Plan</Text>
                     )}
-                    {plan.productId === "com.photomedyearlyplan" && (
+                    {plan.productId === "com.photomedyearlyplan1" && (
                       <Text style={styles.planTitle}>
                         Annual Pro Subscription
                       </Text>
                     )}
-                    {plan.productId === "com.photomedonemonth" && (
+                    {plan.productId === "com.photomedonemonth1" && (
                       <Text style={styles.planTitle}>Monthly Access Plan</Text>
                     )}
                     <Text style={styles.planPrice}>
@@ -464,17 +464,17 @@ export default function SubscriptionManage(params) {
                         : plan.localizedPrice}
                     </Text>
                   </View>
-                  {plan.productId === "com.photomedthreemonth" && (
+                  {plan.productId === "com.photomedthreemonth1" && (
                     <Text style={styles.planText}>
                       • Enjoy full access to all features for 3 months
                     </Text>
                   )}
-                  {plan.productId === "com.photomedyearlyplan" && (
+                  {plan.productId === "com.photomedyearlyplan1" && (
                     <Text style={styles.planText}>
                       • Full app access for a year at a great value
                     </Text>
                   )}
-                  {plan.productId === "com.photomedonemonth" && (
+                  {plan.productId === "com.photomedonemonth1" && (
                     <Text style={styles.planText}>
                       • Access to all features for 1 month
                     </Text>
@@ -761,20 +761,20 @@ const styles = StyleSheet.create({
 
 // const SUBSCRIPTION_SKUS = Platform.select({
 //   ios: [
-//     "com.photomedyearlyplan",
-//     "com.photomedthreemonth",
-//     "com.photomedonemonth",
+//     "com.photomedyearlyplan1",
+//     "com.photomedthreemonth1",
+//     "com.photomedonemonth1",
 //   ],
 //   android: [
-//     "com.photomedthreemonth",
-//     "com.photomedyearlyplan",
-//     "com.photomedonemonth",
+//     "com.photomedthreemonth1",
+//     "com.photomedyearlyplan1",
+//     "com.photomedonemonth1",
 //   ],
 // });
 // const PLAN_PRIORITY = {
-//   "com.photomedonemonth": 1,
-//   "com.photomedthreemonth": 2,
-//   "com.photomedyearlyplan": 3,
+//   "com.photomedonemonth1": 1,
+//   "com.photomedthreemonth1": 2,
+//   "com.photomedyearlyplan1": 3,
 // };
 
 // export default function SubscriptionManage(params) {
@@ -1281,30 +1281,30 @@ const styles = StyleSheet.create({
 //                   style={[styles.planCard, isSelected && styles.selectedCard]}
 //                 >
 //                   <View style={styles.cardHeader}>
-//                     {plan.productId === "com.photomedthreemonth" && (
+//                     {plan.productId === "com.photomedthreemonth1" && (
 //                       <Text style={styles.planTitle}>3-Month Premium Plan</Text>
 //                     )}
-//                     {plan.productId === "com.photomedyearlyplan" && (
+//                     {plan.productId === "com.photomedyearlyplan1" && (
 //                       <Text style={styles.planTitle}>
 //                         Annual Pro Subscription
 //                       </Text>
 //                     )}
-//                     {plan.productId === "com.photomedonemonth" && (
+//                     {plan.productId === "com.photomedonemonth1" && (
 //                       <Text style={styles.planTitle}>Monthly Access Plan</Text>
 //                     )}
 //                     <Text style={styles.planPrice}>{plan.localizedPrice}</Text>
 //                   </View>
-//                   {plan.productId === "com.photomedthreemonth" && (
+//                   {plan.productId === "com.photomedthreemonth1" && (
 //                     <Text style={styles.planText}>
 //                       • Enjoy full access to all features for 3 months
 //                     </Text>
 //                   )}
-//                   {plan.productId === "com.photomedyearlyplan" && (
+//                   {plan.productId === "com.photomedyearlyplan1" && (
 //                     <Text style={styles.planText}>
 //                       • Full app access for a year at a great value
 //                     </Text>
 //                   )}
-//                   {plan.productId === "com.photomedonemonth" && (
+//                   {plan.productId === "com.photomedonemonth1" && (
 //                     <Text style={styles.planText}>
 //                       • Access to all features for 1 month
 //                     </Text>

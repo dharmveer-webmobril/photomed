@@ -68,7 +68,7 @@ const PrivacyPolicy = () => {
   }
 
   return (
-    <WrapperContainer wrapperStyle={commonStyles.innerContainer}>
+ 
       <ScrollView
         contentContainerStyle={styles.scrollContainer}
         refreshControl={
@@ -86,7 +86,7 @@ const PrivacyPolicy = () => {
           stylesheet={Htmlstyles}
         />
       </ScrollView>
-    </WrapperContainer>
+ 
   );
 };
 
@@ -95,7 +95,8 @@ export default PrivacyPolicy;
 const styles = StyleSheet.create({
   scrollContainer: {
     padding: 10,
-    paddingBottom:40
+    paddingBottom:40,
+    paddingTop:30
   },
   txtStyle: {
     fontFamily: FONTS.regular,
