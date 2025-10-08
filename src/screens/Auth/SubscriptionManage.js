@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   Alert,
   Platform,
+  Linking,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import Loading from "../../components/Loading";
@@ -23,7 +24,7 @@ import { getMySubscriptionDetails } from "../../configs/api";
 import { updateSubscription } from "../../redux/slices/authSlice";
 
 const PLAN_PRIORITY = {
-  "com.photomedonemonth1": 1, // lowest
+  "com.photomedonemonth1": 1,
   "com.photomedthreemonth1": 2,
   "com.photomedyearlyplan1": 3, // highest
 };
@@ -406,7 +407,19 @@ export default function SubscriptionManage(params) {
       {selected && <View style={styles.radioInner} />}
     </TouchableOpacity>
   );
-
+  const onPress = async () => {
+    try {
+      const supported = await Linking.canOpenURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/');
+      if (!supported) {
+        Alert.alert('Cannot open link', url);
+        return;
+      }
+      await Linking.openURL('https://www.apple.com/legal/internet-services/itunes/dev/stdeula/');
+    } catch (err) {
+      console.error('Failed to open URL:', err);
+      Alert.alert('Error', 'Unable to open link at the moment.');
+    }
+  };
   return (
     <SafeAreaView style={styles.safeArea}>
       <Loading visible={isLoading || isGetSubLoading} />
@@ -532,9 +545,21 @@ export default function SubscriptionManage(params) {
               </TouchableOpacity>
             </>
           )}
-
           {
-            subscriptions?.length > 0 &&
+            !isLoading && !isGetSubLoading && subscriptions?.length <= 0 &&
+            <Text
+              style={{
+                color: "#32327C",
+                textAlign: "center",
+                fontSize: 14,
+                marginVertical: 50
+              }}
+            >
+              Subscriptions not found
+            </Text>
+          }
+          {
+            // subscriptions?.length > 0 &&
             <>
               <Text style={{ color: "#000", marginTop: 10 }}>
                 Note:- If your payment was deducted but the plan was not activated,
@@ -572,11 +597,11 @@ export default function SubscriptionManage(params) {
                 }}
               >
                 <Text
-                  onPress={() =>
-                    navigate("Terms and Condition", {
-                      slug: "terms-and-conditions",
-                      screenName: "Terms and Conditions",
-                    })
+                  onPress={() => onPress()
+                    // navigate("Terms and Condition", {
+                    //   slug: "terms-and-conditions",
+                    //   screenName: "Terms and Conditions",
+                    // })
                   }
                   style={{
                     color: "#32327C",
@@ -584,7 +609,7 @@ export default function SubscriptionManage(params) {
                     textDecorationLine: "underline",
                   }}
                 >
-                  Terms of Service
+                  Terms of Use (EULA)
                 </Text>
                 <Text
                   onPress={() =>
@@ -604,19 +629,7 @@ export default function SubscriptionManage(params) {
               </View>
             </>
           }
-          {
-            !isLoading && !isGetSubLoading && subscriptions?.length <= 0 &&
-            <Text
-              style={{
-                color: "#32327C",
-                textAlign: "center",
-                fontSize: 14,
-                marginTop: 50
-              }}
-            >
-              Data not found
-            </Text>
-          }
+
         </ScrollView>
       </View>
     </SafeAreaView>

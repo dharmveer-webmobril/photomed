@@ -1,20 +1,20 @@
 buildscript {
-    ext {
-        buildToolsVersion = "35.0.0"
-        minSdkVersion = 23
-        compileSdkVersion = 35   // 🔥 update this from 34 → 35
-        targetSdkVersion = 35
-        ndkVersion = "26.1.10909125"
-        kotlinVersion = "1.9.24"
-        googlePlayServicesAuthVersion = "20.7.0"
-    }
+   ext {
+    buildToolsVersion = "36.0.0"
+    minSdkVersion = 23
+    compileSdkVersion = 36        // ✅ Required by androidx.browser:1.10.0-alpha01
+    targetSdkVersion = 36         // ✅ Match compileSdk for consistency
+    ndkVersion = "26.1.10909125"
+    kotlinVersion = "1.9.24"
+    googlePlayServicesAuthVersion = "20.7.0"
+}
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
         classpath 'com.google.gms:google-services:4.4.2'
-        classpath("com.android.tools.build:gradle:8.5.1")
+       classpath("com.android.tools.build:gradle:8.9.1")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
     }

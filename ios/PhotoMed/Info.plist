@@ -26,10 +26,18 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.photoMedPro.com</string>
+			<string>com.googleusercontent.apps.944528607298-mq2mfkmjupkjshkgu89ltmj5nhda2teo</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.944528607298-mq2mfkmjupkjshkgu89ltmj5nhda2teo</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.photomedpro</string>
 			</array>
 		</dict>
 	</array>
@@ -60,18 +68,16 @@
 			</dict>
 		</dict>
 	</dict>
-	<key>NSAppleMusicUsageDescription</key>
-	<string>Play music while hiking.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>PhotoMed would like to access your Camera for App Profile Photo Uploading. Your photos won’t be shared without your permission. It is safe and secure.</string>
+	<string>PhotoMed needs access to your Camera to upload profile photos securely.</string>
 	<key>NSContactsUsageDescription</key>
-	<string>PhotoMed would like to access your contacts to help you connect with friends and share your experiences. Your contacts will not be used for any other purpose without your permission.</string>
+	<string>PhotoMed needs access to your Contacts to help connect with friends securely.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>PhotoMed would like to access your location while using the app for personalized services.</string>
+	<string>PhotoMed needs access to your location to provide personalized services.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>PhotoMed needs access to your microphone for audio recording. Your recordings will not be shared without your permission.</string>
+	<string>PhotoMed needs access to your Microphone for audio recording.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>PhotoMed would like to access your photo library for App Profile Photo Uploading. Your photos won't be shared without your permission. It is safe and secure.</string>
+	<string>PhotoMed needs access to your Photo Library to upload profile photos securely.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Poppins-Bold.ttf</string>
