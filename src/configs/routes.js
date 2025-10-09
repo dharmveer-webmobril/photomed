@@ -55,7 +55,7 @@ const _routes = [
     },
     {
         name: ScreenName.CONNECT_CLOUD,
-        Component: Platform.OS == 'ios' ? ConnectCloudIos : ConnectCloud,
+        Component: Platform.OS === 'ios' ? ConnectCloudIos : ConnectCloud,
         headerShown: false
     },
 ]

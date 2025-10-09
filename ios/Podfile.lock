@@ -1411,8 +1411,8 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - Yoga
-  - react-native-app-auth (8.0.3):
-    - AppAuth (>= 1.7.6)
+  - react-native-app-auth (8.0.0):
+    - AppAuth (>= 1.7.3)
     - React-Core
   - react-native-cameraroll (7.10.1):
     - DoubleConversion
@@ -2467,7 +2467,7 @@ SPEC CHECKSUMS:
   React-logger: d79b704bf215af194f5213a6b7deec50ba8e6a9b
   React-Mapbuffer: b982d5bba94a8bc073bda48f0d27c9b28417fae3
   React-microtasksnativemodule: 475ea38712131abd7f7935c82a41364cea2fa01f
-  react-native-app-auth: 149f01d2c824758453c9e7815217ded451974683
+  react-native-app-auth: c4a3b4edc11100070d8d7bc48d55fb66668cead9
   react-native-cameraroll: febb3f47d5dd10ff19d8ae12346db5f380de5dd8
   react-native-compressor: 7945999d05c5e42443afe11b9ee9ce52400f2a6f
   react-native-config: 3367df9c1f25bb96197007ec531c7087ed4554c3

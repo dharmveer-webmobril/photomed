@@ -2,6 +2,7 @@ import {
   Alert,
   Image,
   Linking,
+  Platform,
   StyleSheet,
   Text,
   View,
@@ -121,8 +122,8 @@ const ConnectCloudIos = () => {
       showTitle: true,
       enableUrlBarHiding: true,
       enableDefaultShare: false,
-      ephemeralWebSession: false,
-      forceCloseOnRedirection: false,
+      ephemeralWebSession: Platform.OS === 'ios',
+      forceCloseOnRedirection: Platform.OS === 'android',
     };
     try {
       if (await InAppBrowser.isAvailable()) {

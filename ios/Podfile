@@ -8,16 +8,22 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
+# Firebase + MLKit setup with modular headers
 pod 'Firebase', :modular_headers => true
 pod 'FirebaseCoreInternal', :modular_headers => true
 pod 'GoogleUtilities', :modular_headers => true
 pod 'FirebaseCore', :modular_headers => true
 pod 'GoogleMLKit/FaceDetection', '6.0.0'
 
+# Correct RNAppAuth pod declaration for react-native-app-auth
+pod 'AppAuth'
+
+# Handle frameworks linkage dynamically
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
   use_frameworks! :linkage => linkage.to_sym
+  use_modular_headers!
 end
 
 target 'PhotoMed' do
@@ -25,8 +31,8 @@ target 'PhotoMed' do
 
   use_react_native!(
     :path => config[:reactNativePath],
-    :hermes_enabled=>false,
-    # An absolute path to your application root.
+    :hermes_enabled => false, # Disable Hermes if not required
+    # Absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
@@ -36,12 +42,19 @@ target 'PhotoMed' do
   end
 
   post_install do |installer|
-    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
+    # Standard RN post-install hook
     react_native_post_install(
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Ensure proper iOS deployment target for all pods
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = min_ios_version_supported
+      end
+    end
   end
 end

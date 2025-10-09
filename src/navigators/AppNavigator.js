@@ -12,6 +12,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import {
   Image,
   Modal,
+  Platform,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -22,6 +23,7 @@ import imagePaths from "../assets/images";
 import BootSplash from "react-native-bootsplash";
 import { getMySubscriptionDetails } from "../configs/api";
 import { updateSubscription } from "../redux/slices/authSlice";
+import ConnectCloudIos from "../screens/Auth/ConnectCloudIos";
 
 const AppNavigator = () => {
   const dispatch = useDispatch();
@@ -72,6 +74,7 @@ const AppNavigator = () => {
       }, 2500);
     }
   }, [token, accessToken]);
+
 
   return (
     <>
@@ -131,7 +134,7 @@ const AppNavigator = () => {
           {token && accessToken ? (
             <MainStack />
           ) : token ? (
-            <ConnectCloud />
+            Platform.OS === 'ios' ? <ConnectCloudIos /> : <ConnectCloud />
           ) : (
             <AuthStack />
           )}
