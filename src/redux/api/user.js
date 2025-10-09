@@ -38,6 +38,20 @@ export const userApi = commonApi.injectEndpoints({
         };
       },
     }),
+    verifyEmailForgot: builder.mutation({
+      query: ({ token, data }) => {
+        console.log("📤 verifyEmail request:", { token, data });
+        return {
+          url: "verifyotp",
+          method: "POST",
+          body: data,
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        };
+      },
+    }),
     currentUserProfile: builder.query({
       query: ({ token }) => ({
         url: 'getprofile',
@@ -126,5 +140,6 @@ export const {
   useUpdateProfileMutation,
   useResetPasswordOTPCodeMutation,
   useChangePasswordMutation,
+  useVerifyEmailForgotMutation,
   useDeleteAccountMutation,  // Add the custom hook for deleteAccount
 } = userApi;

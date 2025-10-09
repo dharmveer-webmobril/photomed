@@ -8,6 +8,8 @@ import UpdatePassword from "../screens/Auth/UpdatePassword";
 import ConnectCloud from "../screens/Auth/ConnectCloud";
 import Terms from "../screens/Profile/Terms";
 import PrivacyPolicy from "../screens/Auth/PrivacyPolicy";
+import { Platform } from "react-native";
+import ConnectCloudIos from "../screens/Auth/ConnectCloudIos";
 
 
 const _routes = [
@@ -53,7 +55,7 @@ const _routes = [
     },
     {
         name: ScreenName.CONNECT_CLOUD,
-        Component: ConnectCloud,
+        Component: Platform.OS == 'ios' ? ConnectCloudIos : ConnectCloud,
         headerShown: false
     },
 ]

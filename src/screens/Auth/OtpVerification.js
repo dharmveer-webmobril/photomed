@@ -12,8 +12,10 @@ import OTPTextView from "react-native-otp-textinput";
 import { navigate } from "../../navigators/NavigationService";
 import {
   useRequestCodeMutation,
+  useVerifyEmailForgotMutation,
   useVerifyEmailMutation,
 } from "../../redux/api/user";
+import { getMySubscriptionDetails } from '../../configs/api'
 import Loading from "../../components/Loading";
 import { useDispatch, useSelector } from "react-redux";
 import { saveUserData, setUserId, updateSubscription } from "../../redux/slices/authSlice";
@@ -26,6 +28,7 @@ const OtpVerification = (props) => {
     useRequestCodeMutation();
   const [token, setToken] = useState(props.route.params.userToken);
   const [verifyEmailMutation, { isLoading }] = useVerifyEmailMutation();
+  const [verifyEmailMutation1, { isLoading1 }] = useVerifyEmailForgotMutation();
   const isConnected = useSelector((state) => state.network.isConnected);
   const preScreen = props.route.params.screenName;
   const email = props.route.params.email;
@@ -34,7 +37,7 @@ const OtpVerification = (props) => {
   const input = useRef(null);
   const [timer, setTimer] = useState(30);
   const [canResend, setCanResend] = useState(false);
-  // console.log('props.route.params.userToken', props.route.params.userToken);
+  console.log('props.route.params.userToken', props.route.params.userToken);
 
   const clearInput = () => {
     if (input.current) {
@@ -67,13 +70,14 @@ const OtpVerification = (props) => {
         email,
         otp: otpInput,
       };
-      const response = await verifyEmailMutation({ token, data: data });
+      const response = ScreenName.OTP_VERIFICATION ? await verifyEmailMutation1({ token, data: { otp: otpInput } }) : await verifyEmailMutation({ token, data: data });
       console.log("response:-------", response);
 
       if (response.data?.succeeded) {
         Toast.show(response.data.ResponseMessage);
         if (preScreen == ScreenName.SIGN_UP) {
           console.log("response.data", response.data);
+          await getMySubscriptionDetails(response.data.ResponseBody.token, response.data.ResponseBody?.id);
           dispatch(saveUserData(response.data.ResponseBody.token));
           dispatch(setUserId(response.data.ResponseBody?.id));
           dispatch(updateSubscription(response?.data?.ResponseBody?.subscription));
@@ -126,7 +130,7 @@ const OtpVerification = (props) => {
     <WrapperContainer
       wrapperStyle={[commonStyles.innerContainer, styles.container]}
     >
-      <Loading visible={isLoading || loading} />
+      <Loading visible={isLoading || loading || isLoading1} />
       <KeyboardAwareScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollViewContentContainer}
