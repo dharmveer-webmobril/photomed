@@ -27,7 +27,7 @@ import { useNavigation } from '@react-navigation/native';
 import Orientation from 'react-native-orientation-locker';
 import InAppBrowser from 'react-native-inappbrowser-reborn';
 
-const DROPBOX_REDIRECT_URI = 'https://mycomponent-22b21.web.app/redirect.html';
+const DROPBOX_REDIRECT_URI = 'com.photomedpro://dropboxredirect';
 const GOOGLE_REDIRECT_URI = 'com.photomedpro:/oauth2redirect';
 const TOKEN_LIFESPAN = 3600 * 1000; // 1 hour
 import { sha256 } from 'js-sha256';
@@ -224,13 +224,13 @@ const ConnectCloudIos = () => {
   const connectDrive = async () => {
     // Check user status before starting authentication
     const canProceed = await checkAndHandleLogout();
-    if (!canProceed) return; // Stop if user needs to log out
+    if (!canProceed) return;
     setLoading(true);
     try {
       await GoogleSignin.hasPlayServices();
       let userInfo = await GoogleSignin.signIn();
       const { accessToken } = await GoogleSignin.getTokens();
-      // console.log('Google Drive Access Token:', accessToken);
+    
       let tokens = await getWebGoogleToken(userInfo.data.serverAuthCode);
 
       if (tokens) {

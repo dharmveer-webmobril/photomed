@@ -974,7 +974,7 @@ export async function createOrGetCategoryFolder(
   }
 }
 
- 
+
 export const generateUniqueKey = () => {
   return uuidv4().replace(/\D/g, "").slice(0, 5);
 };
@@ -1386,8 +1386,8 @@ export async function addSubscriptions(token, data1) {
 }
 
 export const validateSubscription = async (token) => {
-console.log("configUrl.BASE_URL + 'validate-receipt'", configUrl.BASE_URL + 'validate-receipt');
-console.log("configUrl.BASE_URL + token", token);
+  console.log("configUrl.BASE_URL + 'validate-receipt'", configUrl.BASE_URL + 'validate-receipt');
+  console.log("configUrl.BASE_URL + token", token);
 
   try {
     const response = await fetch(configUrl.BASE_URL + 'validate-receipt', {
@@ -1576,5 +1576,26 @@ export const getMySubscriptionDetails = async (token, userId) => {
   } catch (error) {
     console.error("⚠️ Error fetching subscription details:", error);
     return null;
+  }
+};
+
+
+export const getAppStatus = async () => {
+  try {
+    const response = await fetch(configUrl.BASE_URL + 'app-status', {
+      method: "GET",
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text(); // helpful for debugging backend response
+      throw new { error: 'error' }
+    }
+    return await response.json();
+  } catch (error) {
+    console.log('validateSubscription error', error);
+    return { error: 'error' };
   }
 };

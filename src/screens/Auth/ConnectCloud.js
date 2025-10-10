@@ -1,5 +1,11 @@
-import { Alert, Image, Modal, SafeAreaView, StyleSheet, Text, View, Platform } from 'react-native';
-import React, { useState } from 'react';
+import {
+  Alert,
+  Image,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import React, { useState, useEffect } from 'react';
 import WrapperContainer from '../../components/WrapperContainer';
 import commonStyles from '../../styles/commonStyles';
 import { imagePath } from '../../configs/imagePath';
@@ -10,118 +16,115 @@ import CustomBtn from '../../components/CustomBtn';
 import { useDispatch, useSelector } from 'react-redux';
 import { logout, setAccessToken, setCloudType } from '../../redux/slices/authSlice';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { WebView } from 'react-native-webview';
 import Toast from 'react-native-simple-toast';
 import Loading from '../../components/Loading';
 import { storeData } from '../../configs/helperFunction';
-import { configUrl } from '../../configs/api';
+import { configUrl, getAppStatus } from '../../configs/api';
 import { useCurrentUserProfileQuery } from '../../redux/api/user';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Orientation from 'react-native-orientation-locker';
-
-const DROPBOX_REDIRECT_URI = 'https://photomedpro.com/';
+import { authorize } from 'react-native-app-auth';
+const TOKEN_LIFESPAN = 3600 * 1000;
 
 const ConnectCloud = () => {
-  const navigation = useNavigation()
-  React.useEffect(() => {
-    navigation.addListener("focus", () => {
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
+  const token = useSelector((state) => state.auth?.user);
+  const [loading, setLoading] = useState(false);
+  const [appStatus, setAppStatus] = useState(0);
+  const { data: userDetail, refetch } = useCurrentUserProfileQuery({ token });
+
+  useEffect(() => {
+    navigation.addListener('focus', () => {
       Orientation.lockToPortrait();
     });
   }, [navigation]);
-  const dispatch = useDispatch();
-  const token = useSelector((state) => state.auth?.user);
 
-
-  const [showWebView, setShowWebView] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const { data: userDetail, isLoading, error, refetch } = useCurrentUserProfileQuery({ token });
-
-  const TOKEN_LIFESPAN = 3600 * 1000; // 1 hour in milliseconds
+  useFocusEffect(
+    React.useCallback(() => {
+      loadAppStatus()
+    }, [])
+  );
+  async function loadAppStatus() {
+    try {
+      setLoading(true)
+      let result = await getAppStatus();
+      console.log('app status', result?.ResponseBody?.status);
+      if (result?.succeeded && result?.ResponseBody?.status) {
+        setAppStatus(result?.ResponseBody?.status);
+      } else {
+        setAppStatus(0)
+      }
+    } catch (error) {
+      setAppStatus(0)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const checkAndHandleLogout = async () => {
     const userRefetchResult = await refetch();
     const errorData = userRefetchResult?.error?.data;
-
     if (errorData?.isDeleted || errorData?.status === 2) {
-      // console.log('Logout triggered before authentication due to:', errorData);
       dispatch(logout());
-      Toast.show('Your account is deactivated. Please contact the administrator.')
-      return false; // Indicate that further processing should stop
+      Toast.show('Your account is deactivated. Please contact the administrator.');
+      return false;
     }
-    return true; // Allow the flow to continue
+    return true;
   };
-
-
-  const handleNavigationStateChange = async (navState) => {
-    const { url } = navState;
-
-    if (url.startsWith(DROPBOX_REDIRECT_URI)) {
-      setShowWebView(false);
-      setLoading(true);
-      const code = url.match(/code=([^&]*)/)?.[1];
-      if (code) {
-        const tokens = await exchangeCodeForTokens(code);
-        if (tokens) {
-          const { access_token, refresh_token, expires_in } = tokens;
-          console.log('expires_inexpires_in', expires_in);
-          let expiresIn = Date.now() + parseInt(expires_in) * 1000 //convert in milisecond
-          dispatch(setAccessToken(access_token));
-          await storeData('refresh_token', refresh_token)
-          await storeData('token_expiry', expiresIn)
-          dispatch(setCloudType('dropbox'));
-          Toast.show('Dropbox Account Connected Successfully');
-          // console.log('Dropbox Access Token:', tokens);
-        }
-      }
-      setLoading(false);
-    }
-  };
-
-  const exchangeCodeForTokens = async (code) => {
-    const tokenUrl = 'https://api.dropboxapi.com/oauth2/token';
-    const params = new URLSearchParams({
-      code,
-      grant_type: 'authorization_code',
-      client_id: configUrl.DROPBOX_CLIENT_ID,
-      client_secret: configUrl.DROPBOX_CLIENT_SECRET,
-      redirect_uri: DROPBOX_REDIRECT_URI,
-    });
-
-    try {
-      const response = await fetch(tokenUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString(),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        return {
-          access_token: data.access_token,
-          refresh_token: data.refresh_token,
-          expires_in: data.expires_in,
-        };
-      } else {
-        console.error('Token exchange error:', data);
-        throw new Error(data.error_description || 'Failed to exchange code for tokens');
-      }
-    } catch (error) {
-      console.error('Error exchanging code for tokens:', error);
-      throw error;
-    }
-  };
-
 
   const startDropboxAuth = async () => {
-    // Check user status before starting authentication
-    const canProceed = await checkAndHandleLogout();
-    if (!canProceed) return; // Stop if user needs to log out
 
-    setShowWebView(true);
-    setLoading(true);
+    try {
+      const config = {
+        clientId: configUrl.DROPBOX_CLIENT_ID,
+        clientSecret: configUrl.DROPBOX_CLIENT_SECRET,
+        redirectUrl: "com.photomedpro://dropboxredirect",
+        scopes: ['files.content.write'],
+        serviceConfiguration: {
+          authorizationEndpoint: 'https://www.dropbox.com/oauth2/authorize',
+          tokenEndpoint: 'https://api.dropboxapi.com/oauth2/token',
+        },
+        additionalParameters: { token_access_type: 'offline' },
+      };
+      console.log('Attempting auth with config:', JSON.stringify(config, null, 2));
+
+      const result = await authorize(config);
+
+      if (result?.accessToken) {
+        const { accessToken, refreshToken, accessTokenExpirationDate } = result;
+
+        // Convert expiration date to timestamp
+        const expiresIn = new Date(accessTokenExpirationDate).getTime();
+
+        // Dispatch to Redux
+
+        dispatch(setAccessToken(accessToken));
+        dispatch(setCloudType('dropbox'));
+
+        // Store tokens locally
+        await storeData('refresh_token', refreshToken);
+        await storeData('token_expiry', expiresIn.toString());
+
+        Toast.show('Dropbox Account Connected Successfully');
+      }
+      console.log('Auth result:', result);
+    } catch (error) {
+      console.error('Detailed auth error:', JSON.stringify(error, null, 2));
+      Alert.alert('Error', `Code: ${error.code}\nMessage: ${error.message}`);
+    }
+
+
 
   };
+
+  const btnDropBox = () => {
+    if (appStatus === 0 || appStatus === '0') {
+      Alert.alert("Coming Soon", "Dropbox integration will be added in a future update.");
+      return;
+    }
+    startDropboxAuth();
+  }
 
   GoogleSignin.configure({
     webClientId: configUrl.GOOGLE_CLIENT_ID,
@@ -131,16 +134,6 @@ const ConnectCloud = () => {
       "email",
       "profile",
       "https://www.googleapis.com/auth/drive.file"
-      // "email",
-      // "profile",
-      // 'https://www.googleapis.com/auth/drive',
-      // 'https://www.googleapis.com/auth/drive.file',
-      // 'https://www.googleapis.com/auth/drive.appdata',
-      // 'https://www.googleapis.com/auth/drive.metadata',
-      // 'https://www.googleapis.com/auth/drive.readonly',
-      // 'https://www.googleapis.com/auth/drive.metadata.readonly',
-      // 'https://www.googleapis.com/auth/drive.apps.readonly',
-      // 'https://www.googleapis.com/auth/drive.photos.readonly',
     ],
   });
 
@@ -172,7 +165,6 @@ const ConnectCloud = () => {
 
       const Tokens = await response.json();
       console.log('Tokens:', Tokens);
-      console.log('Tokens:', Tokens);
       return Tokens
 
     } catch (error) {
@@ -183,15 +175,14 @@ const ConnectCloud = () => {
 
 
   const connectDrive = async () => {
-    // Check user status before starting authentication
+
     const canProceed = await checkAndHandleLogout();
-    if (!canProceed) return; // Stop if user needs to log out
+    if (!canProceed) return;
     setLoading(true);
     try {
       await GoogleSignin.hasPlayServices();
       let userInfo = await GoogleSignin.signIn();
       const { accessToken } = await GoogleSignin.getTokens();
-      // console.log('Google Drive Access Token:', accessToken);
       let tokens = await getWebGoogleToken(userInfo.data.serverAuthCode);
 
       if (tokens) {
@@ -221,40 +212,34 @@ const ConnectCloud = () => {
     // Check user status again after authentication
     await checkAndHandleLogout();
   };
+  console.log('appStatusappStatus', appStatus);
 
   return (
     <WrapperContainer wrapperStyle={[commonStyles.innerContainer, styles.container]}>
-      <Modal visible={showWebView} onRequestClose={() => setShowWebView(false)}>
-        <SafeAreaView style={{ flex: 1, }}>
-          <Loading visible={loading} />
-          <Text onPress={() => setShowWebView(false)}
-            style={[styles.title, { alignSelf: 'flex-end', marginBottom: 0, top: Platform.OS == 'ios' ? 40 : -10, zIndex: 2, position: 'absolute', right: 15, color: '#0061FE' }]}>Close</Text>
-          <WebView
-            originWhitelist={['*']}
-            source={{
-              uri: `https://www.dropbox.com/oauth2/authorize?response_type=code&client_id=${configUrl.DROPBOX_CLIENT_ID}&redirect_uri=${encodeURIComponent(DROPBOX_REDIRECT_URI)}&token_access_type=offline`,
-            }}
-            onLoadEnd={() => setLoading(false)}
-            onNavigationStateChange={handleNavigationStateChange}
-          />
-        </SafeAreaView>
-      </Modal>
+      <Loading visible={loading} />
       <View style={{ flex: 0.6, width: '100%', alignItems: 'center' }}>
         <Image source={imagePath.cloud} style={{ marginTop: verticalScale(40) }} />
         <Text style={styles.title}>Connect Cloud Storage</Text>
-        <Text style={styles.subtitle}>Connect your Dropbox or Google Drive to{'\n'}
-          store patient records securely
+        <Text style={styles.subtitle}>
+          {/* {`Connect your ${(appStatus === 1 || appStatus === '1') ? 'Dropbox or' : ''} Google Drive to ${'\n'}store patient records securely`} */}
+          {`Connect your Dropbox or Google Drive to ${'\n'}store patient records securely`}
         </Text>
       </View>
+
       <View style={{ flex: 0.4, justifyContent: 'center' }}>
-        <CustomBtn
-          onPress={startDropboxAuth}
-          title={'Connect Dropbox'}
-          btnStyle={{ marginBottom: verticalScale(20) }}
-        />
+        <Text style={[styles.subtitle, { marginBottom: verticalScale(10) }]}>
+          Note: To connect to the cloud, you need a Google Drive or Dropbox account. If you don’t have one, please create an account first.
+        </Text>
         <CustomBtn
           onPress={connectDrive}
           title={'Connect Google Drive'}
+          btnStyle={{ marginBottom: verticalScale(20), }}
+        />
+
+        <CustomBtn
+          onPress={() => { btnDropBox() }}
+          title={'Connect Dropbox'}
+          btnStyle={{ marginBottom: verticalScale(20), opacity: (appStatus === 0 || appStatus === '0') ? 0.8 : 1 }}
         />
       </View>
     </WrapperContainer>
@@ -278,14 +263,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: verticalScale(10),
   },
-  loaderContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-  },
 });
+
+

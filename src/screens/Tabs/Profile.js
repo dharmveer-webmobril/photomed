@@ -31,7 +31,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import DropboxIcon from "../../assets/SvgIcons/DropboxIcon";
 import GoogleDriveIcon from "../../assets/SvgIcons/GoogleDriveIcon";
 import ImageWithLoader from "../../components/ImageWithLoader";
-
+import { Dropbox } from 'dropbox';
 const Profile = (props) => {
   const [logoutVisible, setLogoutVisible] = useState(false);
   const [deleteVisible, setDeleteVisible] = useState(false);
@@ -177,6 +177,35 @@ const Profile = (props) => {
     );
   };
 
+  const revokeDropboxToken = async (accessToken) => {
+    try {
+      const response = await fetch('https://api.dropboxapi.com/2/auth/token/revoke', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}), // Dropbox expects an empty JSON body
+      });
+
+      if (response.ok) {
+        console.log('Dropbox token revoked');
+      } else {
+        const errorData = await response.json();
+        console.log('Error revoking Dropbox token:', errorData);
+      }
+    } catch (error) {
+      console.log('Network or other error:', error);
+    }
+  };
+
+
+  const accessToken = useSelector((state) => state.auth.accessToken);
+  const btnLogout = async () => {
+    if (provider !== 'google') await revokeDropboxToken(accessToken);
+    dispatch(logout())
+    setLogoutVisible(false);
+  };
   return (
     <WrapperContainer
       wrapperStyle={[commonStyles.innerContainer, styles.container]}
@@ -185,7 +214,7 @@ const Profile = (props) => {
       <AccountPopUp
         title={"Logout"}
         onPressCancel={() => setLogoutVisible(false)}
-        onPressSuccess={() => dispatch(logout())}
+        onPressSuccess={() => { btnLogout() }}
         subTitle={
           "Are you sure you want to logout from Photomed Pro? this will end your current session."
         }

@@ -134,7 +134,7 @@ const AppNavigator = () => {
           {token && accessToken ? (
             <MainStack />
           ) : token ? (
-            Platform.OS === 'ios' ? <ConnectCloudIos /> : <ConnectCloud />
+            <ConnectCloud />
           ) : (
             <AuthStack />
           )}

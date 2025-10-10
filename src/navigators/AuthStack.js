@@ -1,11 +1,6 @@
-import React from 'react';
-
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
 import _routes from '../configs/routes';
-import { NavigationContainer } from '@react-navigation/native';
 import COLORS from '../styles/colors';
-import { navigationRef } from './NavigationService';
 import FONTS from '../styles/fonts';
 import Welcome from '../screens/Auth/Welcome';
 import ScreenName from '../configs/screenName';

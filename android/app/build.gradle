@@ -86,7 +86,7 @@ android {
         versionCode 7
         versionName "0.0.1"
         manifestPlaceholders = [
-            appAuthRedirectScheme: 'io.identityserver.demo.auth'
+            appAuthRedirectScheme: 'com.photomedpro'
         ]
         missingDimensionStrategy 'store', 'play'
 
