@@ -24,6 +24,7 @@ import { useCurrentUserProfileQuery } from '../../redux/api/user';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Orientation from 'react-native-orientation-locker';
 import { authorize } from 'react-native-app-auth';
+import axios from 'axios';
 const TOKEN_LIFESPAN = 3600 * 1000;
 
 const ConnectCloud = () => {
@@ -137,35 +138,33 @@ const ConnectCloud = () => {
     ],
   });
 
+  console.log('configUrl.GOOGLE_CLIENT_ID', configUrl.GOOGLE_CLIENT_ID);
+  console.log('configUrl.GOOGLE_CLIENT_SECRET', configUrl.GOOGLE_CLIENT_SECRET);
 
   const getWebGoogleToken = async (serverAuthCode) => {
     console.log('serverAuthCodeserverAuthCode', serverAuthCode);
 
     try {
-      // Use the refresh token to get a new access token
-      const response = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
+      
+      const tokenEndpoint = 'https://oauth2.googleapis.com/token';
+      const response = await axios.post(tokenEndpoint, {
+        client_id: configUrl.GOOGLE_CLIENT_ID,
+        client_secret: configUrl.GOOGLE_CLIENT_SECRET,
+        code: serverAuthCode,
+        grant_type: 'authorization_code',
+        redirect_uri: '', // Your redirect URI if used
+      }, {
         headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          client_id: configUrl.GOOGLE_CLIENT_ID,
-          client_secret: configUrl.GOOGLE_CLIENT_SECRET,
-          code: serverAuthCode,
-          redirect_uri: '', // Optional for mobile apps
-          grant_type: 'authorization_code',
-        }),
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error exchanging auth code:', errorData);
+      console.log('tokentokentoken', response.data);
+      if (response?.data && response?.data?.access_token) {
+        return response.data
+      }else{
         throw new Error('Failed to exchange authorization code');
       }
-
-      const Tokens = await response.json();
-      console.log('Tokens:', Tokens);
-      return Tokens
 
     } catch (error) {
       console.error('Error refreshing access token:', error);
@@ -175,15 +174,16 @@ const ConnectCloud = () => {
 
 
   const connectDrive = async () => {
-
     const canProceed = await checkAndHandleLogout();
-    if (!canProceed) return;
+    if (!canProceed) return; 
     setLoading(true);
     try {
       await GoogleSignin.hasPlayServices();
       let userInfo = await GoogleSignin.signIn();
-      const { accessToken } = await GoogleSignin.getTokens();
+      const res = await GoogleSignin.getTokens();
+      console.log('Google Drive Access Token:', res);
       let tokens = await getWebGoogleToken(userInfo.data.serverAuthCode);
+      console.log('tokenstokens', tokens);
 
       if (tokens) {
         const { access_token, refresh_token, expires_in } = tokens;
