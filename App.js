@@ -13,6 +13,7 @@ import { decode as atob } from "base-64";
 import Orientation from "react-native-orientation-locker";
 import { IAPProvider } from "./src/configs/IAPContext";
 import { SafeAreaView } from 'react-native-safe-area-context';
+import UpdateChecker from "./src/screens/UpdateCheck";
 if (!global.atob) {
   global.atob = atob;
 }
@@ -37,7 +38,7 @@ const App = () => {
       try {
         await requestUserPermission();
         await notificationListener();
-        checkForUpdates();
+        // checkForUpdates();
         // Simulate loading tasks
         await new Promise((resolve) => setTimeout(resolve, 2500)); // Hold for 2 seconds
       } catch (error) {
@@ -56,7 +57,9 @@ const App = () => {
       <Provider store={store}>
         <StatusBar backgroundColor={"white"} barStyle={"dark-content"} />
         <AppNavigator />
+
       </Provider>
+      <UpdateChecker/>
     </SafeAreaView>
   );
 };

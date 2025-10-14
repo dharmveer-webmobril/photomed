@@ -28,7 +28,7 @@ const OtpVerification = (props) => {
     useRequestCodeMutation();
   const [token, setToken] = useState(props.route.params.userToken);
   const [verifyEmailMutation, { isLoading }] = useVerifyEmailMutation();
-  const [verifyEmailMutation1, { isLoading1 }] = useVerifyEmailForgotMutation();
+  const [verifyEmailMutation1, { isLoading:isLoading1 }] = useVerifyEmailForgotMutation();
   const isConnected = useSelector((state) => state.network.isConnected);
   const preScreen = props.route.params.screenName;
   const email = props.route.params.email;

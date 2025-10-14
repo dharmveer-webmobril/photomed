@@ -17,8 +17,9 @@ import Toast from 'react-native-simple-toast'
 
 
 const ForgotPassword = () => {
-    const [requestCodeMutation, { isLoading }] = useRequestCodeMutation();
+    const [requestCodeMutation,] = useRequestCodeMutation();
     const [email, setEmail] = useState('')
+    const [isLoading, setLoading] = useState(false)
     const isConnected = useSelector((state) => state.network.isConnected);
 
 
@@ -44,24 +45,27 @@ const ForgotPassword = () => {
 
         // Proceed with API call or further actions
         try {
+            setLoading(true)
             const response = await requestCodeMutation({ email });
             if (response.data?.succeeded) {
                 // Toast.show(`Your otp is : ${response.data.ResponseBody.otp}`);
                 // Toast.show(response.data.ResponseMessage);
-                navigate(ScreenName.OTP_VERIFICATION,{screenName:ScreenName.OTP_VERIFICATION,userToken:response.data.ResponseBody.token,email:email})
+                navigate(ScreenName.OTP_VERIFICATION, { screenName: ScreenName.OTP_VERIFICATION, userToken: response.data.ResponseBody.token, email: email })
                 // Handle successful registration logic
             } else {
                 Toast.show(response.data?.ResponseMessage || 'Something went wrong');
             }
         } catch (error) {
             console.error('Registration Error:', error);
+        } finally {
+            setLoading(false);
         }
     };
 
 
     return (
         <WrapperContainer wrapperStyle={[commonStyles.innerContainer, styles.container]}>
-            <Loading visible={isLoading}/>
+            <Loading visible={isLoading} />
             <KeyboardAwareScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollViewContentContainer}
@@ -71,14 +75,14 @@ const ForgotPassword = () => {
                 <Image source={imagePath.logo} style={styles.logoStyle} />
                 <Text style={commonStyles.authTitleStyle}>Forgot Password</Text>
                 <Text style={commonStyles.authSbTitleStyle}>Please enter your Email</Text>
-                <AppTextInput 
-                value={email}
-                keyboardType={'email-address'}
-                onChangeText={(txt) => setEmail(txt)}
-                placeholder={'Enter Email'}
+                <AppTextInput
+                    value={email}
+                    keyboardType={'email-address'}
+                    onChangeText={(txt) => setEmail(txt)}
+                    placeholder={'Enter Email'}
                     leftIcon={imagePath.email} />
                 <CustomBtn onPress={handleSendOtp}
-                title={'Send OTP'} btnStyle={{ marginTop: verticalScale(130) }} />
+                    title={'Send OTP'} btnStyle={{ marginTop: verticalScale(130) }} />
             </KeyboardAwareScrollView>
         </WrapperContainer>
     )
@@ -90,7 +94,7 @@ const styles = StyleSheet.create({
     container: {
         // alignItems: 'center',
         paddingHorizontal: 30,
-        padding:0
+        padding: 0
     }, logoStyle: {
         height: 120,
         width: 120,

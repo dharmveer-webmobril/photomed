@@ -30,6 +30,14 @@
           }
         },
         {
+          "client_id": "944528607298-u3tvekt9atdm41gair7olfbuhkks31d9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.photomedPro.com",
+            "certificate_hash": "2ad97d5c8db9dd8bd45eace1f0b40e8fc1aa541f"
+          }
+        },
+        {
           "client_id": "944528607298-q2cbq7r9cdkck7oss6dng5v0q046ct61.apps.googleusercontent.com",
           "client_type": 3
         }

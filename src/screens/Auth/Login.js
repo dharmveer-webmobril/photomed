@@ -59,14 +59,7 @@ const Login = () => {
     scopes: [
       "email",
       "profile",
-      "https://www.googleapis.com/auth/drive",
-      "https://www.googleapis.com/auth/drive.file",
-      "https://www.googleapis.com/auth/drive.appdata",
-      "https://www.googleapis.com/auth/drive.metadata",
-      "https://www.googleapis.com/auth/drive.readonly",
-      "https://www.googleapis.com/auth/drive.metadata.readonly",
-      "https://www.googleapis.com/auth/drive.apps.readonly",
-      "https://www.googleapis.com/auth/drive.photos.readonly",
+      "https://www.googleapis.com/auth/drive.file"
     ],
   });
   const isConnected = useSelector((state) => state.network.isConnected);
@@ -181,8 +174,8 @@ const Login = () => {
       } else {
         Toast.show(
           loginApiResponse?.data?.ResponseMessage ||
-            loginApiResponse.error?.data?.ResponseMessage ||
-            "Something went wrong. Please try again."
+          loginApiResponse.error?.data?.ResponseMessage ||
+          "Something went wrong. Please try again."
         );
       }
     } catch (error) {
@@ -277,8 +270,8 @@ const Login = () => {
           device_type,
           fcmToken,
         });
-        
-console.log('resultresultresult',result);
+
+        console.log('resultresultresult', result);
 
         if (result?.data?.succeeded) {
           dispatch(setUserId(result?.data?.ResponseBody?.userData?._id));
