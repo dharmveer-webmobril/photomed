@@ -2,7 +2,7 @@ import { Linking, StatusBar, StyleSheet, Text, View } from "react-native";
 import React, { useEffect } from "react";
 import { Provider, useSelector } from "react-redux";
 import { store } from "./src/redux/store";
-
+import BootSplash from "react-native-bootsplash";
 import AppNavigator from "./src/navigators/AppNavigator";
 import {
   notificationListener,
@@ -14,6 +14,7 @@ import Orientation from "react-native-orientation-locker";
 import { IAPProvider } from "./src/configs/IAPContext";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import UpdateChecker from "./src/screens/UpdateCheck";
+import FaceRecognitionCamera from "./src/screens/FaceRecognitionCamera";
 if (!global.atob) {
   global.atob = atob;
 }
@@ -33,9 +34,9 @@ const App = () => {
   // }, []);
 
   useEffect(() => {
-
     const init = async () => {
       try {
+
         await requestUserPermission();
         await notificationListener();
         // checkForUpdates();
@@ -47,19 +48,22 @@ const App = () => {
     };
 
     init().finally(async () => {
-
+      setTimeout(async () => {
+        await BootSplash.hide({ fade: true });
+      }, 2500);
       // console.log("BootSplash has been hidden successfully");
     });
   }, []);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <Provider store={store}>
+      {/* <Provider store={store}>
         <StatusBar backgroundColor={"white"} barStyle={"dark-content"} />
         <AppNavigator />
 
       </Provider>
-      <UpdateChecker/>
+      <UpdateChecker/> */}
+      <FaceRecognitionCamera />
     </SafeAreaView>
   );
 };
