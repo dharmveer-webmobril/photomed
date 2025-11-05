@@ -1,66 +1,58 @@
 import { useRoute } from "@react-navigation/native";
 import React, { useMemo, useRef, useState } from "react";
-import {
-  View,
-  StyleSheet,
-  PanResponder,
-  Image,
-  Alert,
-  Dimensions,
-  SafeAreaView,
-} from "react-native";
-import Svg, { Circle, Text as SvgText } from "react-native-svg";
+import { View, StyleSheet, PanResponder, Image, Alert, Dimensions, SafeAreaView } from "react-native";
+import Svg, { Circle } from "react-native-svg";
 import CustomBtn from "../components/CustomBtn";
 import { scale, width } from "../styles/responsiveLayoute";
-import {
-  checkAndRefreshGoogleAccessToken,
-  getDropboxFileUrl,
-  getImageDetailsById,
-  setFilePublic,
-  uploadCaptureFilesToPhotoMedFolder,
-} from "../configs/api";
+import { checkAndRefreshGoogleAccessToken, getDropboxFileUrl, getImageDetailsById, setFilePublic, uploadCaptureFilesToPhotoMedFolder } from "../configs/api";
 import { setPatientImages } from "../redux/slices/patientSlice";
 import { useSelector, useDispatch } from "react-redux";
 import ViewShot from "react-native-view-shot";
 import { useUploadSingleFileToDropboxMutation } from "../redux/api/common";
 import Loading from "../components/Loading";
-import { navigate } from "../navigators/NavigationService";
+import { goBack, navigate } from "../navigators/NavigationService";
 import ScreenName from "../configs/screenName";
 
 const { height: windowHeight } = Dimensions.get("window");
 
 export default function MarkableImage() {
   const [box, setBox] = useState({ w: 0, h: 0 });
-  const [imageSize, setImageSize] = useState({ w: 0, h: 0 });
-  const [circles, setCircles] = useState([]);
-  const [tempCircle, setTempCircle] = useState(null);
-  const [isLoading, setIsLoading] = useState(null);
+  const [imageSize, setImageSize] = useState({ w: 0, h: 0 }); // Track actual image size
+  const [circles, setCircles] = useState([]); // Store all circles
+  const [tempCircle, setTempCircle] = useState(null); // Currently drawing
+  const [isLoading, setIsLoading] = useState(null); // Currently drawing
   const drawing = useRef(false);
   const route = useRoute();
   const image = route?.params?.image;
-  const images = route?.params?.images || [];
+  const images = route?.params?.images;
   const provider = useSelector((state) => state.auth.cloudType);
   const patientId = useSelector((state) => state.auth.patientId.patientId);
   const patientName = useSelector((state) => state.auth.patientName.patientName);
   const accessToken = useSelector((state) => state.auth.accessToken);
   const dispatch = useDispatch();
-  const viewShotRef = useRef(null);
+  const viewShotRef = useRef(null); // Reference for view capture
   const [uploadFileToDropbox] = useUploadSingleFileToDropboxMutation();
+  console.log("image in markable", image);
+  console.log("image in markable", image?.path);
 
+  // Get image dimensions
   React.useEffect(() => {
     if (image?.path) {
       Image.getSize(
         image.path,
         (imgWidth, imgHeight) => {
-          // set scaled size but fit inside fixed box
+          // Calculate scaled dimensions to fit within drawingArea
           const maxWidth = width;
-          const maxHeight = windowHeight * 0.75; // <-- fixed height box
+          const maxHeight = windowHeight * 0.8;
           const scaleFactor = Math.min(maxWidth / imgWidth, maxHeight / imgHeight);
           const scaledWidth = imgWidth * scaleFactor;
           const scaledHeight = imgHeight * scaleFactor;
           setImageSize({ w: scaledWidth, h: scaledHeight });
+          console.log("Image dimensions:", { w: scaledWidth, h: scaledHeight });
         },
-        (error) => console.error("Error getting image size:", error)
+        (error) => {
+          console.error("Error getting image size:", error);
+        }
       );
     }
   }, [image?.path]);
@@ -68,46 +60,53 @@ export default function MarkableImage() {
   const panResponder = useMemo(
     () =>
       PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
+        onStartShouldSetPanResponder: () => {
+          console.log("onStartShouldSetPanResponder triggered");
+          return true;
+        },
+        onMoveShouldSetPanResponder: () => {
+          console.log("onMoveShouldSetPanResponder triggered");
+          return true;
+        },
         onPanResponderGrant: (evt) => {
+          console.log("onPanResponderGrant triggered", evt.nativeEvent);
           const { locationX, locationY } = evt.nativeEvent;
 
-          // check if tapping existing circle
+          // Check if tapping inside an existing circle
           const tappedIndex = circles.findIndex((c) => {
-            const dx = locationX / imageSize.w - c.center.x;
-            const dy = locationY / imageSize.h - c.center.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            return distance <= c.radius;
+            const dx = locationX - c.center.x;
+            const dy = locationY - c.center.y;
+            return Math.sqrt(dx * dx + dy * dy) <= c.radius;
           });
 
           if (tappedIndex !== -1) {
-            Alert.alert("Confirm", "Do you want to remove or attach image?", [
-              { text: "Cancel", style: "cancel" },
-              {
-                text: "Attach Image",
-                onPress: () => {
-                  // TODO: open attach flow
+            // Remove circle on tap
+            Alert.alert(
+              "Remove Circle",
+              "Do you want to remove this circle?",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Remove",
+                  style: "destructive",
+                  onPress: () =>
+                    setCircles((prev) =>
+                      prev.filter((_, idx) => idx !== tappedIndex)
+                    ),
                 },
-              },
-              {
-                text: "Remove",
-                style: "destructive",
-                onPress: () =>
-                  setCircles((prev) => prev.filter((_, idx) => idx !== tappedIndex)),
-              },
-            ]);
+              ]
+            );
             return;
           }
 
+          // Start drawing a new circle
           drawing.current = true;
-          setTempCircle({
-            center: { x: locationX, y: locationY },
-            radius: 0,
-          });
+          setTempCircle({ center: { x: locationX, y: locationY }, radius: 0 });
+          console.log("Started drawing circle at:", { x: locationX, y: locationY });
         },
         onPanResponderMove: (evt) => {
           if (!drawing.current || !tempCircle) return;
+          console.log("onPanResponderMove triggered", evt.nativeEvent);
           const { locationX, locationY } = evt.nativeEvent;
           const dx = locationX - tempCircle.center.x;
           const dy = locationY - tempCircle.center.y;
@@ -118,86 +117,90 @@ export default function MarkableImage() {
         },
         onPanResponderRelease: () => {
           if (drawing.current && tempCircle && tempCircle.radius > 0) {
-            const normalizedCircle = {
-              center: {
-                x: tempCircle.center.x / imageSize.w,
-                y: tempCircle.center.y / imageSize.h,
-              },
-              radius: tempCircle.radius / Math.min(imageSize.w, imageSize.h),
-            };
-            setCircles((prev) => [...prev, normalizedCircle]);
+            setCircles((prev) => [...prev, tempCircle]);
+            console.log("Circle added:", tempCircle);
           }
           drawing.current = false;
           setTempCircle(null);
+          console.log("onPanResponderRelease triggered");
+        },
+        onPanResponderTerminate: () => {
+          drawing.current = false;
+          setTempCircle(null);
+          console.log("onPanResponderTerminate triggered");
         },
       }),
-    [circles, tempCircle, imageSize]
+    [circles, tempCircle]
   );
 
   const onLayout = (e) => {
     const { width, height } = e.nativeEvent.layout;
     setBox({ w: width, h: height });
+    console.log("Layout updated:", { width, height });
   };
 
   const saveImage = async () => {
     let imgss = [];
     try {
+      // Capture the screenshot of the ViewShot ref
       const uri = await viewShotRef.current.capture({
         format: "jpg",
         quality: 0.8,
       });
+      console.log("Captured screenshot URI:", uri);
 
-      const localImageArr = [
-        {
-          ...image,
-          path: uri,
-          uri: uri,
-          metadata: { circles, timestamp: new Date().toISOString() },
-        },
-      ];
+      // Replace the original image with the captured screenshot
+      let localImageArr = [{ ...image, path: uri, uri: uri }]; // Preserve original image properties
 
       if (localImageArr.length <= 0) {
         Alert.alert("Validation Error", "Please capture at least one image first.");
         return;
       }
-
       setIsLoading(true);
 
       if (provider === "google") {
         await checkAndRefreshGoogleAccessToken(accessToken);
-        const patientInfo = { patientId, patientName };
+        const patientInfo = {
+          patientId,
+          patientName,
+        };
         const uploadedFileIds = await uploadCaptureFilesToPhotoMedFolder(
-          localImageArr,
+          localImageArr, // Use the screenshot URI
           patientInfo,
           accessToken
         );
-
         const uploadedImages = await Promise.all(
           uploadedFileIds.map(async (fileId) => {
             const image = await getImageDetailsById(fileId, accessToken);
             const publicUrl = await setFilePublic(fileId, accessToken);
-            return { ...image, publicUrl, metadata: localImageArr[0].metadata };
+            return {
+              ...image,
+              publicUrl,
+            };
           })
         );
         imgss = [...images, ...uploadedImages];
         dispatch(setPatientImages(imgss));
+        console.log("Uploaded images:", imgss);
       } else {
+        // Dropbox upload
         for (let file of localImageArr) {
           let result = await uploadFileToDropbox({
-            file,
+            file, // Use the screenshot URI
             userId: patientName + patientId,
             accessToken,
           }).unwrap();
           let publicUrl = await getDropboxFileUrl(result.path_display, accessToken);
-          result = { ...result, publicUrl, metadata: file.metadata };
+          console.log("Dropbox public URL:", publicUrl);
+
+          result = { ...result, publicUrl };
           imgss = [result, ...images];
         }
       }
-
       navigate(ScreenName.CAMERA_GRID, {
         imageData: imgss,
-        provider,
-      });
+        provider
+      })
     } catch (error) {
       Alert.alert("Error", "Something went wrong. Please try again later.");
       console.error("Error capturing or uploading image:", error);
@@ -209,50 +212,41 @@ export default function MarkableImage() {
   return (
     <SafeAreaView style={styles.container}>
       <Loading visible={isLoading} />
-
-      {/* ✅ Fixed-size box (full width, 75% height) */}
-      <View
-        style={[styles.fixedBox, { width, height: windowHeight * 0.75 }]}
-      >
+      {/* Background image and SVG overlay wrapped in ViewShot */}
+      <View style={styles.drawingArea}>
         <ViewShot
           ref={viewShotRef}
           options={{ format: "jpg", quality: 0.8 }}
-          style={[styles.imageContainer, { width: "100%", height: "100%" }]}
+          style={[styles.imageContainer, { width: imageSize.w, height: imageSize.h }]}
         >
           <View
-            style={[styles.imageContainer, { width: "100%", height: "100%" }]}
+            style={[styles.imageContainer, { width: imageSize.w, height: imageSize.h }]}
             onLayout={onLayout}
             {...panResponder.panHandlers}
           >
             <Image
               source={{ uri: image?.path }}
-              style={[styles.backgroundImage, { width: "100%", height: "100%" }]}
+              style={[styles.backgroundImage, { width: imageSize.w, height: imageSize.h }]}
               resizeMode="contain"
+              onLayout={(e) => {
+                console.log("Image layout:", e.nativeEvent.layout);
+              }}
             />
-
-            <Svg style={StyleSheet.absoluteFill}>
+            {/* SVG overlay for circles */}
+            <Svg style={StyleSheet.absoluteFill} width={imageSize.w} height={imageSize.h}>
+              {/* Saved circles */}
               {circles.map((c, i) => (
-                <React.Fragment key={i}>
-                  <Circle
-                    cx={c.center.x * imageSize.w}
-                    cy={c.center.y * imageSize.h}
-                    r={c.radius * Math.min(imageSize.w, imageSize.h)}
-                    stroke="#2DD4BF"
-                    strokeWidth={3}
-                    fill="rgba(45,212,191,0)"
-                  />
-                  <SvgText
-                    x={c.center.x * imageSize.w}
-                    y={c.center.y * imageSize.h - 8}
-                    fontSize={14}
-                    fill="#2DD4BF"
-                    textAnchor="middle"
-                  >
-                    {`M${i + 1}`}
-                  </SvgText>
-                </React.Fragment>
+                <Circle
+                  key={i}
+                  cx={c.center.x}
+                  cy={c.center.y}
+                  r={c.radius}
+                  stroke="#2DD4BF"
+                  strokeWidth={3}
+                  fill="rgba(45,212,191,0)"
+                />
               ))}
-
+              {/* Circle being drawn */}
               {tempCircle && tempCircle.radius > 0 && (
                 <Circle
                   cx={tempCircle.center.x}
@@ -267,7 +261,6 @@ export default function MarkableImage() {
           </View>
         </ViewShot>
       </View>
-
       <View style={styles.buttonContainer}>
         <CustomBtn
           title="Clear All"
@@ -277,7 +270,7 @@ export default function MarkableImage() {
         <CustomBtn
           title="Save"
           btnStyle={{ width: scale(100), marginLeft: 10 }}
-          onPress={saveImage}
+          onPress={() => saveImage()}
         />
       </View>
     </SafeAreaView>
@@ -285,18 +278,22 @@ export default function MarkableImage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  fixedBox: {
-    alignSelf: "center",
-    backgroundColor: "#000",
-    justifyContent: "center",
-    alignItems: "center",
-    overflow: "hidden",
-    borderRadius: 8,
-    marginTop: 10,
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
   },
-  imageContainer: { overflow: "hidden" },
-  backgroundImage: { position: "absolute" },
+  drawingArea: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  imageContainer: {
+    overflow: "hidden",
+  },
+  backgroundImage: {
+    position: "absolute",
+  },
   buttonContainer: {
     padding: scale(16),
     width: width,

@@ -17,6 +17,7 @@ import CrossIcon from "../assets/SvgIcons/CrossIcon";
 import ImageViewer from "../screens/ImageViewer";
 import ImageDetails from "../screens/ImageDetails";
 import TagFilter from "../screens/TagFilter";
+import DermoscopyDash from "../screens/dermoscopy/DermoscopyDash";
 import CollageAdd from "../screens/CollageAdd";
 import EditPatient from "../screens/EditPatient";
 import SelectPhoto from "../screens/SelectPhoto";
@@ -232,6 +233,14 @@ const MainStack = () => {
       <Stack.Screen
         name={ScreenName.TAG_FILTER}
         component={TagFilter}
+        options={{
+          headerShown: false,
+          headerTintColor: COLORS.textColor,
+        }}
+      />
+      <Stack.Screen
+        name={ScreenName.DERMO_SCOPY}
+        component={DermoscopyDash}
         options={{
           headerShown: false,
           headerTintColor: COLORS.textColor,

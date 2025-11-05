@@ -24,6 +24,7 @@ const ScreenName = {
   FRAMING:'Framing',
   SUB_MANAGE:'SubscriptionManage',
   TAG_FILTER:'TagFilter',
+  DERMO_SCOPY:'DermoscopyDash',
 };
 
 export default ScreenName;

@@ -3041,11 +3041,6 @@
   resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.3.0.tgz#d06bbb384ebcf6c505fde1c3d0ed4ddffe0aaff8"
   integrity sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==
 
-"@vladmandic/face-api@^1.7.15":
-  version "1.7.15"
-  resolved "https://registry.yarnpkg.com/@vladmandic/face-api/-/face-api-1.7.15.tgz#10cddf5c405f6f52f37605c9ee28c91ac6a23ead"
-  integrity sha512-WDMmK3CfNLo8jylWqMoQgf4nIst3M0fzx1dnac96wv/dvMTN4DxC/Pq1DGtduDk1lktCamQ3MIDXFnvrdHTXDw==
-
 "@vscode/sudo-prompt@^9.0.0":
   version "9.3.1"
   resolved "https://registry.yarnpkg.com/@vscode/sudo-prompt/-/sudo-prompt-9.3.1.tgz#c562334bc6647733649fd42afc96c0eea8de3b65"
@@ -7770,10 +7765,10 @@ react-native-iap@12.16.2:
   resolved "https://registry.yarnpkg.com/react-native-iap/-/react-native-iap-12.16.2.tgz#56d870e5bd851ceafe3990089ec7099feee451cd"
   integrity sha512-pIyO3eSZkYJYLdgDF90Or2wUsbiiYwa5xgUpaHBqZuVEk5Nz0ZDN4acwoXFfPa/a52MmQOYEeHbYLAQQW0o+rg==
 
-react-native-image-crop-picker@^0.51.0:
-  version "0.51.0"
-  resolved "https://registry.yarnpkg.com/react-native-image-crop-picker/-/react-native-image-crop-picker-0.51.0.tgz#673748d97459c0f03c63dd835418b1ef94ee7f01"
-  integrity sha512-hY0pxnPkTj75dUTfqoCkwIqCrStd/SK6j2CNEcMww8AIUx7Wp6HQVrF6ZzZK8waxvoO9t7kORwjTG2u1piuGqw==
+react-native-image-crop-picker@^0.51.1:
+  version "0.51.1"
+  resolved "https://registry.yarnpkg.com/react-native-image-crop-picker/-/react-native-image-crop-picker-0.51.1.tgz#1e42865454030c5194e693a9e7691bf5afe460f5"
+  integrity sha512-GIFRyXJgv1dPceKd/hraK9q9V38v45rSg2ONR6RiSePcOJemkHpc/PMU86pq6lWPilDYHSxbZmea2pNMk85ayw==
 
 react-native-image-pan-zoom@^2.1.12:
   version "2.1.12"
@@ -7815,11 +7810,6 @@ react-native-keyboard-aware-scroll-view@^0.9.5:
   dependencies:
     prop-types "^15.6.2"
     react-native-iphone-x-helper "^1.0.3"
-
-react-native-mlkit-ocr@^0.3.0:
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/react-native-mlkit-ocr/-/react-native-mlkit-ocr-0.3.0.tgz#b5b65dbe1fffdca0ca2012b1cab56cca6ea1bf58"
-  integrity sha512-8oNJwNMGsUup41nWlKA01iW6xiNkCcXM3ANDsOKKijvsrd3eWNs7kL0Yhpt3Cq64zSyjoeqkdTdOCDiI6Pv6KA==
 
 react-native-modal-datetime-picker@^18.0.0:
   version "18.0.0"
@@ -7954,10 +7944,10 @@ react-native-view-shot@^4.0.2:
   dependencies:
     html2canvas "^1.4.1"
 
-react-native-vision-camera@^4.7.2:
-  version "4.7.2"
-  resolved "https://registry.yarnpkg.com/react-native-vision-camera/-/react-native-vision-camera-4.7.2.tgz#e4bd8f3d893a3f5fa9d8224ce28b8ef00d171bc1"
-  integrity sha512-C+5PvlSunN6I4aYplSask+v3jfhgduZumIVw6H6lG+Afpf8boIcG3uFSsSfVgj+hxI7fx6qM6bsciEhzgxEUYg==
+react-native-vision-camera@4.5.1:
+  version "4.5.1"
+  resolved "https://registry.yarnpkg.com/react-native-vision-camera/-/react-native-vision-camera-4.5.1.tgz#245a2b4b894b75c104342fd3e14e934462203d90"
+  integrity sha512-ob7gfBYin4lG2zlzRr5y4rYJN3NCCyJotFX1z3ul8V0N2GwkCGh31cko6hF9DXG4VocSPVYKt+K5W0CWLp3y0g==
 
 react-native-webview@^13.12.3:
   version "13.15.0"

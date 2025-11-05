@@ -203,6 +203,32 @@ const PatientDetails = (props) => {
   //   fetchGoogleDriveImages1(accessToken, patientName, trimmedId, (count) => {
   //   });
   // }, [accessToken]);
+  const checkSubFolders = async (accessToken, parentFolderId) => {
+    const q = encodeURIComponent(`'${parentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`);
+    const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`;
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    const data = await response.json();
+    console.log('datadatadatadata', data);
+
+    if (data.error) {
+      console.log('checkSubFolders ❌ Error:', data.error);
+      return;
+    }
+
+    if (!data.files || data.files.length === 0) {
+      console.log('checkSubFolders 🚫 No subfolders found inside this folder.');
+    } else {
+      console.log(`checkSubFolders 📁 Found ${data.files.length} subfolder(s):`);
+      data.files.forEach((f, i) => console.log(`${i + 1}. ${f.name} (${f.id})`));
+    }
+  };
   const fetchGoogleDriveImages = async () => {
     try {
       let vailidToken = await checkAndRefreshGoogleAccessToken(accessToken);
@@ -214,13 +240,15 @@ const PatientDetails = (props) => {
         console.error("PhotoMed folder not found");
         return;
       }
-
       // Step 2: Locate the patient folder inside "PhotoMed"
       const patientFolderId = await getFolderId(
         preData.full_name + trimmedId,
         accessToken,
         photoMedFolderId
       );
+      
+      checkSubFolders(accessToken,patientFolderId)
+
 
       if (!patientFolderId) {
         console.error("Patient folder not found");
@@ -234,6 +262,7 @@ const PatientDetails = (props) => {
         accessToken,
         patientFolderId
       );
+      checkSubFolders(accessToken, allImagesFolderId)
       if (!allImagesFolderId) {
         console.error("All Images folder not found");
         return;
@@ -449,15 +478,15 @@ const PatientDetails = (props) => {
   };
 
   const subscription = useSelector((state) => state.auth?.subscription);
-  const needSubscription = !subscription?.hasSubscription ||  subscription?.isExpired  // || !subscription?.isActive;
-  console.log('needSubscriptionneedSubscriptionneedSubscription', needSubscription, subscription);
+  const needSubscription = !subscription?.hasSubscription || subscription?.isExpired  // || !subscription?.isActive;
+  console.log('needSubscriptio------', needSubscription, subscription);
 
 
   const _chooseFile = async () => {
-    if (needSubscription ) {
-      showSubscriptionAlert(navigate);
-      return;
-    }
+    // if (needSubscription ) {
+    //   showSubscriptionAlert(navigate);
+    //   return;
+    // }
     // navigate('MarkableImage')
     try {
       // Step 1: Select and map files
@@ -494,22 +523,22 @@ const PatientDetails = (props) => {
   };
 
   const btnCollage = (type) => {
-    if (needSubscription) {
-      showSubscriptionAlert(navigate);
-      return;
-    }
+    // if (needSubscription) {
+    //   showSubscriptionAlert(navigate);
+    //   return;
+    // }
     type == "withSelectedImage"
       ? navigate(ScreenName.COLLAGE_ADD, {
-          images: collageImages,
-          preData: preData,
-        })
+        images: collageImages,
+        preData: preData,
+      })
       : navigate(ScreenName.COLLAGE_ADD, { preData: preData });
   };
   const btnAddTag = () => {
-    if (needSubscription) {
-      showSubscriptionAlert(navigate);
-      return;
-    }
+    // if (needSubscription) {
+    //   showSubscriptionAlert(navigate);
+    //   return;
+    // }
     navigate(ScreenName.IMAGE_DETAILS, {
       images: collageImages,
     });
@@ -590,18 +619,28 @@ const PatientDetails = (props) => {
             </View>
           </View>
         </View>
-        <CustomBtn
-          onPress={() =>
-            navigate(ScreenName.EDIT_PATIENT, {
-              patient,
-              imageCount:
-                provider == "google" ? images.length : imageUrls.length,
-            })
-          }
-          titleStyle={{ fontSize: 10 }}
-          btnStyle={{ width: 150, height: 30, marginTop: verticalScale(10) }}
-          title={"Edit Patient Information"}
-        />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <CustomBtn
+            onPress={() =>
+              navigate(ScreenName.EDIT_PATIENT, {
+                patient,
+                imageCount:
+                  provider == "google" ? images.length : imageUrls.length,
+              })
+            }
+            titleStyle={{ fontSize: 10 }}
+            btnStyle={{ width: 150, height: 30, marginTop: verticalScale(10) }}
+            title={"Edit Patient Information"}
+          />
+          <CustomBtn
+            onPress={() => {
+              navigate(ScreenName.DERMO_SCOPY)
+            }}
+            titleStyle={{ fontSize: 10 }}
+            btnStyle={{ width: 150, height: 30, marginTop: verticalScale(10) }}
+            title={"Dermoscopy"}
+          />
+        </View>
       </View>
       <View style={styles.subContainer}>
         <View style={commonStyles.flexView}>

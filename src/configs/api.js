@@ -53,7 +53,6 @@ export async function getFolderId(
     );
 
     const data = await response.json();
-    console.log('data---69', data);
     return data.files && data.files.length > 0 ? data.files[0].id : null;
   } catch (error) {
     console.log('error---69', error);
@@ -182,29 +181,29 @@ export async function getSubFolderId(
   return data.files && data.files.length > 0 ? data.files[0].id : null;
 }
 
-export async function checkGooleAllImagesFolderExists(folderId, accessToken) {
-  const url = `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name,mimeType`;
+// export async function checkGooleAllImagesFolderExists(folderId, accessToken) {
+//   const url = `https://www.googleapis.com/drive/v3/files/${folderId}?fields=id,name,mimeType`;
 
-  try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+//   try {
+//     const response = await fetch(url, {
+//       method: "GET",
+//       headers: {
+//         Authorization: `Bearer ${accessToken}`,
+//       },
+//     });
 
-    if (response.ok) {
-      const data = await response.json();
-      return true; // Folder exists
-    } else {
-      const errorData = await response.json();
-      return false; // Folder doesn't exist
-    }
-  } catch (error) {
-    console.error("Error checking folder existence:", error.message);
-    return false;
-  }
-}
+//     if (response.ok) {
+//       const data = await response.json();
+//       return true; // Folder exists
+//     } else {
+//       const errorData = await response.json();
+//       return false; // Folder doesn't exist
+//     }
+//   } catch (error) {
+//     console.error("Error checking folder existence:", error.message);
+//     return false;
+//   }
+// }
 
 export const safeCreateFolder = async (
   folderPath,
@@ -378,69 +377,7 @@ export async function uploadFilesToPhotoMedFolder(
   }
 }
 
-const uploadImageToDrive123 = async (
-  accessToken,
-  files,
-  folderId,
-  patientName,
-  imageName
-) => {
-  try {
-    // Fetch the file blob
-    const blob = await fetch(files.uri).then((res) => res.blob());
-
-    // Metadata with folder ID and file details
-    const metadata = {
-      name: imageName || "photo.jpg", // File name
-      mimeType: "image/jpeg", // MIME type
-      parents: folderId ? [folderId] : [], // Folder ID (if specified)
-    };
-
-    // Build the multipart body manually
-    const boundary = "foo_bar_baz"; // Unique string to separate parts
-    const body = `
---${boundary}
-Content-Type: application/json; charset=UTF-8
-
-${JSON.stringify(metadata)}
---${boundary}
-Content-Type: ${blob.type}
-
-`;
-
-    // Convert the body to a Blob and append the file content
-    const multipartBody = new Blob([body, blob, `\n--${boundary}--`], {
-      type: `multipart/related; boundary=${boundary}`,
-    });
-
-    // Send the request
-    const response = await fetch(
-      "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": `multipart/related; boundary=${boundary}`,
-        },
-        body: multipartBody,
-      }
-    );
-
-    // Parse the response
-    const responseData = await response.json();
-
-    if (response.ok) {
-      return responseData.id;
-    } else {
-      console.error("Error uploading file:", responseData);
-      Toast.show("Failed to upload file");
-      throw new Error("Failed to upload file");
-    }
-  } catch (error) {
-    console.error("Error uploading image:", error);
-    throw new Error("Failed to upload file");
-  }
-};
+ 
 
 export const getImageDetailsById = async (fileId, accessToken) => {
   try {
@@ -527,39 +464,39 @@ export async function deleteImage(fileId, accessToken) {
     return false;
   }
 }
-export async function updateFileMetadata(
-  fileId,
-  categoryName,
-  notes,
-  accessToken
-) {
-  const url = `https://www.googleapis.com/drive/v3/files/${fileId}`;
-  const metadata = {
-    properties: {
-      categoryName: categoryName,
-      notes: notes,
-    },
-  };
-  try {
-    const response = await fetch(url, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(metadata),
-    });
+// export async function updateFileMetadata(
+//   fileId,
+//   categoryName,
+//   notes,
+//   accessToken
+// ) {
+//   const url = `https://www.googleapis.com/drive/v3/files/${fileId}`;
+//   const metadata = {
+//     properties: {
+//       categoryName: categoryName,
+//       notes: notes,
+//     },
+//   };
+//   try {
+//     const response = await fetch(url, {
+//       method: "PATCH",
+//       headers: {
+//         Authorization: `Bearer ${accessToken}`,
+//         "Content-Type": "application/json",
+//       },
+//       body: JSON.stringify(metadata),
+//     });
 
-    if (!response.ok) {
-      throw new Error(`Error updating file metadata: ${response.statusText}`);
-    }
+//     if (!response.ok) {
+//       throw new Error(`Error updating file metadata: ${response.statusText}`);
+//     }
 
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    // console.error('Error updating file metadata:', error);
-  }
-}
+//     const result = await response.json();
+//     return result;
+//   } catch (error) {
+//     // console.error('Error updating file metadata:', error);
+//   }
+// }
 
 async function checkIfPathExists(path, accessToken) {
   try {
@@ -859,44 +796,45 @@ async function getFileProperties(fileId, accessToken) {
   return fileData.appProperties;
 }
 
-export async function createCategoryImage(
-  accessToken,
-  parentFolderId,
-  fileId,
-  categoryName
-) {
-  try {
-    // Ensure we create or get the patient-specific folder instead of the category folder
-    const categoryFolderId = await createOrGetCategoryFolder(
-      parentFolderId,
-      categoryName,
-      accessToken
-    );
+// export async function createCategoryImage(
+//   accessToken,
+//   parentFolderId,
+//   fileId,
+//   categoryName
+// ) {
+//   try {
+//     // Ensure we create or get the patient-specific folder instead of the category folder
+//     const categoryFolderId = await createOrGetCategoryFolder(
+//       parentFolderId,
+//       categoryName,
+//       accessToken
+//     );
 
-    // Check if the image exists in the patient folder (not in the category folder)
-    const imageExists = await checkIfFileExistsInFolder(
-      fileId,
-      categoryFolderId,
-      accessToken
-    );
+//     // Check if the image exists in the patient folder (not in the category folder)
+//     const imageExists = await checkIfFileExistsInFolder(
+//       fileId,
+//       categoryFolderId,
+//       accessToken
+//     );
 
-    if (imageExists) {
-      Toast.show("Image already exists in the patient folder.");
-    } else {
-      // Copy the file into the patient-specific folder
-      const resp = await copyFileToCategoryFolder(
-        fileId,
-        categoryFolderId,
-        accessToken
-      );
-      navigate(ScreenName.HOME);
-    }
-  } catch (error) {
-    console.error("Error:", error);
-  }
-}
+//     if (imageExists) {
+//       Toast.show("Image already exists in the patient folder.");
+//     } else {
+//       // Copy the file into the patient-specific folder
+//       const resp = await copyFileToCategoryFolder(
+//         fileId,
+//         categoryFolderId,
+//         accessToken
+//       );
+//       navigate(ScreenName.HOME);
+//     }
+//   } catch (error) {
+//     console.error("Error:", error);
+//   }
+// }
 
 // Check if the file already exists in the category folder
+
 export async function checkIfFileExistsInFolder(
   parentFileId,
   categoryFolderId,

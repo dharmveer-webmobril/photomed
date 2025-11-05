@@ -278,11 +278,10 @@ const CameraGrid = (props) => {
   const needSubscription = !subscription?.hasSubscription || !subscription?.isActive || subscription?.isExpired;
 
   const _chooseFile = async () => {
-    console.log("activePatient", activePatient);
-    if (needSubscription) {
-      showSubscriptionAlert(navigate);
-      return;
-    }
+    // if (needSubscription) {
+    //   showSubscriptionAlert(navigate);
+    //   return;
+    // }
     if (loacalImageArr?.length <= 0) {
       Alert.alert(
         "Validation Error",

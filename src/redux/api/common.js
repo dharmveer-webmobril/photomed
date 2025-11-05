@@ -440,6 +440,7 @@ export const commonApi = createApi({
             },
             body: JSON.stringify({ path: folderPath }),
           });
+console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2));
 
           // Check if the first API call was successful
           if (listFilesResponse.error) {

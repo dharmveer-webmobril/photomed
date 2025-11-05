@@ -81,7 +81,7 @@ const ConnectCloud = () => {
         clientId: configUrl.DROPBOX_CLIENT_ID,
         clientSecret: configUrl.DROPBOX_CLIENT_SECRET,
         redirectUrl: "com.photomedpro://dropboxredirect",
-        scopes: ['files.content.write'],
+        scopes: ['files.content.write','files.content.read'],
         serviceConfiguration: {
           authorizationEndpoint: 'https://www.dropbox.com/oauth2/authorize',
           tokenEndpoint: 'https://api.dropboxapi.com/oauth2/token',
@@ -120,10 +120,10 @@ const ConnectCloud = () => {
   };
 
   const btnDropBox = () => {
-    if (appStatus === 0 || appStatus === '0') {
-      Alert.alert("Coming Soon", "Dropbox integration will be added in a future update.");
-      return;
-    }
+    // if (appStatus === 0 || appStatus === '0') {
+    //   Alert.alert("Coming Soon", "Dropbox integration will be added in a future update.");
+    //   return;
+    // }
     startDropboxAuth();
   }
 
