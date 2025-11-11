@@ -94,7 +94,7 @@ const MainStack = () => {
         name={"MarkableImage"}
         component={MarkableImage}
         options={{
-          headerShown: true,
+          headerShown: false,
           headerTintColor: COLORS.textColor,
           headerTitle: "Mark Image",
         }}

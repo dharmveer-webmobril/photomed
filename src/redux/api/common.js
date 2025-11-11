@@ -42,8 +42,6 @@ export const commonApi = createApi({
         }),
       }),
     }),
-
-
     searchPatient: builder.query({
       query: ({ term = "", token }) => {
         const searchQuery = term?.trim()
@@ -198,6 +196,7 @@ export const commonApi = createApi({
         body: JSON.stringify({ full_name, email, query }),
       }),
     }),
+
     // Google Drive: Get Folder ID
     getFolderId: builder.query({
       query: ({ folderName, accessToken }) => {
@@ -418,6 +417,7 @@ export const commonApi = createApi({
         }
       },
     }),
+
     // Add this to the `endpoints` section of your `commonApi`
     getAllImageUrls: builder.query({
       async queryFn(
@@ -440,7 +440,7 @@ export const commonApi = createApi({
             },
             body: JSON.stringify({ path: folderPath }),
           });
-console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2));
+          // console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2));
 
           // Check if the first API call was successful
           if (listFilesResponse.error) {
@@ -518,6 +518,7 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
           ]
           : [{ type: "Images", id: "LIST" }],
     }),
+
     getAllImageUrlsForFilter: builder.mutation({
       async queryFn(
         { userId, accessToken, folderPath },
@@ -616,6 +617,7 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
           ]
           : [{ type: "Images", id: "LIST" }],
     }),
+
     uploadFileToDropbox: builder.mutation({
       async queryFn(
         { file, userId, accessToken, imageName },
@@ -734,7 +736,7 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
 
           const rawResponse = await response.text();
           console.log("rawResponse 735-----", metadata);
-          
+
           if (response.ok) {
             const responseData = JSON.parse(rawResponse);
             return { data: responseData };
@@ -772,6 +774,7 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
         { type: "Images", id: "LIST" },
       ],
     }),
+
     postImageCategory: builder.mutation({
       query: ({ token, imageData }) => ({
         url: "imagecategory",
@@ -783,6 +786,7 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
         body: imageData,
       }),
     }),
+
     getImageCategory: builder.query({
       query: ({ token, id }) => ({
         url: `getimagecategory/${id}`,
@@ -793,6 +797,7 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
         },
       }),
     }),
+
     getImageCategories: builder.query({
       query: ({ token }) => ({
         url: `getimagecategory`,
@@ -803,6 +808,7 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
         },
       }),
     }),
+
     getNotifications: builder.query({
       query: ({ token }) => ({
         url: "getnotifications",
@@ -823,6 +829,7 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
           ]
           : [{ type: "Notification", id: "LIST" }],
     }),
+
     deleteNotification: builder.mutation({
       query: ({ notificationIds, token }) => ({
         url: `deletenotification`, // Update this to match your API endpoint
@@ -838,6 +845,7 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
         ...notificationIds.map((id) => ({ type: "Notification", id })), // Invalidate each specific notification
       ],
     }),
+
     shareUrl: builder.mutation({
       query: ({ body, token }) => ({
         url: "shareurl", // Full URL including API path
@@ -854,6 +862,7 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
         return request;
       },
     }),
+
     postDrCategorySubcat: builder.mutation({
       query: ({ token, catData }) => ({
         url: "adddrcategory",
@@ -865,6 +874,7 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
         body: catData,
       }),
     }),
+
     getMixedCategories: builder.query({
       query: ({ token }) => ({
         url: "getdrcategory",
@@ -875,6 +885,7 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
         },
       }),
     }),
+
     getUserProfile: builder.query({
       query: ({ token }) => ({
         url: 'getprofile',
@@ -885,8 +896,8 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
         },
       }),
     }),
-    deleteTagSubTag: builder.mutation({
 
+    deleteTagSubTag: builder.mutation({
       query: ({ token, id }) => ({
         url: `deletedrcategory/${id}`,
         method: "DELETE",
@@ -896,18 +907,6 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
         },
       }),
     }),
-
-    // postPatientTags: builder.mutation({
-    //   query: ({ token, tags, patientId }) => ({
-    //     url: `addtags/${patientId}`,
-    //     method: "POST",
-    //     headers: {
-    //       Authorization: `Bearer ${token}`,
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: tags,
-    //   }),
-    // }),
 
     postAttachImageWithTag: builder.mutation({
       query: ({ token, tag, subtag, imageId }) => ({
@@ -924,6 +923,7 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
         }),
       }),
     }),
+
     getAttachImageWithTag: builder.query({
       query: ({ token, imageId }) => {
         console.log('getAttachImageWithTag', token, imageId);
@@ -936,6 +936,81 @@ console.log("📦 listFilesResponse:", JSON.stringify(listFilesResponse, null, 2
           },
         }
       }
+    }),
+
+    uploadDropBoxImageByFolder: builder.mutation({
+      async queryFn({ file, path, userId, accessToken },) {
+        try {
+          console.log("ufilefilefilefilefileri-----", file);
+          let { path: filePath, name } = file;
+
+          console.log("uri-----", filePath);
+          // if (!uri.startsWith('file://')) {
+          //   uri = `file://${uri}`;
+          // }
+
+          const fileData = await fetch(filePath);
+          const blob = await fileData.blob();
+          const metadata = {
+            path,
+            mode: "add",
+            autorename: true,
+            mute: false,
+          };
+          const response = await fetch(
+            "https://content.dropboxapi.com/2/files/upload",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/octet-stream",
+                "Dropbox-API-Arg": JSON.stringify(metadata),
+              },
+              body: blob,
+            }
+          );
+
+          const rawResponse = await response.text();
+          console.log("rawResponse 973-----", metadata);
+
+          if (response.ok) {
+            const responseData = JSON.parse(rawResponse);
+            return { data: responseData };
+          } else {
+            return { error: rawResponse || "Failed to upload file" };
+          }
+        } catch (error) {
+          return { error: error.message || "An unknown error occurred" };
+        }
+      },
+
+    }),
+
+    getDermoScopyMoles: builder.query({
+      query: ({ body, patientId,token,cloudType }) => {
+        console.log('getDermoScopyMoles patientId cloudType',patientId,cloudType);
+        console.log('`dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`',`dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`);
+        
+        return {
+          url: `dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      }
+    }),
+    postDermoScopyMole: builder.mutation({
+      query: ({ token, data }) => ({
+        url: `dermoscopy`,
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }),
     }),
 
   }),
@@ -976,7 +1051,8 @@ export const {
   // usePostPatientTagsMutation
   usePostAttachImageWithTagMutation,
   useLazyGetAttachImageWithTagQuery,
-
-
   useSearchPatientQuery,
+  useUploadDropBoxImageByFolderMutation,
+  usePostDermoScopyMoleMutation,
+  useGetDermoScopyMolesQuery
 } = commonApi;

@@ -16,14 +16,8 @@
 		41C106F12E8F8F28008C3471 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 41C106F02E8F8F28008C3471 /* StoreKit.framework */; };
 		44923BE61F83C18E31AD62F2 /* libPods-PhotoMed-PhotoMedTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 60D319A997525B4378BC4CCA /* libPods-PhotoMed-PhotoMedTests.a */; };
 		456AFD43DA6403C4F79B7747 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = EEA43ADFC18C5373B8ECE54E /* PrivacyInfo.xcprivacy */; };
-		4EBEF2A3E4184C7D9752C7E7 /* ssd_mobilenetv1_model-shard1 in Resources */ = {isa = PBXBuildFile; fileRef = CC8F964CDA9D475ABE7B596F /* ssd_mobilenetv1_model-shard1 */; };
-		6F8589F1C503448096DE5BAD /* face_recognition_model-weights_manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 3B24879576CD4067A31A659A /* face_recognition_model-weights_manifest.json */; };
-		749696FECF3E425E8A43DB21 /* ssd_mobilenetv1_model-weights_manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = DC639D54F15346B08D4B3791 /* ssd_mobilenetv1_model-weights_manifest.json */; };
-		7A26997FC2C7449A87E784F6 /* face_recognition_model-shard1 in Resources */ = {isa = PBXBuildFile; fileRef = 0D192E60279E4C7FA54C04F9 /* face_recognition_model-shard1 */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		DAE23254B9EC43D4BCED2221 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AFABCC1ECF4D4224BF025292 /* BootSplash.storyboard */; };
-		EE6B6CFCFF3A4501B58297C0 /* face_landmark_68_model-weights_manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 892C69E2E36549D0BD4B1A59 /* face_landmark_68_model-weights_manifest.json */; };
-		F313972149A848D08B9E2DF7 /* face_landmark_68_model-shard1 in Resources */ = {isa = PBXBuildFile; fileRef = 880D6D0A9FD14C6EA84F35FF /* face_landmark_68_model-shard1 */; };
 		F378E3C9DAAE0B2F47985AFA /* libPods-PhotoMed.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 080F6D01BDB5D03C0D2EDF7B /* libPods-PhotoMed.a */; };
 /* End PBXBuildFile section */
 
@@ -43,7 +37,6 @@
 		00E356F21AD99517003FC87E /* PhotoMedTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PhotoMedTests.m; sourceTree = "<group>"; };
 		046D1EB255731EFF1AB9591E /* Pods-PhotoMed-PhotoMedTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PhotoMed-PhotoMedTests.release.xcconfig"; path = "Target Support Files/Pods-PhotoMed-PhotoMedTests/Pods-PhotoMed-PhotoMedTests.release.xcconfig"; sourceTree = "<group>"; };
 		080F6D01BDB5D03C0D2EDF7B /* libPods-PhotoMed.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PhotoMed.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		0D192E60279E4C7FA54C04F9 /* face_recognition_model-shard1 */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "face_recognition_model-shard1"; path = "../assets/models/face_recognition_model-shard1"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* PhotoMed.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PhotoMed.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FAF1A68108700A75B9A /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppDelegate.h; path = PhotoMed/AppDelegate.h; sourceTree = "<group>"; };
 		13B07FB01A68108700A75B9A /* AppDelegate.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = AppDelegate.mm; path = PhotoMed/AppDelegate.mm; sourceTree = "<group>"; };
@@ -51,20 +44,15 @@
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = PhotoMed/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = PhotoMed/main.m; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = PhotoMed/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		3B24879576CD4067A31A659A /* face_recognition_model-weights_manifest.json */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "face_recognition_model-weights_manifest.json"; path = "../assets/models/face_recognition_model-weights_manifest.json"; sourceTree = "<group>"; };
 		411FACD72E8CE68200676888 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		413E56A42CE482D700BEFB66 /* PhotoMed.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = PhotoMed.entitlements; path = PhotoMed/PhotoMed.entitlements; sourceTree = "<group>"; };
 		41C106F02E8F8F28008C3471 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		60D319A997525B4378BC4CCA /* libPods-PhotoMed-PhotoMedTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PhotoMed-PhotoMedTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = PhotoMed/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		880D6D0A9FD14C6EA84F35FF /* face_landmark_68_model-shard1 */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "face_landmark_68_model-shard1"; path = "../assets/models/face_landmark_68_model-shard1"; sourceTree = "<group>"; };
-		892C69E2E36549D0BD4B1A59 /* face_landmark_68_model-weights_manifest.json */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "face_landmark_68_model-weights_manifest.json"; path = "../assets/models/face_landmark_68_model-weights_manifest.json"; sourceTree = "<group>"; };
 		AA73A9C64B305BAA011F3A5D /* Pods-PhotoMed.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PhotoMed.release.xcconfig"; path = "Target Support Files/Pods-PhotoMed/Pods-PhotoMed.release.xcconfig"; sourceTree = "<group>"; };
 		ABB9B78D7DE543D0BD192A84 /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = PhotoMed/Colors.xcassets; sourceTree = "<group>"; };
 		AEC2D1EE78F91A4B85144D1D /* Pods-PhotoMed.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PhotoMed.debug.xcconfig"; path = "Target Support Files/Pods-PhotoMed/Pods-PhotoMed.debug.xcconfig"; sourceTree = "<group>"; };
 		AFABCC1ECF4D4224BF025292 /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = PhotoMed/BootSplash.storyboard; sourceTree = "<group>"; };
-		CC8F964CDA9D475ABE7B596F /* ssd_mobilenetv1_model-shard1 */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "ssd_mobilenetv1_model-shard1"; path = "../assets/models/ssd_mobilenetv1_model-shard1"; sourceTree = "<group>"; };
-		DC639D54F15346B08D4B3791 /* ssd_mobilenetv1_model-weights_manifest.json */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "ssd_mobilenetv1_model-weights_manifest.json"; path = "../assets/models/ssd_mobilenetv1_model-weights_manifest.json"; sourceTree = "<group>"; };
 		DF2E209851FD329143EF3C73 /* Pods-PhotoMed-PhotoMedTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PhotoMed-PhotoMedTests.debug.xcconfig"; path = "Target Support Files/Pods-PhotoMed-PhotoMedTests/Pods-PhotoMed-PhotoMedTests.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		EEA43ADFC18C5373B8ECE54E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = PhotoMed/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -130,12 +118,6 @@
 		25FE4F421EC04167B51A5FD7 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				880D6D0A9FD14C6EA84F35FF /* face_landmark_68_model-shard1 */,
-				892C69E2E36549D0BD4B1A59 /* face_landmark_68_model-weights_manifest.json */,
-				0D192E60279E4C7FA54C04F9 /* face_recognition_model-shard1 */,
-				3B24879576CD4067A31A659A /* face_recognition_model-weights_manifest.json */,
-				CC8F964CDA9D475ABE7B596F /* ssd_mobilenetv1_model-shard1 */,
-				DC639D54F15346B08D4B3791 /* ssd_mobilenetv1_model-weights_manifest.json */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -292,12 +274,6 @@
 				411FACD82E8CE68200676888 /* GoogleService-Info.plist in Resources */,
 				DAE23254B9EC43D4BCED2221 /* BootSplash.storyboard in Resources */,
 				29FE14799C6244AAA0E26CF7 /* Colors.xcassets in Resources */,
-				F313972149A848D08B9E2DF7 /* face_landmark_68_model-shard1 in Resources */,
-				EE6B6CFCFF3A4501B58297C0 /* face_landmark_68_model-weights_manifest.json in Resources */,
-				7A26997FC2C7449A87E784F6 /* face_recognition_model-shard1 in Resources */,
-				6F8589F1C503448096DE5BAD /* face_recognition_model-weights_manifest.json in Resources */,
-				4EBEF2A3E4184C7D9752C7E7 /* ssd_mobilenetv1_model-shard1 in Resources */,
-				749696FECF3E425E8A43DB21 /* ssd_mobilenetv1_model-weights_manifest.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

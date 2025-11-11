@@ -6,25 +6,42 @@ import { useRoute } from '@react-navigation/native';
 import { useSelector } from 'react-redux';
 import COLORS from '../styles/colors';
 import FONTS from '../styles/fonts';
+import ImageCropPicker from 'react-native-image-crop-picker';
 
 const { width, height } = Dimensions.get("window");
 export default function CollageDermoscopy() {
   const route = useRoute();
   const provider = useSelector((state) => state.auth.cloudType);
   const [imageArr, setImageArr] = useState([])
-  const [secondBoxImage, setSecondBoxImage] = useState(null)
-  const image = route?.params?.image;
+  const [secondBoxImage, setSecondBoxImage] = useState(null);
+  const [firstBoximage, setFirstBoximage] = useState(null);
   const images = route?.params?.images;
-  console.log('images?.lengthimages?.length', images);
+
+  console.log('images?.lengthimages?.length', images.length);
+
   useEffect(() => {
+    setImageArr(images)
     if (images?.length > 0) {
-      console.log('images?.lengthimages?.length', images);
-      setImageArr(images)
-      let img = provider === "google" ? images[0] : images[0]
-      setSecondBoxImage(img)
+      setFirstBoximage(images[0])
     }
   }, [images])
-  console.log('imageimageimage--', image);
+
+  console.log('imageimageimage--', images);
+  console.log('imageArrimageArrimageArr--', imageArr);
+
+  const openCamera = () => {
+    ImageCropPicker.openCamera({
+      cropping: false,
+      mediaType: "photo",
+      width: 1000,
+      height: 1000,
+      compressImageQuality: 0.8,
+    })
+      .then((img) => {
+        setSecondBoxImage(img)
+      })
+      .catch((e) => console.log("Camera cancelled or error:", e));
+  };
 
   return (
     <View style={{ flex: 1, }}>
@@ -34,90 +51,76 @@ export default function CollageDermoscopy() {
             scalable={{ min: 1, max: 5 }}
             style={{ height: "100%", width: "100%" }}
           >
-            <ImageWithLoader
-              uri={
-                provider === "google" ? image.webContentLink : image.publicUrl
-              }
-              style={[
-                { width: "100%", height: "100%" }, // Default styles
-                // Add border if 'Border' is selected
-              ]}
+            {firstBoximage && <ImageWithLoader
+              uri={firstBoximage?.path}
+              style={[{ width: "100%", height: "100%" }]}
               resizeMode="contain"
-            />
+            />}
           </Gestures>
         </View>
-        <View style={{ justifyContent: 'space-between', alignItems: 'center', width: '50%', height: height * 0.6, borderWidth: 1, overflow: "hidden", }}>
-          <Gestures
+        <View style={{ justifyContent: 'center', alignItems: 'center', width: '50%', height: height * 0.6, borderWidth: 1, overflow: "hidden", }}>
+
+          {secondBoxImage ? <Gestures
             scalable={{ min: 1, max: 5 }}
             style={{ height: "100%", width: "100%" }}
           >
             <ImageWithLoader
-              uri={provider === "google" ? secondBoxImage?.webContentLink : secondBoxImage?.publicUrl}
+              uri={secondBoxImage.path}
               style={[
-                { width: "100%", height: "100%" }, // Default styles
-                // Add border if 'Border' is selected
+                { width: "100%", height: "100%" },
               ]}
               resizeMode="contain"
             />
 
+            <TouchableOpacity style={{ backgroundColor: '#00000060', zIndex: 9999, position: 'absolute', width: '100%', justifyContent: 'center', alignItems: 'center', paddingVertical: 8, bottom: 0 }}>
+              <Text style={{ color: '#000' }}>Choose another Image</Text>
+            </TouchableOpacity>
+
           </Gestures>
+            :
+            <TouchableOpacity onPress={() => { openCamera() }}>
+              <Text style={{ color: '#000' }}>Add Image</Text>
+            </TouchableOpacity>
+          }
         </View>
       </View>
-      <View style={{ width: "100%", justifyContent: "center", alignItems: "center",marginTop:20 }}>
+      <View style={{ width: "100%", justifyContent: "center", alignItems: "center", marginTop: 20 }}>
         {
-          imageArr?.length > 0 ?
-            <>
-              <FlatList
-                horizontal
-                data={imageArr}
-                contentContainerStyle={{ alignSelf: 'center' }}
-                renderItem={({ item }) => {
-                  return <TouchableOpacity
-
+          imageArr?.length > 1 &&
+          <>
+            <FlatList
+              horizontal
+              data={imageArr}
+              contentContainerStyle={{ alignSelf: 'center' }}
+              renderItem={({ item }) => {
+                return <TouchableOpacity
+                  style={[{
+                    height: 60,
+                    width: 60,
+                    marginHorizontal: 5,
+                    borderRadius: 2,
+                  },
+                  secondBoxImage === item && { borderWidth: 3, borderColor: COLORS.primary, }
+                  ]}
+                  onPress={() => {
+                    setFirstBoximage(item);
+                  }}
+                >
+                  <ImageWithLoader
+                    uri={item.path}
                     style={[
                       {
-                        height: 60,
-                        width: 60,
-                        marginHorizontal: 5,
+                        height: '100%',
+                        width: '100%',
                         borderRadius: 2,
                       },
-                      secondBoxImage === item && { borderWidth: 3, borderColor: COLORS.primary, }
-                    ]}
-                    onPress={() => {
-                      setSecondBoxImage(item);
-                    }}
-                  >
-                    <ImageWithLoader
-                      uri={
-                        provider === "google"
-                          ? item.webContentLink
-                          : item.publicUrl
-                      }
-                      style={[
-                        {
-                          height: '100%',
-                          width: '100%',
-                          borderRadius: 2,
-                        },
 
-                      ]}
-                    />
-                  </TouchableOpacity>
-                }}
-              />
-            </>
-            :
-            <Text
-              style={{
-                marginVertical: 20,
-                fontFamily: FONTS.bold,
-                fontSize: 14,
-                color: COLORS.primary,
-                textAlign: "center"
+                    ]}
+                  />
+                </TouchableOpacity>
               }}
-            >
-              No Photo Available.
-            </Text>
+            />
+          </>
         }
       </View>
     </View>

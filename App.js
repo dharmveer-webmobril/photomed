@@ -14,6 +14,7 @@ import Orientation from "react-native-orientation-locker";
 import { IAPProvider } from "./src/configs/IAPContext";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import UpdateChecker from "./src/screens/UpdateCheck";
+import { MenuProvider } from "react-native-popup-menu";
 if (!global.atob) {
   global.atob = atob;
 }
@@ -56,12 +57,13 @@ const App = () => {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <Provider store={store}>
-        <StatusBar backgroundColor={"white"} barStyle={"dark-content"} />
-        <AppNavigator />
-
-      </Provider>
-      <UpdateChecker />
+      <MenuProvider>
+        <Provider store={store}>
+          <StatusBar backgroundColor={"white"} barStyle={"dark-content"} />
+          <AppNavigator />
+        </Provider>
+        <UpdateChecker />
+      </MenuProvider>
     </SafeAreaView>
   );
 };

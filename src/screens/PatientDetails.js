@@ -229,6 +229,7 @@ const PatientDetails = (props) => {
       data.files.forEach((f, i) => console.log(`${i + 1}. ${f.name} (${f.id})`));
     }
   };
+  
   const fetchGoogleDriveImages = async () => {
     try {
       let vailidToken = await checkAndRefreshGoogleAccessToken(accessToken);
@@ -246,8 +247,8 @@ const PatientDetails = (props) => {
         accessToken,
         photoMedFolderId
       );
-      
-      checkSubFolders(accessToken,patientFolderId)
+
+      checkSubFolders(accessToken, patientFolderId)
 
 
       if (!patientFolderId) {
@@ -320,7 +321,6 @@ const PatientDetails = (props) => {
   };
 
   useEffect(() => {
-    // setPatientId();
     loadImages();
   }, [accessToken, provider]);
 
@@ -479,7 +479,7 @@ const PatientDetails = (props) => {
 
   const subscription = useSelector((state) => state.auth?.subscription);
   const needSubscription = !subscription?.hasSubscription || subscription?.isExpired  // || !subscription?.isActive;
-  console.log('needSubscriptio------', needSubscription, subscription);
+  // console.log('needSubscriptio------', needSubscription, subscription);
 
 
   const _chooseFile = async () => {

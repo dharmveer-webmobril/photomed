@@ -288,6 +288,7 @@ export const safeCreateFolder = async (
     return null; // Return null to indicate failure without crashing the app
   }
 };
+
 export async function uploadCaptureFilesToPhotoMedFolder(
   filePathArray,
   patientInfo,
