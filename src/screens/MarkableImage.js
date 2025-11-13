@@ -15,7 +15,7 @@ import {
 import Svg, { Circle, Text as SvgText } from "react-native-svg";
 import CustomBtn from "../components/CustomBtn";
 import { width } from "../styles/responsiveLayoute";
-import { generateUniqueKey } from "../configs/api";
+import { checkAndRefreshGoogleAccessToken, createFolderInParentAndCheck, fetchFolder, generateUniqueKey, getAllImagesRecursively, getFolderId, safeCreateFolder, setFilePublic, uploadFileToDrive } from "../configs/api";
 import { useSelector } from "react-redux";
 import ViewShot from "react-native-view-shot";
 import Loading from "../components/Loading";
@@ -51,13 +51,14 @@ export default function MarkableImage() {
   const patientName = useSelector((state) => state.auth.patientName.patientName);
   const accessToken = useSelector((state) => state.auth.accessToken);
   const token = useSelector((state) => state.auth?.user);
+  const [loading, setLoading] = useState(false)
+  const [savedMolesId, setsavedMolesId] = useState(null)
 
   const viewShotRef = useRef(null);
 
-  // ... [getImageFromData, useEffects, combineMoleAndFolderData, openCamera] unchanged ...
-
   useEffect(() => {
-    getDropBoxData();
+    if (cloudType === 'google') getDriveData()
+    else getDropBoxData();
   }, []);
 
   async function getDropBoxData() {
@@ -147,79 +148,60 @@ export default function MarkableImage() {
       let imageJson1 = groupedFolders.slice(1);
       setCapturedImage(imageJson);
       setImageByCloud(imageJson1);
+      console.log('fasdfafasfasfa', JSON.stringify(groupedFolders, null, 2));
+
       return { data: groupedFolders };
     } catch (error) {
       console.log("Dropbox API Error:", error.response?.data || error.message);
       return { error: { message: error.message } };
     }
   }
-  // const DRIVE_API = 'https://www.googleapis.com/drive/v3/files';
 
-  // const getAllImagesRecursively = async (accessToken, folderId) => {
-  //   const allFiles = [];
+  async function getDriveData() {
+    setLoading(true);
+    try {
+      await checkAndRefreshGoogleAccessToken(accessToken);
+      // Step 1: Locate the "PhotoMed" folder
+      const photoMedFolderId = await getFolderId("PhotoMed", accessToken);
+      if (!photoMedFolderId) {
+        console.error("PhotoMed folder not found");
+        return;
+      }
+      // Step 2: Locate the patient folder inside "PhotoMed"
+      const patientFolderId = await getFolderId(
+        patientName + patientId,
+        accessToken,
+        photoMedFolderId
+      );
+      // Step 2: Locate the patient folder inside "PhotoMed"
+      const dermofolderId = await getFolderId(
+        'Dermoscopy',
+        accessToken,
+        patientFolderId
+      );
 
-  //   async function fetchFolder(folderId) {
-  //     const query = `'${folderId}' in parents and trashed=false`;
-  //     const res = await axios.get(DRIVE_API, {
-  //       headers: { Authorization: `Bearer ${accessToken}` },
-  //       params: {
-  //         q: query,
-  //         fields: 'files(id, name, mimeType, parents)',
-  //       },
-  //     });
+      // Step 2: Locate the patient folder inside "PhotoMed"
+      const bodyfolderId = await getFolderId(
+        body,
+        accessToken,
+        dermofolderId
+      );
 
-  //     for (const file of res.data.files) {
-  //       if (file.mimeType === 'application/vnd.google-apps.folder') {
-  //         // Recursive call for subfolders
-  //         await fetchFolder(file.id);
-  //       } else if (file.mimeType.startsWith('image/')) {
-  //         // Only images (jpeg, png, etc.)
-  //         allFiles.push(file);
-  //       }
-  //     }
-  //   }
-
-  //   await fetchFolder(folderId);
-  //   return allFiles;
-  // };
-
-  // async function getDriveData() {
-  //   // const folderPath = `/PhotoMed/${patientName + patientId}/Dermoscopy/${body}`;
-  //   try {
-  //     let vailidToken = await checkAndRefreshGoogleAccessToken(accessToken);
-  //     // Step 1: Locate the "PhotoMed" folder
-  //     const photoMedFolderId = await getFolderId("PhotoMed", accessToken);
-  //     if (!photoMedFolderId) {
-  //       console.error("PhotoMed folder not found");
-  //       return;
-  //     }
-  //     // Step 2: Locate the patient folder inside "PhotoMed"
-  //     const patientFolderId = await getFolderId(
-  //       preData.full_name + trimmedId,
-  //       accessToken,
-  //       photoMedFolderId
-  //     );
-  //     // Step 2: Locate the patient folder inside "PhotoMed"
-  //     const dermofolderId = await getFolderId(
-  //       'Dermoscopy',
-  //       accessToken,
-  //       patientFolderId
-  //     );
-
-  //     // Step 2: Locate the patient folder inside "PhotoMed"
-  //     const bodyfolderId = await getFolderId(
-  //       body,
-  //       accessToken,
-  //       dermofolderId
-  //     );
-
-  //     const folderData = getAllImagesRecursively(accessToken, bodyfolderId)
-
-
-  //   } catch {
-
-  //   }
-  // }
+      const folderData = await getAllImagesRecursively(accessToken, bodyfolderId)
+      if (folderData && folderData.length > 0) {
+        let rootImage = folderData[0].images[0];
+        console.log('---rootImage---', JSON.stringify(rootImage, null, 2));
+        let molesData = folderData.slice(1);
+        setCapturedImage(rootImage);
+        setImageByCloud(molesData);
+      }
+      // console.log('---folderData---', JSON.stringify(folderData, null, 2));
+      setLoading(false);
+    } catch (error) {
+      setLoading(false);
+      console.log('--folderData-- errorerror', error);
+    }
+  }
 
   useEffect(() => {
     (async () => {
@@ -230,10 +212,13 @@ export default function MarkableImage() {
 
   const { data } = useGetDermoScopyMolesQuery(
     { patientId: patientFullId, body, token, cloudType },
-    { skip: !patientFullId } // 👈 this line prevents running until patientFullId exists
+    { skip: !patientFullId }
   );
+  
   useEffect(() => {
+    console.log('data.ResponseBody-', data);
     if (data && data.ResponseBody && data.ResponseBody[0]?.moles?.length > 0 && imageByCloud) {
+      setsavedMolesId(data.ResponseBody[0]?.moles?._id)
       const combineData = combineMoleAndFolderData(data.ResponseBody[0]?.moles, imageByCloud);
       setCombinedMoles(combineData);
       setCircles(combineData);
@@ -291,7 +276,7 @@ export default function MarkableImage() {
       .then((img) => {
         const newImg = { ...img };
         const uniqueKey = generateUniqueKey();
-        newImg.name = `dermo_${body}_${uniqueKey}.jpg`;
+        newImg.name = `dermo_${body}_${patientId}.jpg`;
         if (!newImg.path.startsWith("file://")) {
           newImg.path = `file://${newImg.path}`;
         }
@@ -386,7 +371,7 @@ export default function MarkableImage() {
           drawing.current = true;
           setTempCircle({
             center: { x: normX, y: normY },
-            radius: 0.02, // small dot
+            radius: 0.02,
           });
         },
 
@@ -428,7 +413,6 @@ export default function MarkableImage() {
       }),
     [circles, tempCircle, imageSize, box, isMarkingEnabled]
   );
-
 
   const btnAttachImages = (tappedIndex) => {
     ImageCropPicker.openCamera({
@@ -477,8 +461,7 @@ export default function MarkableImage() {
   };
 
   const saveImage = async () => {
-    // await addToDrive();
-    // return
+
     if (!capturedImage?.path) {
       Alert.alert("No Image", "Please capture an image first");
       return;
@@ -500,7 +483,13 @@ export default function MarkableImage() {
       return;
     }
 
-    await addToDropBox();
+    if (cloudType == 'google') {
+      await addToDrive();
+    } else {
+      await addToDropBox();
+    }
+
+    // if ()
     await addCirclesDimentions();
     Alert.alert("Success", "Image with marks saved successfully!", [{ text: "OK" }]);
   };
@@ -540,7 +529,7 @@ export default function MarkableImage() {
   }
 
   async function addToDrive() {
-    const path = `/PhotoMed/${patientName + patientId}/Dermoscopy/${body}/${capturedImage.name}`;
+    setLoading(true)
     try {
 
       let bodyFolderId = await safeCreateFolder(
@@ -548,11 +537,36 @@ export default function MarkableImage() {
         accessToken,
         "root"
       );
+      let rootImage = {
+        uri: capturedImage?.path,
+        name: capturedImage?.name,
+        type: capturedImage?.mime
+      }
+      await uploadFileToDrive(rootImage, bodyFolderId, accessToken)
       console.log('shsjhsfjhs', bodyFolderId);
+      //add root lavel image here=======
+      //end add root lavel image========
 
-
+      for (let index = 0; index < circles.length; index++) {
+        const element = circles[index];
+        if (element.attachedImages && element.attachedImages.length > 0) {
+          for (let j = 0; j < element.attachedImages.length; j++) {
+            const valuse = element.attachedImages[j];
+            let subImage = {
+              uri: valuse?.path,
+              name: valuse?.name,
+              type: valuse?.mime
+            }
+            const subfoldername = `m${index + 1}`;
+            const subFolderId = await createFolderInParentAndCheck(subfoldername, bodyFolderId, accessToken);
+            await uploadFileToDrive(subImage, subFolderId, accessToken)
+          }
+        }
+      }
+      setLoading(false);
     } catch (error) {
-
+      setLoading(false);
+      console.log('errorerror', error);
     }
   }
 
@@ -580,9 +594,13 @@ export default function MarkableImage() {
     }
   }
 
+  useEffect(() => {
+    console.log('capturedImage', capturedImage);
+  }, [capturedImage])
+
   return (
     <SafeAreaView style={styles.container}>
-      <Loading visible={isLoading} />
+      <Loading visible={isLoading || loading} />
 
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => goBack()} style={{ marginLeft: 10 }}>

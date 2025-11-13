@@ -203,33 +203,8 @@ const PatientDetails = (props) => {
   //   fetchGoogleDriveImages1(accessToken, patientName, trimmedId, (count) => {
   //   });
   // }, [accessToken]);
-  const checkSubFolders = async (accessToken, parentFolderId) => {
-    const q = encodeURIComponent(`'${parentFolderId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`);
-    const url = `https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`;
 
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
 
-    const data = await response.json();
-    console.log('datadatadatadata', data);
-
-    if (data.error) {
-      console.log('checkSubFolders ❌ Error:', data.error);
-      return;
-    }
-
-    if (!data.files || data.files.length === 0) {
-      console.log('checkSubFolders 🚫 No subfolders found inside this folder.');
-    } else {
-      console.log(`checkSubFolders 📁 Found ${data.files.length} subfolder(s):`);
-      data.files.forEach((f, i) => console.log(`${i + 1}. ${f.name} (${f.id})`));
-    }
-  };
-  
   const fetchGoogleDriveImages = async () => {
     try {
       let vailidToken = await checkAndRefreshGoogleAccessToken(accessToken);
@@ -248,7 +223,6 @@ const PatientDetails = (props) => {
         photoMedFolderId
       );
 
-      checkSubFolders(accessToken, patientFolderId)
 
 
       if (!patientFolderId) {
@@ -263,7 +237,6 @@ const PatientDetails = (props) => {
         accessToken,
         patientFolderId
       );
-      checkSubFolders(accessToken, allImagesFolderId)
       if (!allImagesFolderId) {
         console.error("All Images folder not found");
         return;
@@ -281,6 +254,7 @@ const PatientDetails = (props) => {
           return { ...image, publicUrl };
         })
       );
+      // console.log('publicImagespublicImages', JSON.stringify(publicImages, null, 2));
 
       publicImages?.length &&
         publicImages?.length &&

@@ -28,6 +28,7 @@ export const configUrl = {
 };
 
 const GOOGLE_BASE_URL = "https://www.googleapis.com/drive/v3";
+const DRIVE_API = 'https://www.googleapis.com/drive/v3/files';
 
 export async function getFolderId(
   folderName,
@@ -159,6 +160,53 @@ export async function createFolderInParent(folderName, parentId, accessToken) {
     throw error;
   }
 }
+
+export async function createFolderInParentAndCheck(folderName, parentId, accessToken) {
+  try {
+    // Step 1: Check if folder already exists
+    const query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and '${parentId}' in parents and trashed=false`;
+    const searchRes = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id, name)`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    const searchData = await searchRes.json();
+    if (searchData.files && searchData.files.length > 0) {
+      // ✅ Folder already exists
+      return searchData.files[0].id;
+    }
+
+    // Step 2: Create new folder if not found
+    const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: folderName,
+        mimeType: "application/vnd.google-apps.folder",
+        parents: [parentId],
+      }),
+    });
+
+    const createData = await createRes.json();
+
+    if (!createRes.ok) {
+      throw new Error(createData.error?.message || "Failed to create folder");
+    }
+
+    return createData.id;
+  } catch (error) {
+    console.error("createFolderInParent error:", error);
+    throw error;
+  }
+}
+
 
 // Helper function to find a subfolder inside a parent folder
 export async function getSubFolderId(
@@ -378,7 +426,7 @@ export async function uploadFilesToPhotoMedFolder(
   }
 }
 
- 
+
 
 export const getImageDetailsById = async (fileId, accessToken) => {
   try {
@@ -417,6 +465,35 @@ export async function listFolderImages(folderId, accessToken) {
   return data.files;
 }
 
+
+export async function fetchFolder(folderId, accessToken) {
+  try {
+    if (!folderId || !accessToken) {
+      throw new Error("Missing folderId or accessToken");
+    }
+    const query = `'${folderId}' in parents and trashed=false`;
+    const res = await axios.get(DRIVE_API, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      params: {
+        q: query,
+        fields:
+          'files(id,name,mimeType,webViewLink,webContentLink,description,properties,createdTime)',
+      },
+    });
+    if (!res.data || !Array.isArray(res.data.files)) {
+      throw new Error("Invalid response structure from Google Drive API");
+    }
+
+    return res.data;
+  } catch (error) {
+    console.log('fetchFolder', JSON.stringify(error, null, 2));
+    const message = "Something went wrong.";
+    throw new Error(`Drive API Error : ${message}`);
+  }
+}
+
+
+
 export async function setFilePublic(fileId, accessToken) {
   const response = await fetch(
     `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`,
@@ -443,6 +520,73 @@ export async function setFilePublic(fileId, accessToken) {
   return data;
 }
 
+export const getAllImagesRecursively = async (accessToken, folderId) => {
+  try {
+    if (!accessToken) {
+      throw new Error("Access token is missing");
+    }
+    if (!folderId) {
+      throw new Error("Folder ID is missing");
+    }
+
+    let allFiles = [];
+
+    const dermoData = await fetchFolder(folderId, accessToken);
+
+    if (!dermoData || !Array.isArray(dermoData.files)) {
+      throw new Error("Invalid response from fetchFolder");
+    }
+
+    for (const file of dermoData.files) {
+      try {
+        let obj = {};
+
+        if (file.mimeType === "application/vnd.google-apps.folder") {
+          obj.folderId = file.id;
+          obj.folderName = file.name;
+          const arr = [];
+
+          const folderItem = await fetchFolder(file.id, accessToken);
+
+          if (folderItem?.files?.length) {
+            for (const element of folderItem.files) {
+              try {
+                await setFilePublic(element.id, accessToken);
+                const modifiedObj = { path: element.webContentLink, ...element };
+                arr.push(modifiedObj);
+              } catch (innerErr) {
+                console.error(
+                  `Failed to set file public for ${element.id}:`,
+                  innerErr.message
+                );
+              }
+            }
+          }
+
+          obj.images = arr;
+          allFiles.push(obj);
+        }
+
+        else if (file.mimeType?.startsWith("image/")) {
+          obj.folderName = "root";
+          obj.folderId = folderId;
+          obj.images = [{ ...file, path: file.webContentLink }];
+          allFiles.push(obj);
+        }
+      } catch (fileErr) {
+        console.error(`Error processing file ${file.id || file.name}:`, fileErr);
+      }
+    }
+
+    return allFiles;
+  } catch (err) {
+    console.error("Error in getAllImagesRecursively:", err);
+    throw new Error(
+      `Failed to get images recursively: ${err.message || "Unknown error"}`
+    );
+  }
+};
+
 export async function deleteImage(fileId, accessToken) {
   try {
     const response = await fetch(
@@ -465,39 +609,7 @@ export async function deleteImage(fileId, accessToken) {
     return false;
   }
 }
-// export async function updateFileMetadata(
-//   fileId,
-//   categoryName,
-//   notes,
-//   accessToken
-// ) {
-//   const url = `https://www.googleapis.com/drive/v3/files/${fileId}`;
-//   const metadata = {
-//     properties: {
-//       categoryName: categoryName,
-//       notes: notes,
-//     },
-//   };
-//   try {
-//     const response = await fetch(url, {
-//       method: "PATCH",
-//       headers: {
-//         Authorization: `Bearer ${accessToken}`,
-//         "Content-Type": "application/json",
-//       },
-//       body: JSON.stringify(metadata),
-//     });
 
-//     if (!response.ok) {
-//       throw new Error(`Error updating file metadata: ${response.statusText}`);
-//     }
-
-//     const result = await response.json();
-//     return result;
-//   } catch (error) {
-//     // console.error('Error updating file metadata:', error);
-//   }
-// }
 
 async function checkIfPathExists(path, accessToken) {
   try {
