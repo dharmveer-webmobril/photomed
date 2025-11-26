@@ -1,7 +1,7 @@
 buildscript {
    ext {
     buildToolsVersion = "36.0.0"
-    minSdkVersion = 23
+    minSdkVersion = 26
     compileSdkVersion = 36        // ✅ Required by androidx.browser:1.10.0-alpha01
     targetSdkVersion = 36         // ✅ Match compileSdk for consistency
     ndkVersion = "26.1.10909125"

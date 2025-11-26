@@ -89,8 +89,8 @@ const Login = () => {
       setPassword(password1);
     } else {
       setIsRemeberMe(false);
-      setEmail("");
-      setPassword("");
+      setEmail("test@mailinator.com");
+      setPassword("Qwerty@1");
     }
   };
   const togglePasswordVisibility = () => {

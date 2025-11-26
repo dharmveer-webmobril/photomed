@@ -15,6 +15,7 @@ import { IAPProvider } from "./src/configs/IAPContext";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import UpdateChecker from "./src/screens/UpdateCheck";
 import { MenuProvider } from "react-native-popup-menu";
+import FaceRecognitionCamera from "./src/screens/FaceRecognitionCamera";
 if (!global.atob) {
   global.atob = atob;
 }
@@ -46,7 +47,7 @@ const App = () => {
         // console.log('Error during initialization:', error);
       }
     };
-
+  BootSplash.hide({ fade: true });
     init().finally(async () => {
       setTimeout(async () => {
         await BootSplash.hide({ fade: true });

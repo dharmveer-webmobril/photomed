@@ -27,6 +27,8 @@ import ImageZoomML from "../screens/ImageZoomML";
 import { Image, TouchableOpacity } from "react-native";
 import SubscriptionManage from "../screens/Auth/SubscriptionManage";
 import MarkableImage from "../screens/MarkableImage";
+import TextRecognizationUi from "../screens/TextRecognizationUi";
+import FaceRecognitionCamera from "../screens/FaceRecognitionCamera";
 import { IAPProvider } from "../configs/IAPContext";
 
 const Stack = createNativeStackNavigator();
@@ -48,6 +50,25 @@ const MainStack = () => {
         },
       }}
     >
+      {/* <Stack.Screen
+        name={"FaceRecognitionCamera"}
+        component={FaceRecognitionCamera}
+        options={{
+          headerShown: false,
+          headerTintColor: COLORS.textColor,
+          headerTitle: "Mark Image",
+        }}
+      /> */}
+      {/* <Stack.Screen
+        name={"TextRecognizationUi"}
+        component={TextRecognizationUi}
+        options={{
+          headerShown: false,
+          headerTintColor: COLORS.textColor,
+          headerTitle: "Mark Image",
+        }}
+      /> */}
+
       <Stack.Screen
         name={"Bottom"}
         component={BottomTabs}
@@ -99,6 +120,7 @@ const MainStack = () => {
           headerTitle: "Mark Image",
         }}
       />
+
       <Stack.Screen
         name={"CollageDermoscopy"}
         component={CollageDermoscopy}
@@ -209,7 +231,7 @@ const MainStack = () => {
       >
         {() => (
           <IAPProvider>
-            <SubscriptionManage page="profile"/>
+            <SubscriptionManage page="profile" />
           </IAPProvider>
         )}
       </Stack.Screen>

@@ -466,11 +466,13 @@ export async function listFolderImages(folderId, accessToken) {
 }
 
 
+
 export async function fetchFolder(folderId, accessToken) {
   try {
     if (!folderId || !accessToken) {
       throw new Error("Missing folderId or accessToken");
     }
+
     const query = `'${folderId}' in parents and trashed=false`;
     const res = await axios.get(DRIVE_API, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -480,6 +482,7 @@ export async function fetchFolder(folderId, accessToken) {
           'files(id,name,mimeType,webViewLink,webContentLink,description,properties,createdTime)',
       },
     });
+
     if (!res.data || !Array.isArray(res.data.files)) {
       throw new Error("Invalid response structure from Google Drive API");
     }
@@ -491,8 +494,6 @@ export async function fetchFolder(folderId, accessToken) {
     throw new Error(`Drive API Error : ${message}`);
   }
 }
-
-
 
 export async function setFilePublic(fileId, accessToken) {
   const response = await fetch(
@@ -538,6 +539,8 @@ export const getAllImagesRecursively = async (accessToken, folderId) => {
     }
 
     for (const file of dermoData.files) {
+      console.log('filefile---', file);
+
       try {
         let obj = {};
 
@@ -552,7 +555,10 @@ export const getAllImagesRecursively = async (accessToken, folderId) => {
             for (const element of folderItem.files) {
               try {
                 await setFilePublic(element.id, accessToken);
-                const modifiedObj = { path: element.webContentLink, ...element };
+                const modifiedObj = {
+                  path: element.webContentLink,
+                  ...element
+                };
                 arr.push(modifiedObj);
               } catch (innerErr) {
                 console.error(
@@ -566,8 +572,8 @@ export const getAllImagesRecursively = async (accessToken, folderId) => {
           obj.images = arr;
           allFiles.push(obj);
         }
-
         else if (file.mimeType?.startsWith("image/")) {
+          await setFilePublic(file.id, accessToken);
           obj.folderName = "root";
           obj.folderId = folderId;
           obj.images = [{ ...file, path: file.webContentLink }];
@@ -610,6 +616,59 @@ export async function deleteImage(fileId, accessToken) {
   }
 }
 
+export async function deleteDriveFolder(folderId, accessToken) {
+  try {
+    // 1. Fetch all children inside folder
+    const listResponse = await fetch(
+      `https://www.googleapis.com/drive/v3/files?q='${folderId}'+in+parents`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    const listData = await listResponse.json();
+
+    if (!listResponse.ok) {
+      throw new Error(listData.error?.message || "Failed to list folder files");
+    }
+
+    // 2. Delete all child files one by one
+    for (const item of listData.files) {
+      await fetch(`https://www.googleapis.com/drive/v3/files/${item.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+    }
+
+    // 3. Delete the folder itself
+    const deleteFolderResponse = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${folderId}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    if (!deleteFolderResponse.ok) {
+      const errorData = await deleteFolderResponse.json();
+      throw new Error(errorData.error?.message || "Failed to delete folder");
+    }
+
+    return true;
+  } catch (error) {
+    console.log("Delete folder error:", error);
+    return false;
+  }
+}
+
+
 
 async function checkIfPathExists(path, accessToken) {
   try {
@@ -641,9 +700,9 @@ async function checkIfPathExists(path, accessToken) {
 }
 
 function base64ToBinary(base64) {
-  const binaryString = atob(base64); // Decode base64
+  const binaryString = atob(base64);
   const len = binaryString.length;
-  const bytes = new Uint8Array(len); // Create a new byte array
+  const bytes = new Uint8Array(len);
 
   for (let i = 0; i < len; i++) {
     bytes[i] = binaryString.charCodeAt(i);
@@ -653,7 +712,6 @@ function base64ToBinary(base64) {
 
 export async function ensureDropboxFolderExists(folderPath, accessToken) {
   const url = "https://api.dropboxapi.com/2/files/create_folder_v2";
-
   try {
     const response = await fetch(url, {
       method: "POST",
@@ -667,9 +725,9 @@ export async function ensureDropboxFolderExists(folderPath, accessToken) {
     const responseData = await response.json();
 
     if (response.ok) {
-      return true; // Folder created successfully
+      return true;
     } else if (responseData.error?.path?.[".tag"] === "conflict") {
-      return true; // Folder already exists
+      return true;
     } else {
       throw new Error(responseData.error_summary || "Failed to create folder");
     }
@@ -1300,7 +1358,7 @@ async function ensureGoogleDriveFolderExists(
   parentFolderId,
   accessToken
 ) {
-  // Search for the folder
+
   const query = `'${parentFolderId}' in parents and name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
   const response = await fetchGoogleDriveAPI(
     `/files?q=${encodeURIComponent(query)}`,

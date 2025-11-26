@@ -987,10 +987,10 @@ export const commonApi = createApi({
     }),
 
     getDermoScopyMoles: builder.query({
-      query: ({ body, patientId,token,cloudType }) => {
-        console.log('getDermoScopyMoles patientId cloudType',patientId,cloudType);
-        console.log('`dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`',`dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`);
-        
+      query: ({ body, patientId, token, cloudType }) => {
+        console.log('getDermoScopyMoles patientId cloudType', patientId, cloudType);
+        console.log('`dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`', `dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`);
+
         return {
           url: `dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`,
           method: 'GET',
@@ -1005,6 +1005,17 @@ export const commonApi = createApi({
       query: ({ token, data }) => ({
         url: `dermoscopy`,
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      }),
+    }),
+    updateDermoScopyMole: builder.mutation({
+      query: ({ token, data, id }) => ({
+        url: `dermoscopy/${id}`,
+        method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -1054,5 +1065,6 @@ export const {
   useSearchPatientQuery,
   useUploadDropBoxImageByFolderMutation,
   usePostDermoScopyMoleMutation,
+  useUpdateDermoScopyMoleMutation,
   useGetDermoScopyMolesQuery
 } = commonApi;

@@ -1,6 +1,27 @@
-import { Alert } from "react-native";
+import { Alert, Image } from "react-native";
+export async function getDriveImageMetadata(fileId, accessToken) {
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/drive/v3/files/${fileId}?fields=imageMediaMetadata`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
 
-export const askForDermoScopy = (makrCircleFun,campareFun) => {
+    const json = await res.json();
+    return {
+      imgWidth: json?.imageMediaMetadata?.width,
+      imgHeight: json?.imageMediaMetadata?.height
+    };
+  } catch (e) {
+    console.log("Metadata error", e);
+    return null;
+  }
+}
+
+export const askForDermoScopy = (makrCircleFun, campareFun) => {
   Alert.alert(
     "Choose an Action",
     "Would you like to mark a circle on this image, or compare it with the previous image?",
@@ -8,7 +29,7 @@ export const askForDermoScopy = (makrCircleFun,campareFun) => {
       {
         text: "Mark Circle",
         onPress: () => {
-            makrCircleFun()
+          makrCircleFun()
           console.log("User chose to mark circle");
           // 👉 navigate to marking screen or enable drawing mode
         },
@@ -16,7 +37,7 @@ export const askForDermoScopy = (makrCircleFun,campareFun) => {
       {
         text: "Compare with Previous",
         onPress: () => {
-            campareFun()
+          campareFun()
           console.log("User chose to compare with previous image");
           // 👉 navigate to comparison screen or overlay previous image
         },
