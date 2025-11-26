@@ -8,18 +8,16 @@ import {
   Text
 } from 'react-native';
 
-const OptionsModal = ({ visible, onClose, onAddImage ,onCompare}) => {
- 
-  const openGallery = async () => {
+const OptionsModal = ({ visible, onClose, onAddImage, onCompare, onDelete }) => {
 
-  };
+
 
   return (
     <Modal
       visible={visible}
       animationType="slide"
       transparent
-      // onRequestClose={onClose}
+    // onRequestClose={onClose}
     >
       <Pressable style={styles.backdrop}>
         <View style={styles.modalContent}>
@@ -32,13 +30,13 @@ const OptionsModal = ({ visible, onClose, onAddImage ,onCompare}) => {
             <Text style={styles.buttonText}>Add image</Text>
           </TouchableOpacity>
           <View style={{ height: 1, color: "#7F7F7F" }} />
-          <TouchableOpacity style={styles.button} onPress={()=>{onCompare()}}>
+          <TouchableOpacity style={styles.button} onPress={() => { onCompare() }}>
             <Text style={styles.buttonText}>Compare</Text>
           </TouchableOpacity>
           <View style={{ height: 1, color: "#7F7F7F" }} />
           <TouchableOpacity
             style={[styles.button, { marginBottom: 8 }]}
-            onPress={openGallery}
+            onPress={() => { onDelete() }}
           >
             <Text style={styles.buttonText}>Delete</Text>
           </TouchableOpacity>

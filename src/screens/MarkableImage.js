@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import Svg, { Circle, Text as SvgText } from "react-native-svg";
 import { width } from "../styles/responsiveLayoute";
-import { checkAndRefreshGoogleAccessToken, createFolderInParentAndCheck, deleteDriveFolder, generateUniqueKey, getAllImagesRecursively, getFolderId, safeCreateFolder, uploadFileToDrive } from "../configs/api";
+import { checkAndRefreshGoogleAccessToken, createFolderInParentAndCheck, deleteDriveFolder, deleteFileFromDropbox, generateUniqueKey, getAllImagesRecursively, getFolderId, safeCreateFolder, uploadFileToDrive } from "../configs/api";
 import { useSelector } from "react-redux";
 import ViewShot from "react-native-view-shot";
 import Loading from "../components/Loading";
@@ -623,7 +623,7 @@ export default function MarkableImage() {
       const basePath = `/PhotoMed/${patientName + patientId}/Dermoscopy/${body}`;
       const rootPath = `${basePath}/${capturedImage.name}`;
 
-      // Upload main image
+
       await uploadDropBoxImageByFolder({
         file: capturedImage,
         path: rootPath,
@@ -631,7 +631,7 @@ export default function MarkableImage() {
         accessToken,
       }).unwrap();
 
-      // Upload mole images
+
       for (const circle of circles) {
         if (!circle.attachedImages?.length) continue;
 
@@ -651,10 +651,9 @@ export default function MarkableImage() {
       }
     } catch (error) {
       console.log("❌ Dropbox Upload Error:", error);
-      throw new Error("Dropbox upload failed"); // pass to main catch
+      throw new Error("Dropbox upload failed");
     }
   };
-
 
   const addToDrive = async () => {
     try {
@@ -705,34 +704,53 @@ export default function MarkableImage() {
       }
     } catch (error) {
       console.log("❌ Drive Upload Error:", error);
-      throw new Error("Google Drive upload failed"); // pass to main catch
+      throw new Error("Google Drive upload failed");
     }
   };
 
   async function deleteImage(tappedIndex) {
-    let selData = circles[tappedIndex];
-    console.log('selData---', selData);
-    setLoading(true);
-    try {
-      if (cloudType == 'google') {
-        let folderId = selData?.folderId;
-        console.log('folderIdfolderId', folderId);
-        await deleteDriveFolder(folderId, accessToken);
-        const updatedCircles = circles.filter((_, idx) => idx !== tappedIndex);
-        setCircles(updatedCircles);
-        await addCirclesDimentions(updatedCircles);
-      } else {
+    const selData = circles[tappedIndex];
 
+    if (!selData) {
+      console.log("⚠ Invalid index", tappedIndex);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // GOOGLE DRIVE DELETE
+      if (cloudType === "google") {
+        if (!selData.folderId) {
+          throw new Error("Missing Google Drive folderId");
+        }
+
+        await deleteDriveFolder(selData.folderId, accessToken);
       }
+
+      // DROPBOX DELETE
+      else {
+        if (!selData.folderPath) {
+          throw new Error("Missing Dropbox folderPath");
+        }
+
+        await deleteFileFromDropbox(selData.folderPath, accessToken);
+      }
+
+      // Update local circles array
+      const updatedCircles = circles.filter((_, idx) => idx !== tappedIndex);
+      setCircles(updatedCircles);
+
+      // Update dimensions in DB
+      await addCirclesDimentions(updatedCircles);
+
     } catch (error) {
-      setLoading(false);
-      console.log('deleteImagede error', deleteImage);
+      console.log("❌ deleteImage Error:", error);
+      Alert.alert("Error", "Failed to delete image. Please try again.");
     } finally {
       setLoading(false);
     }
-
   }
-
 
   async function addCirclesDimentions(updatedList) {
     let idpatientId = await AsyncStorage.getItem("patientId");
@@ -767,8 +785,6 @@ export default function MarkableImage() {
       console.log("Save error:", error);
     }
   }
-
-
 
   return (
     <SafeAreaView style={styles.container}>
@@ -1005,8 +1021,7 @@ const styles = StyleSheet.create({
   },
   backIcon: { height: 28, width: 28 },
   circleItem: {
-    // flexDirection: "row",
-    // justifyContent: "space-between",
+
   },
   containerCircleItem: {
     flexDirection: "row",
