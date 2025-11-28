@@ -89,6 +89,21 @@ PODS:
     - MLKitFaceDetection (~> 5.0.0)
   - GoogleMLKit/MLKitCore (6.0.0):
     - MLKitCommon (~> 11.0.0)
+  - GoogleMLKit/TextRecognition (6.0.0):
+    - GoogleMLKit/MLKitCore
+    - MLKitTextRecognition (~> 4.0.0)
+  - GoogleMLKit/TextRecognitionChinese (6.0.0):
+    - GoogleMLKit/MLKitCore
+    - MLKitTextRecognitionChinese (~> 3.0.0)
+  - GoogleMLKit/TextRecognitionDevanagari (6.0.0):
+    - GoogleMLKit/MLKitCore
+    - MLKitTextRecognitionDevanagari (~> 3.0.0)
+  - GoogleMLKit/TextRecognitionJapanese (6.0.0):
+    - GoogleMLKit/MLKitCore
+    - MLKitTextRecognitionJapanese (~> 3.0.0)
+  - GoogleMLKit/TextRecognitionKorean (6.0.0):
+    - GoogleMLKit/MLKitCore
+    - MLKitTextRecognitionKorean (~> 3.0.0)
   - GoogleSignIn (7.1.0):
     - AppAuth (< 2.0, >= 1.7.3)
     - GTMAppAuth (< 5.0, >= 4.1.1)
@@ -193,6 +208,29 @@ PODS:
     - GTMSessionFetcher/Core (< 4.0, >= 3.3.2)
   - MLKitFaceDetection (5.0.0):
     - MLKitCommon (~> 11.0)
+    - MLKitVision (~> 7.0)
+  - MLKitTextRecognition (4.0.0):
+    - MLKitCommon (~> 11.0)
+    - MLKitTextRecognitionCommon (= 3.0.0)
+    - MLKitVision (~> 7.0)
+  - MLKitTextRecognitionChinese (3.0.0):
+    - MLKitCommon (~> 11.0)
+    - MLKitTextRecognitionCommon (= 3.0.0)
+    - MLKitVision (~> 7.0)
+  - MLKitTextRecognitionCommon (3.0.0):
+    - MLKitCommon (~> 11.0)
+    - MLKitVision (~> 7.0)
+  - MLKitTextRecognitionDevanagari (3.0.0):
+    - MLKitCommon (~> 11.0)
+    - MLKitTextRecognitionCommon (= 3.0.0)
+    - MLKitVision (~> 7.0)
+  - MLKitTextRecognitionJapanese (3.0.0):
+    - MLKitCommon (~> 11.0)
+    - MLKitTextRecognitionCommon (= 3.0.0)
+    - MLKitVision (~> 7.0)
+  - MLKitTextRecognitionKorean (3.0.0):
+    - MLKitCommon (~> 11.0)
+    - MLKitTextRecognitionCommon (= 3.0.0)
     - MLKitVision (~> 7.0)
   - MLKitVision (7.0.0):
     - GoogleToolboxForMac/Logger (< 5.0, >= 4.2.1)
@@ -1485,6 +1523,9 @@ PODS:
     - Yoga
   - react-native-get-random-values (1.11.0):
     - React-Core
+  - react-native-image-crop-tools (1.6.4):
+    - React-Core
+    - TOCropViewController (= 2.8.0)
   - react-native-image-resizer (1.4.5):
     - React-Core
   - react-native-netinfo (11.4.1):
@@ -1500,6 +1541,29 @@ PODS:
   - react-native-simple-toast (3.3.2):
     - React-Core
     - Toast (~> 4)
+  - react-native-skia (2.3.10):
+    - DoubleConversion
+    - glog
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React
+    - React-callinvoker
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-slider (4.5.7):
     - DoubleConversion
     - glog
@@ -1545,6 +1609,27 @@ PODS:
     - ReactCommon/turbomodule/core
     - Yoga
   - react-native-webview (13.15.0):
+    - DoubleConversion
+    - glog
+    - RCT-Folly (= 2024.01.01.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
+  - react-native-worklets-core (1.6.2):
     - DoubleConversion
     - glog
     - RCT-Folly (= 2024.01.01.00)
@@ -1912,6 +1997,13 @@ PODS:
   - RNMLKitFaceDetection (1.3.2):
     - GoogleMLKit/FaceDetection (= 6.0.0)
     - React
+  - RNMLKitTextRecognition (1.5.2):
+    - GoogleMLKit/TextRecognition (= 6.0.0)
+    - GoogleMLKit/TextRecognitionChinese (= 6.0.0)
+    - GoogleMLKit/TextRecognitionDevanagari (= 6.0.0)
+    - GoogleMLKit/TextRecognitionJapanese (= 6.0.0)
+    - GoogleMLKit/TextRecognitionKorean (= 6.0.0)
+    - React
   - RNNotifee (9.1.8):
     - React-Core
     - RNNotifee/NotifeeCore (= 9.1.8)
@@ -2059,12 +2151,18 @@ PODS:
   - SocketRocket (0.7.0)
   - Toast (4.1.1)
   - TOCropViewController (2.8.0)
-  - VisionCamera (4.5.1):
-    - VisionCamera/Core (= 4.5.1)
-    - VisionCamera/React (= 4.5.1)
-  - VisionCamera/Core (4.5.1)
-  - VisionCamera/React (4.5.1):
+  - VisionCamera (4.7.2):
+    - VisionCamera/Core (= 4.7.2)
+    - VisionCamera/FrameProcessors (= 4.7.2)
+    - VisionCamera/React (= 4.7.2)
+  - VisionCamera/Core (4.7.2)
+  - VisionCamera/FrameProcessors (4.7.2):
+    - React
+    - React-callinvoker
+    - react-native-worklets-core
+  - VisionCamera/React (4.7.2):
     - React-Core
+    - VisionCamera/FrameProcessors
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -2118,6 +2216,7 @@ DEPENDENCIES:
   - react-native-date-picker (from `../node_modules/react-native-date-picker`)
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
+  - react-native-image-crop-tools (from `../node_modules/react-native-image-crop-tools`)
   - react-native-image-resizer (from `../node_modules/react-native-image-resizer`)
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-orientation-locker (from `../node_modules/react-native-orientation-locker`)
@@ -2125,10 +2224,12 @@ DEPENDENCIES:
   - react-native-safari-view (from `../node_modules/react-native-safari-view`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - react-native-simple-toast (from `../node_modules/react-native-simple-toast`)
+  - "react-native-skia (from `../node_modules/@shopify/react-native-skia`)"
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - react-native-version-check (from `../node_modules/react-native-version-check`)
   - react-native-view-shot (from `../node_modules/react-native-view-shot`)
   - react-native-webview (from `../node_modules/react-native-webview`)
+  - react-native-worklets-core (from `../node_modules/react-native-worklets-core`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
@@ -2170,6 +2271,7 @@ DEPENDENCIES:
   - RNImageCropPicker (from `../node_modules/react-native-image-crop-picker`)
   - RNInAppBrowser (from `../node_modules/react-native-inappbrowser-reborn`)
   - "RNMLKitFaceDetection (from `../node_modules/@react-native-ml-kit/face-detection`)"
+  - "RNMLKitTextRecognition (from `../node_modules/@react-native-ml-kit/text-recognition`)"
   - "RNNotifee (from `../node_modules/@notifee/react-native`)"
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
@@ -2201,6 +2303,12 @@ SPEC REPOS:
     - MLImage
     - MLKitCommon
     - MLKitFaceDetection
+    - MLKitTextRecognition
+    - MLKitTextRecognitionChinese
+    - MLKitTextRecognitionCommon
+    - MLKitTextRecognitionDevanagari
+    - MLKitTextRecognitionJapanese
+    - MLKitTextRecognitionKorean
     - MLKitVision
     - nanopb
     - PromisesObjC
@@ -2295,6 +2403,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-document-picker"
   react-native-get-random-values:
     :path: "../node_modules/react-native-get-random-values"
+  react-native-image-crop-tools:
+    :path: "../node_modules/react-native-image-crop-tools"
   react-native-image-resizer:
     :path: "../node_modules/react-native-image-resizer"
   react-native-netinfo:
@@ -2309,6 +2419,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-simple-toast:
     :path: "../node_modules/react-native-simple-toast"
+  react-native-skia:
+    :path: "../node_modules/@shopify/react-native-skia"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
   react-native-version-check:
@@ -2317,6 +2429,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-view-shot"
   react-native-webview:
     :path: "../node_modules/react-native-webview"
+  react-native-worklets-core:
+    :path: "../node_modules/react-native-worklets-core"
   React-nativeconfig:
     :path: "../node_modules/react-native/ReactCommon"
   React-NativeModulesApple:
@@ -2399,6 +2513,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-inappbrowser-reborn"
   RNMLKitFaceDetection:
     :path: "../node_modules/@react-native-ml-kit/face-detection"
+  RNMLKitTextRecognition:
+    :path: "../node_modules/@react-native-ml-kit/text-recognition"
   RNNotifee:
     :path: "../node_modules/@notifee/react-native"
   RNReanimated:
@@ -2441,6 +2557,12 @@ SPEC CHECKSUMS:
   MLImage: 1824212150da33ef225fbd3dc49f184cf611046c
   MLKitCommon: afec63980417d29ffbb4790529a1b0a2291699e1
   MLKitFaceDetection: 7c0e8bf09ddd27105da32d088fca978a99fc30cc
+  MLKitTextRecognition: c83c18ad25496f2077f6ec93c5940487ff2eb343
+  MLKitTextRecognitionChinese: 09d6e22bbc2f1687573473ebb6e470af11c65e7a
+  MLKitTextRecognitionCommon: c0b3a63d529296a19bce1f8bc8a513644ed4d1f6
+  MLKitTextRecognitionDevanagari: abd49431a28e385eaa98edcc2da9664e1eb05b51
+  MLKitTextRecognitionJapanese: f59521572316562030b20cc98b8e635fc282a172
+  MLKitTextRecognitionKorean: 4877b6a8d95cd8846586e83f85b2f3e9ac93a737
   MLKitVision: e858c5f125ecc288e4a31127928301eaba9ae0c1
   nanopb: 438bc412db1928dac798aa6fd75726007be04262
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
@@ -2480,6 +2602,7 @@ SPEC CHECKSUMS:
   react-native-date-picker: b64721d6278b52708457292c218196b383b553b1
   react-native-document-picker: ccca729bfa32ac6f20db6c48dd8ad4ca29ea8795
   react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
+  react-native-image-crop-tools: 9c2eca2b9cb41f902d76fdedfa9f70ed18eb0bd3
   react-native-image-resizer: d9fb629a867335bdc13230ac2a58702bb8c8828f
   react-native-netinfo: f0a9899081c185db1de5bb2fdc1c88c202a059ac
   react-native-orientation-locker: 4409c5b12b65f942e75449872b4f078b6f27af81
@@ -2487,10 +2610,12 @@ SPEC CHECKSUMS:
   react-native-safari-view: 955d7160d159241b8e9395d12d10ea0ef863dcdd
   react-native-safe-area-context: 141eca0fd4e4191288dfc8b96a7c7e1c2983447a
   react-native-simple-toast: 645b68c26e43786fc05e3d7401de2b057f139054
+  react-native-skia: ec3ba4820d49bb1aaf3835666aa1f5850ea63ba2
   react-native-slider: 9e7c4e0ddf1f81396e443fe497c9a57d3e16866a
   react-native-version-check: 54a471d70dadf0f72fc142e70f16e4bf473a91a5
   react-native-view-shot: 39a7bc16d013713148241e7e6067aa11ee4ec6d9
   react-native-webview: a9661db787ee37b595c81c218a7e9b8dc7e996a5
+  react-native-worklets-core: d4fe047c55e2dd1ec4ca3db1f2ff2352f3505bda
   React-nativeconfig: 8c83d992b9cc7d75b5abe262069eaeea4349f794
   React-NativeModulesApple: b8465afc883f5bf3fe8bac3767e394d581a5f123
   React-perflogger: 59e1a3182dca2cee7b9f1f7aab204018d46d1914
@@ -2532,6 +2657,7 @@ SPEC CHECKSUMS:
   RNImageCropPicker: 49fbd4a4797baa057460bebec8da47f83ae8a1d7
   RNInAppBrowser: e36d6935517101ccba0e875bac8ad7b0cb655364
   RNMLKitFaceDetection: c3d95579c042b8937a682a55b04659dc0c4812f8
+  RNMLKitTextRecognition: 2f05c72ed3f0cabad3a97307171f5078846ea29d
   RNNotifee: 4a6ee5c7deaf00e005050052d73ee6315dff7ec9
   RNReanimated: 17c7f50f19ed6fb9ada4d1cf49e4b1fbaac42613
   RNScreens: 6bdabf3bea6afc5028221d802a9bfc289ee398f6
@@ -2541,9 +2667,9 @@ SPEC CHECKSUMS:
   SocketRocket: abac6f5de4d4d62d24e11868d7a2f427e0ef940d
   Toast: 1f5ea13423a1e6674c4abdac5be53587ae481c4e
   TOCropViewController: 797deaf39c90e6e9ddd848d88817f6b9a8a09888
-  VisionCamera: 104de00dce2e04dec51bfb6027eff0312fa3174e
+  VisionCamera: 02578a728d4a479d9c47f869efdf906c5680d50b
   Yoga: 055f92ad73f8c8600a93f0e25ac0b2344c3b07e6
 
-PODFILE CHECKSUM: b354ade9c6c605578aa7da39931d2190b6726b96
+PODFILE CHECKSUM: 492741c80541ae2b173c9a6e7c89bcc588b56461
 
 COCOAPODS: 1.16.2

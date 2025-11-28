@@ -19,5 +19,19 @@ buildscript {
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
     }
 }
+/* 🔥 ADD THIS HERE — Works without allprojects {} */
+subprojects { subproject ->
+    if (subproject.name.contains("selectable-text")) {
+        subproject.afterEvaluate {
+            if (subproject.hasProperty("android")) {
+                subproject.android.compileSdkVersion = 36   // match your app SDK
+                subproject.android.defaultConfig {
+                    targetSdkVersion 36
+                }
+            }
+        }
+    }
+}
+
 
 apply plugin: "com.facebook.react.rootproject"

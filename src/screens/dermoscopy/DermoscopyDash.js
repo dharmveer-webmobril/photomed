@@ -34,10 +34,7 @@ export default function DermoscopyDash() {
         },
     ]);
 
-    //   const onPressMenuOption = (val) => {
-    //     setBody(val);
-    //     openCamera(val);
-    //   };
+     
 
     const openCamera = (val) => {
         ImageCropPicker.openCamera({

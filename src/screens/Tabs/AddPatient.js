@@ -1,5 +1,5 @@
-import {  StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React, {  useMemo, useState } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useMemo, useState } from "react";
 import WrapperContainer from "../../components/WrapperContainer";
 import commonStyles from "../../styles/commonStyles";
 import AppTextInput from "../../components/AppTextInput";
@@ -18,8 +18,10 @@ import { logout } from "../../redux/slices/authSlice";
 import ConsentPopUp from "../../components/ConsentPopUp";
 import { useFocusEffect } from "@react-navigation/native";
 import DatePicker from 'react-native-date-picker'
-import {  countryCodes } from "react-native-country-codes-picker";
-
+import { countryCodes } from "react-native-country-codes-picker";
+import ImageCropPicker from "react-native-image-crop-picker";
+import TextRecognition from "@react-native-ml-kit/text-recognition";
+import TextRecognizationUi from './../TextRecognizationUi'
 
 
 const AddPatient = () => {
@@ -34,7 +36,7 @@ const AddPatient = () => {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  
+
   const maxDate = useMemo(() => {
     return new Date()
   }, []);
@@ -44,6 +46,7 @@ const AddPatient = () => {
 
   const [isCountryPickerOpen, setIsCountryPickerOpen] = useState(false);
   const [countryCode, setCountryCode] = useState('+32');
+  const [textData, setTextData] = useState('');
 
   const [addPatient, { isLoading, error }] = useAddPatientMutation();
 
@@ -81,13 +84,13 @@ const AddPatient = () => {
 
   useFocusEffect(
     React.useCallback(() => {
-      setConsent(true); // Show the popup when the screen is focused
-      return () => setConsent(false); // Cleanup when the screen loses focus
+      setConsent(true);
+      return () => setConsent(false);
     }, [])
   );
 
   const handleOkPress = () => {
-    setConsent(false); // Close the popup when OK is pressed
+    setConsent(false);
   };
 
   const clearFields = () => {
@@ -112,14 +115,7 @@ const AddPatient = () => {
       Toast.show("Please enter your date of birth");
       return false;
     }
-    // if (phone.trim() === "") {
-    //   Toast.show("Please enter your mobile number");
-    //   return false;
-    // }
-    // if (!/^\d{5,15}$/.test(phone.trim())) {
-    //   Toast.show("Please enter a valid mobile number with 5 to 15 digits");
-    //   return false;
-    // }
+
     if (phone && phone.trim() != '' && !/^\d{5,15}$/.test(phone.trim())) {
       Toast.show('Please enter a valid mobile number with 5 to 15 digits');
       return false;
@@ -144,7 +140,6 @@ const AddPatient = () => {
     const patientData = { full_name: cleanName, dob, mobile: (phone && phone.trim()) ? `${countryCode}-${phone}` : phone, email };
     try {
       const response = await addPatient({ token, patientData }).unwrap();
-      // Toast.show(response.ResponseMessage);
       clearFields();
       setIsVisible(true);
     } catch (error) {
@@ -154,25 +149,7 @@ const AddPatient = () => {
     }
   };
 
-  // const handleDateChange = () => {
-  //   // console.log("Selected date: ", selectedDate);
-  //   if (selected instanceof Date && !isNaN(selected)) {
-  //     setDatePickerVisibility(false);
-  //     // Avoid unnecessary updates
-  //     if (selected !== datePickerValue) {
-  //       setDatePickerValue(selected);
-  //       // Format the date as DD-MM-YYYY
-  //       const day = String(selected.getDate()).padStart(2, "0");
-  //       const month = String(selected.getMonth() + 1).padStart(2, "0");
-  //       const year = selected.getFullYear();
-  //       const formattedDate = `${day}-${month}-${year}`;
 
-  //       setDob(formattedDate);
-  //     }
-  //   } else {
-  //     setDatePickerVisibility(false);
-  //   }
-  // };
 
   const handleDateChange = (date) => {
     setDatePickerValue(date);
@@ -191,83 +168,86 @@ const AddPatient = () => {
   }
 
   const [selected, setSelected] = useState(new Date());
-  const [modalVisible, setModalVisible] = useState(false);
+  const [textSelectorModal, setTextSelectorModal] = useState(false);
 
+  const onTextSelect = (val) => {
+    setName(val)
+    setTextSelectorModal(false)
+  }
+  const openCamera = () => {
+
+    ImageCropPicker.openCamera({
+      cropping: false,
+      mediaType: "photo",
+      width: 800,
+      height: 800,
+    })
+      .then(async (img) => {
+        console.log('image------', img);
+        const newImg = { ...img };
+        if (!newImg.path.startsWith("file://")) {
+          newImg.path = `file://${newImg.path}`;
+        }
+        const result = await TextRecognition.recognize(newImg.path);
+        console.log('TextRecognition text-', result);
+        if (result.text) {
+          setTextData(result.text);
+          setTextSelectorModal(true)
+        }
+      })
+      .catch((e) => console.log("Attach photo cancelled:", e));
+  }
   return (
-    <WrapperContainer wrapperStyle={commonStyles.innerContainer}>
+ <WrapperContainer wrapperStyle={commonStyles.innerContainer}>
       <KeyboardAwareScrollView
         showsVerticalScrollIndicator={false}
         extraScrollHeight={10}
       >
-        <ConsentPopUp
-          title={"Consent Required"}
-          onPressSuccess={handleOkPress}
-          visible={consent}
-        />
-        <Loading visible={isLoading} />
+        <View style={styles.topSection}>
+          
+          {/* NAME + OCR BUTTON */}
+          <View style={styles.nameRow}>
+            <View style={styles.nameInputWrapper}>
+              <AppTextInput
+                label={"Name"}
+                maxLength={100}
+                placeHolderTxtColor={COLORS.placeHolderTxtColor}
+                placeholder={"Enter name"}
+                value={name}
+                onChangeText={setName}
+              />
+            </View>
 
-        <DatePicker
-          modal
-          open={isDatePickerVisible}
-          date={datePickerValue}
-          onConfirm={(date) => {
-            const today = new Date();
-            if (date > today) {
-              Toast.show("You can’t select a future date");
-              setDatePickerVisibility(false)
-              return;
-            }
-            handleDateChange(date)
-          }}
-          mode="date"
-          onCancel={() => {
-            setDatePickerVisibility(false)
-          }}
-        />
-        {/* <DatePickerModal
-          selected={selected}
-          modalVisible={modalVisible}
-          selcetDate={(date)=>setSelected(date)}
-          closeModal={() => setModalVisible(false)}
-          doneModal={() => {setModalVisible(false), handleDateChange()}}
-        /> */}
+            <TouchableOpacity onPress={openCamera} style={styles.ocrBtn}>
+              <Image
+                source={require('../../assets/images/ocr.png')}
+                style={styles.ocrIcon}
+              />
+            </TouchableOpacity>
+          </View>
 
-        <RecordAddedPopUp
-          onPressCancel={() => {
-            setIsVisible(false);
-            goBack();
-          }}
-          visible={visible}
-        />
-        <View style={{ flex: 0.6 }}>
-          <AppTextInput
-            label={"Name"}
-            maxLength={100}
-            placeHolderTxtColor={COLORS.placeHolderTxtColor}
-            placeholder={"Enter name"}
-            value={name}
-            onChangeText={setName}
-          />
-
-
-          <TouchableOpacity style={styles.datePickerBox}
+          {/* DOB PICKER */}
+          <TouchableOpacity
+            style={styles.datePickerBox}
             onPress={() => setDatePickerVisibility(true)}
-          // onPress={() => setModalVisible(true)}
           >
-            <Text style={{ color: dob ? COLORS.textColor : COLORS.placeHolderTxtColor, fontSize: 12, }}>{dob ? dob : 'DD-MM-YYYY'}</Text>
+            <Text style={[styles.dateText, { color: dob ? COLORS.textColor : COLORS.placeHolderTxtColor }]}>
+              {dob ? dob : 'DD-MM-YYYY'}
+            </Text>
           </TouchableOpacity>
 
-
+          {/* COUNTRY + PHONE */}
           <CountryPickerComp
             isPickerOpen={isCountryPickerOpen}
-            closeCountryPicker={(val) => { setIsCountryPickerOpen(val) }}
-            openCountryPicker={(val) => { setIsCountryPickerOpen(val) }}
+            closeCountryPicker={(val) => setIsCountryPickerOpen(val)}
+            openCountryPicker={(val) => setIsCountryPickerOpen(val)}
             inputText={phone}
-            onInputChange={(val) => { onPhoneInputChange(val) }}
+            onInputChange={(val) => onPhoneInputChange(val)}
             countryCode={countryCode}
-            setCountryCode={(val) => { setCountryCode(val) }}
+            setCountryCode={(val) => setCountryCode(val)}
           />
 
+          {/* EMAIL */}
           <AppTextInput
             label={"Email"}
             keyboardType={"email-address"}
@@ -277,17 +257,98 @@ const AddPatient = () => {
             onChangeText={setEmail}
           />
         </View>
-        <View style={{ flex: 0.4, justifyContent: "center" }}>
+
+        {/* SAVE BUTTON */}
+        <View style={styles.bottomSection}>
           <CustomBtn onPress={handleSave} title={"Save"} loading={isLoading} />
         </View>
       </KeyboardAwareScrollView>
+
+      {/* POPUPS */}
+      <ConsentPopUp
+        title={"Consent Required"}
+        onPressSuccess={handleOkPress}
+        visible={consent}
+      />
+
+      <Loading visible={isLoading} />
+
+      {/* DATE PICKER */}
+      <DatePicker
+        modal
+        open={isDatePickerVisible}
+        date={datePickerValue}
+        onConfirm={(date) => {
+          const today = new Date();
+          if (date > today) {
+            Toast.show("You can’t select a future date");
+            setDatePickerVisibility(false)
+            return;
+          }
+          handleDateChange(date)
+        }}
+        mode="date"
+        onCancel={() => setDatePickerVisibility(false)}
+      />
+
+      {/* OCR TEXT SELECT MODAL */}
+      <TextRecognizationUi
+        isVisible={textSelectorModal}
+        onClose={() => setTextSelectorModal(false)}
+        textData={textData || ''}
+        onDone={(val) => onTextSelect(val)}
+      />
+
+      {/* SUCCESS POPUP */}
+      <RecordAddedPopUp
+        onPressCancel={() => {
+          setIsVisible(false);
+          goBack();
+        }}
+        visible={visible}
+      />
+
     </WrapperContainer>
   );
 };
 
 export default AddPatient;
-
 const styles = StyleSheet.create({
+  topSection: {
+    flex: 0.6,
+  },
+
+  bottomSection: {
+    flex: 0.4,
+    justifyContent: "center",
+  },
+
+  nameRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+
+  nameInputWrapper: {
+    flex: 1,
+    marginRight: 20,
+  },
+
+  ocrBtn: {
+    marginTop: -20,
+    height: 38,
+    width: 38,
+    borderWidth: 1,
+    borderRadius: 5,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  ocrIcon: {
+    height: 25,
+    width: 25,
+  },
+
   datePickerBox: {
     borderColor: COLORS.borderColor,
     borderWidth: 1,
@@ -298,5 +359,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     paddingHorizontal: 28,
-  }
-})
+  },
+
+  dateText: {
+    fontSize: 12,
+  },
+});

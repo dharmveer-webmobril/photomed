@@ -72,16 +72,15 @@ export default function CollageDermoscopy() {
               resizeMode="contain"
             />
 
-            <TouchableOpacity style={{ backgroundColor: '#00000060', zIndex: 9999, position: 'absolute', width: '100%', justifyContent: 'center', alignItems: 'center', paddingVertical: 8, bottom: 0 }}>
-              <Text style={{ color: '#000' }}>Choose another Image</Text>
-            </TouchableOpacity>
-
           </Gestures>
             :
-            <TouchableOpacity onPress={() => { openCamera() }}>
+            <TouchableOpacity onPress={() => { openCamera() }} style={{ width: '100%', height: "100%", justifyContent: "center", alignItems: 'center' }}>
               <Text style={{ color: '#000' }}>Add Image</Text>
             </TouchableOpacity>
           }
+          {secondBoxImage && <TouchableOpacity onPress={() => { openCamera() }} style={{ bottom: 0, backgroundColor: COLORS.primary, position: 'absolute', width: '100%', height: 44, justifyContent: "center", alignItems: 'center' }}>
+            <Text style={{ color: '#fff' }}>Change Image</Text>
+          </TouchableOpacity>}
         </View>
       </View>
       <View style={{ width: "100%", justifyContent: "center", alignItems: "center", marginTop: 20 }}>

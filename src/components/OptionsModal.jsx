@@ -8,30 +8,28 @@ import {
   Text
 } from 'react-native';
 
-const OptionsModal = ({ visible, onClose, onAddImage, onCompare, onDelete }) => {
+const OptionsModal = ({ visible, onClose, onAddImage, onCompare, onDelete, isCompareActive }) => {
 
-
-
+  console.log('isCompareActiveisCompareActive',isCompareActive);
+  
   return (
     <Modal
       visible={visible}
       animationType="slide"
       transparent
-    // onRequestClose={onClose}
     >
       <Pressable style={styles.backdrop}>
         <View style={styles.modalContent}>
-          <Text style={styles.title}>Title</Text>
           <View style={{ height: 1, color: "#7F7F7F" }} />
           <TouchableOpacity
-            style={[styles.button, { marginBottom: 8 }]}
+            style={styles.button}
             onPress={onAddImage}
           >
             <Text style={styles.buttonText}>Add image</Text>
           </TouchableOpacity>
           <View style={{ height: 1, color: "#7F7F7F" }} />
-          <TouchableOpacity style={styles.button} onPress={() => { onCompare() }}>
-            <Text style={styles.buttonText}>Compare</Text>
+          <TouchableOpacity style={styles.button} onPress={() => { isCompareActive && onCompare() }}>
+            <Text style={[styles.buttonText, { color: isCompareActive ?'#000': '#919190'   }]}>Compare</Text>
           </TouchableOpacity>
           <View style={{ height: 1, color: "#7F7F7F" }} />
           <TouchableOpacity
@@ -82,10 +80,13 @@ const styles = StyleSheet.create({
   },
   button: {
     paddingVertical: 12,
+    width: "100%",
+    alignItems: "center"
   },
   buttonText: {
     fontSize: 16,
     fontFamily: '600',
+    color: '#000'
   },
   cancelButton: {
     marginTop: 10,

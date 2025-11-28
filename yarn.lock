@@ -1087,6 +1087,11 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
+"@colaquecez/react-native-selectable-text@^1.62.7":
+  version "1.62.7"
+  resolved "https://registry.yarnpkg.com/@colaquecez/react-native-selectable-text/-/react-native-selectable-text-1.62.7.tgz#bcb7a5b3322b41911aa5ef32d934426a9cd77ce7"
+  integrity sha512-5MUYQcv/yrxwlQdGmVTzN5w9EBJF6zZhgy+eeZd5yCYio5M2PRrSC6RIQQ34Ekkx+2G9K3hKSnkXWj1w0jClCQ==
+
 "@egjs/hammerjs@^2.0.17":
   version "2.0.17"
   resolved "https://registry.yarnpkg.com/@egjs/hammerjs/-/hammerjs-2.0.17.tgz#5dc02af75a6a06e4c2db0202cae38c9263895124"
@@ -2378,10 +2383,10 @@
   resolved "https://registry.yarnpkg.com/@react-native-ml-kit/face-detection/-/face-detection-1.3.2.tgz#be5a8baf6babb892795c92538c4c45035c0cda1c"
   integrity sha512-yYi6wyUA0jgBKxaXIYmDHdQJPFggm8baI3DhC5jM3iSrvt99wY8I9IdxklgyfExNHMQmc5WCOwvBdn416oSxMQ==
 
-"@react-native-ml-kit/text-recognition@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@react-native-ml-kit/text-recognition/-/text-recognition-2.0.0.tgz#b0a707f908d3e57a220cc665b6b615c8d4575bd1"
-  integrity sha512-RHefLYKndSyoDtgqHQptYQe+mftFk6/H30IQDenKX7PgMlJqoDejX+HdZ8gnP1kVNAt3iH+wyl/P6vCOkLMW9Q==
+"@react-native-ml-kit/text-recognition@1.5.2":
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/@react-native-ml-kit/text-recognition/-/text-recognition-1.5.2.tgz#c8492d6d2874c07f83f8c245b933dd43c23a159d"
+  integrity sha512-zPnJrD19u4FhT0ntvtnZVEhvPym9KyZ0R+UXBYJbCT0ePL9DpMnSewBFnHy44YnXKGgbokRQXUQMMM+GOsQs7w==
 
 "@react-native/assets-registry@0.75.4":
   version "0.75.4"
@@ -7988,11 +7993,6 @@ react-native-view-shot@^4.0.2:
   integrity sha512-USNjYmED7C0me02c1DxKA0074Hw+y/nxo+xJKlffMvfUWWzL5ELh/TJA/pTnVqFurIrzthZDPtDM7aBFJuhrHQ==
   dependencies:
     html2canvas "^1.4.1"
-
-react-native-vision-camera-face-detector@^1.9.1:
-  version "1.9.1"
-  resolved "https://registry.yarnpkg.com/react-native-vision-camera-face-detector/-/react-native-vision-camera-face-detector-1.9.1.tgz#0429e84a24b145fdabdd88be364e223b30e440eb"
-  integrity sha512-OsTe61R1+CyzZLp3xLI3PBMBGd3zEWbeHPgqZPOSbB0gEKWyIaTahBUCft47pVdi72onDlke//hPM+xyFOYBjQ==
 
 react-native-vision-camera@4.7.2:
   version "4.7.2"

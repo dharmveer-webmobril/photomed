@@ -79,7 +79,13 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>PhotoMed needs access to your Photo Library to upload profile photos securely.</string>
 	<key>UIAppFonts</key>
-	<array/>
+	<array>
+		<string>Poppins-Bold.ttf</string>
+		<string>Poppins-ExtraBold.ttf</string>
+		<string>Poppins-Medium.ttf</string>
+		<string>Poppins-Regular.ttf</string>
+		<string>Poppins-SemiBold.ttf</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

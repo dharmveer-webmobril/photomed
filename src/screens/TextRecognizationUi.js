@@ -1,109 +1,102 @@
-import TextRecognition from '@react-native-ml-kit/text-recognition';
-import { useRoute } from '@react-navigation/native';
-import React, { useRef, useState } from 'react';
-import { View, Button, StyleSheet, Image, Text, Alert, ScrollView } from 'react-native';
-import { CropView } from 'react-native-image-crop-tools';
+import { useRoute, useNavigation } from "@react-navigation/native";
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Modal,
+  StatusBar,
+  TouchableOpacity,
+  Image,
+} from "react-native";
+import { SelectableText } from "@colaquecez/react-native-selectable-text";
+import FONTS from "../styles/fonts";
 
-const ImageCropperTool = () => {
-  const cropViewRef = useRef(null);
-  const [croppedImageUri, setCroppedImageUri] = useState(null);
-  const [extractedText, setExtractedText] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const route = useRoute();
-  const imageuri = route?.params?.imageuri;
-
-  const handleCropResult = async (result) => {
-    let uri = result.uri;
-
-    // Fix missing prefix (required for Android)
-    if (!uri.startsWith("file://")) {
-      uri = `file://${uri}`;
+const TextRecognizationUi = ({ isVisible, onClose, textData, onDone }) => {
+  const handleSelection = (ev) => {
+    if (ev?.eventType === "Copy") {
+      ev?.content && onDone(ev?.content);
     }
-
-    console.log("Final Cropped URI:", uri);
-    setCroppedImageUri(uri);
-    
-    // OCR Extraction
-    setLoading(true);
-    try {
-      const recText = await TextRecognition.recognize(uri);
-      console.log("Extracted OCR:", recText);
-      setExtractedText(recText.text || "No Text Detected");
-    } catch (err) {
-      console.log("OCR Error:", err);
-      setExtractedText("Failed to read text");
-    }
-    setLoading(false);
-  };
-
-  const triggerCrop = () => {
-    if (cropViewRef.current) {
-      cropViewRef.current.saveImage(true, 90);
-    }
-  };
-
-  const resetAll = () => {
-    setCroppedImageUri(null);
-    setExtractedText('');
-    setLoading(false);
   };
 
   return (
-    <View style={styles.container}>
-      {!croppedImageUri ? (
-        <>
-          <CropView
-            ref={cropViewRef}
-            sourceUrl={imageuri}
-            style={styles.cropView}
-            onImageCrop={handleCropResult}
-          />
-          <Button title="Crop & Extract Text" onPress={triggerCrop} />
-        </>
-      ) : (
-        <ScrollView contentContainerStyle={styles.resultContainer}>
-          <Text style={styles.title}>Cropped Image</Text>
-          <Image source={{ uri: croppedImageUri }} style={styles.croppedImage} />
+    <Modal visible={isVisible} animationType="slide">
+      <StatusBar backgroundColor="#000" translucent={false} />
+      <View style={styles.modalContainer}>
 
-          <Text style={styles.title}>Extracted Text</Text>
+        {/* Header */}
+        <View style={styles.headerContainer}>
+          <TouchableOpacity onPress={onClose} style={styles.backBtn}>
+            <Image
+              style={styles.backIcon}
+              source={require("../assets/images/icons/backIcon.png")}
+            />
+          </TouchableOpacity>
 
-          {loading ? (
-            <Text style={{ fontSize: 16, color: "gray" }}>Extracting...</Text>
-          ) : (
-            <Text selectable style={styles.extractedText}>
-              {extractedText}
-            </Text>
-          )}
+          <Text style={styles.headerTitle}>Patient Details</Text>
 
-          <Button title="Reset" onPress={resetAll} />
-        </ScrollView>
-      )}
-    </View>
+          <View style={styles.headerRightSpace} />
+        </View>
+
+        {/* Selectable Text */}
+        <SelectableText
+          menuItems={["Copy"]}
+          textComponentProps={{
+            children: (
+              <Text style={styles.recognizedText}>
+                {textData || ""}
+              </Text>
+            ),
+          }}
+          onSelection={handleSelection}
+        />
+
+      </View>
+    </Modal>
   );
 };
 
-export default ImageCropperTool;
+export default TextRecognizationUi;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  cropView: { flex: 1 },
-  resultContainer: { alignItems: 'center', padding: 20 },
-  title: { fontSize: 18, marginVertical: 10, fontWeight: '600' },
-  croppedImage: {
-    width: 300,
-    height: 300,
-    resizeMode: 'contain',
-    marginBottom: 15,
-    borderWidth: 1,
-    borderColor: "#ddd",
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    paddingHorizontal: 20,
   },
-  extractedText: {
-    fontSize: 16,
-    backgroundColor: "#f5f5f5",
-    padding: 10,
-    borderRadius: 8,
+
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 20,
-    width: "100%",
-  }
+  },
+
+  backBtn: {
+    marginLeft: 10,
+  },
+
+  backIcon: {
+    height: 40,
+    width: 40,
+  },
+
+  headerTitle: {
+    fontSize: 15,
+    color: "#424242",
+    marginLeft: -30,
+  },
+
+  headerRightSpace: {
+    width: 40,
+  },
+
+  recognizedText: {
+    color: "#424242",
+    marginTop: 30,
+    textAlign: "justify",
+    fontSize: 16,
+    fontFamily: FONTS.medium,
+    lineHeight: 20,
+  },
 });

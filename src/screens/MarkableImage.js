@@ -273,10 +273,12 @@ export default function MarkableImage() {
   }, [patientFullId])
 
   useEffect(() => {
-    console.log('data.ResponseBody-', data);
+    console.log('data.ResponseBody-', JSON.stringify(data, null, 2));
     if (data && data.ResponseBody && data.ResponseBody[0]?.moles?.length > 0 && imageByCloud) {
       setsavedMolesId(data.ResponseBody[0]?._id)
       const combineData = combineMoleAndFolderData(data.ResponseBody[0]?.moles, imageByCloud);
+      console.log('combineData', combineData);
+
       setCombinedMoles(combineData);
       setCircles(combineData);
     }
@@ -589,14 +591,14 @@ export default function MarkableImage() {
         return Alert.alert("No Marks", "Please add at least one mark");
       }
 
-      const { isValid, invalidIndices } = validateAllMolesHavePhotos();
-      if (!isValid) {
-        const moleList = invalidIndices.map(i => `M${i + 1}`).join(", ");
-        return Alert.alert(
-          "Missing Photos",
-          `Please attach at least one photo to each mole:\n${moleList}`
-        );
-      }
+      // const { isValid, invalidIndices } = validateAllMolesHavePhotos();
+      // if (!isValid) {
+      //   const moleList = invalidIndices.map(i => `M${i + 1}`).join(", ");
+      //   return Alert.alert(
+      //     "Missing Photos",
+      //     `Please attach at least one photo to each mole:\n${moleList}`
+      //   );
+      // }
 
       setLoading(true);
 
@@ -607,8 +609,17 @@ export default function MarkableImage() {
       }
 
       await addCirclesDimentions(circles);
-
-      Alert.alert("Success", "Image with marks saved successfully!");
+      Alert.alert(
+        "Success",
+        "Image with marks saved successfully!",
+        [
+          {
+            text: "OK",
+            onPress: () => goBack(),
+          },
+        ],
+        { cancelable: false }
+      );
     } catch (error) {
       console.log("❌ Error in saveImage:", error);
       Alert.alert("Error", "Something went wrong while saving the image.");
@@ -722,26 +733,31 @@ export default function MarkableImage() {
       // GOOGLE DRIVE DELETE
       if (cloudType === "google") {
         if (!selData.folderId) {
-          throw new Error("Missing Google Drive folderId");
+          const updatedCircles = circles.filter((_, idx) => idx !== tappedIndex);
+          setCircles(updatedCircles);
+          return
         }
+
 
         await deleteDriveFolder(selData.folderId, accessToken);
       }
 
-      // DROPBOX DELETE
+
       else {
         if (!selData.folderPath) {
-          throw new Error("Missing Dropbox folderPath");
+          const updatedCircles = circles.filter((_, idx) => idx !== tappedIndex);
+          setCircles(updatedCircles);
+          return
         }
 
         await deleteFileFromDropbox(selData.folderPath, accessToken);
       }
 
-      // Update local circles array
+
       const updatedCircles = circles.filter((_, idx) => idx !== tappedIndex);
       setCircles(updatedCircles);
 
-      // Update dimensions in DB
+
       await addCirclesDimentions(updatedCircles);
 
     } catch (error) {
@@ -792,9 +808,11 @@ export default function MarkableImage() {
       <OptionsModal
         visible={modalVisible}
         onClose={closeModal}
-        onAddImage={() => { btnAttachImages(tappedIndex); closeModal() }}
+        isCompareActive={circles[tappedIndex]?.attachedImages?.length > 0 ? true : false}
+        onAddImage={() => { closeModal(); btnAttachImages(tappedIndex) }}
         onDelete={() => { deleteImage(tappedIndex); closeModal(); }}
         onCompare={() => {
+          // console.log('circles[tappedIndex]?.attachedImages', circles[tappedIndex]?.attachedImages )
           closeModal();
           navigate('CollageDermoscopy', { images: circles[tappedIndex].attachedImages });
         }}
@@ -810,7 +828,7 @@ export default function MarkableImage() {
         <TouchableOpacity onPress={() => goBack()} style={{ marginLeft: 10 }}>
           <Image style={styles.backIcon} source={require("../assets/images/icons/backIcon.png")} />
         </TouchableOpacity>
-        <Text style={styles.title}>Mark Moles on Body</Text>
+        <Text style={styles.title}>Mark Moles on {body}</Text>
 
         <TouchableOpacity onPress={saveImage} style={{ marginRight: 10, backgroundColor: COLORS.primary, width: 90, justifyContent: 'center', alignItems: 'center', padding: 5, borderRadius: 5 }}>
           <Text style={{ color: '#fff' }}>Save</Text>
@@ -935,7 +953,7 @@ export default function MarkableImage() {
                         <FastImage
                           key={idx}
                           source={{ uri: img.path }}
-                          style={{ height: 30, width: 30, marginRight: 4, marginBottom: 4, borderRadius: 3 }}
+                          style={{ height: 45, width: 45, marginRight: 4, marginBottom: 4, borderRadius: 3 }}
                         />
                       </TouchableOpacity>
                     ))}
