@@ -940,15 +940,8 @@ export const commonApi = createApi({
 
     uploadDropBoxImageByFolder: builder.mutation({
       async queryFn({ file, path, userId, accessToken },) {
-        try {
-          console.log("ufilefilefilefilefileri-----", file);
+        try { 
           let { path: filePath, name } = file;
-
-          console.log("uri-----", filePath);
-          // if (!uri.startsWith('file://')) {
-          //   uri = `file://${uri}`;
-          // }
-
           const fileData = await fetch(filePath);
           const blob = await fileData.blob();
           const metadata = {
@@ -971,7 +964,6 @@ export const commonApi = createApi({
           );
 
           const rawResponse = await response.text();
-          console.log("rawResponse 973-----", metadata);
 
           if (response.ok) {
             const responseData = JSON.parse(rawResponse);
@@ -1059,7 +1051,6 @@ export const {
   useGetMixedCategoriesQuery,
   useGetUserProfileQuery,
   useDeleteTagSubTagMutation,
-  // usePostPatientTagsMutation
   usePostAttachImageWithTagMutation,
   useLazyGetAttachImageWithTagQuery,
   useSearchPatientQuery,

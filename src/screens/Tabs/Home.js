@@ -287,7 +287,7 @@ const Home = () => {
             style={{ marginHorizontal: 9.5 }}
           />
           <TextInput
-            style={styles.textinputStyle}
+            style={styles.textinputStyle} 
             placeholder={"Search..."}
             placeholderTextColor={COLORS.textColor}
             value={searchTerm}
