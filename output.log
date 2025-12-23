@@ -1,9 +1,0 @@
-+ set -x -e
-+ DEST=/
-+ [[ ! -n '' ]]
-+ [[ '' = *Debug* ]]
-+ [[ -n '' ]]
-+ case "$CONFIGURATION" in
-+ echo 'node_modules/react-native/scripts/react-native-xcode.sh must be invoked by Xcode'
-node_modules/react-native/scripts/react-native-xcode.sh must be invoked by Xcode
-+ exit 1

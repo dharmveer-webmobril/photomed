@@ -6,7 +6,8 @@ import ScreenName from "./screenName";
 import { getData, storeData } from "./helperFunction";
 import { store } from "../redux/store";
 import { logout, setAccessToken, } from "../redux/slices/authSlice";
-import { atob } from "react-native-quick-base64";
+// import { atob } from "react-native-quick-base64";
+import base64 from 'react-native-base64';
 const { dispatch } = store;
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
@@ -29,6 +30,7 @@ export const configUrl = {
 
 const GOOGLE_BASE_URL = "https://www.googleapis.com/drive/v3";
 const DRIVE_API = 'https://www.googleapis.com/drive/v3/files';
+console.log('BASEURL',BASEURL);
 
 export async function getFolderId(
   folderName,
@@ -700,7 +702,9 @@ async function checkIfPathExists(path, accessToken) {
 }
 
 function base64ToBinary(base64) {
-  const binaryString = atob(base64);
+
+
+  const binaryString =  base64.decode(base64);
   const len = binaryString.length;
   const bytes = new Uint8Array(len);
 

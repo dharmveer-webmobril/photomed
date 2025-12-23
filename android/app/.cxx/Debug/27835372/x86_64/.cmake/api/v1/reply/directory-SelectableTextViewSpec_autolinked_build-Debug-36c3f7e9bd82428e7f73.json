@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "SelectableTextViewSpec_autolinked_build",
+		"source" : "/Users/ravi/Desktop/projects/PhotoMed/node_modules/@rob117/react-native-selectable-text/android/build/generated/source/codegen/jni"
+	}
+}

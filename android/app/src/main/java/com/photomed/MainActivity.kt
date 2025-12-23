@@ -1,7 +1,5 @@
 package com.photomedPro.com
 
-import android.os.Bundle
-import com.zoontek.rnbootsplash.RNBootSplash
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -15,16 +13,10 @@ class MainActivity : ReactActivity() {
    */
   override fun getMainComponentName(): String = "PhotoMed"
 
-  override fun onCreate(savedInstanceState: Bundle?) {
-    super.onCreate(savedInstanceState) // It's important to call this first before any other logic.
-    RNBootSplash.init(this, R.style.BootTheme) // ⬅️ initialize the splash screen
-  }
-
   /**
    * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]
-   * which allows you to enable New Architecture with a single boolean flag [fabricEnabled].
+   * which allows you to enable New Architecture with a single boolean flags [fabricEnabled]
    */
-  override fun createReactActivityDelegate(): ReactActivityDelegate {
-    return DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
-  }
+  override fun createReactActivityDelegate(): ReactActivityDelegate =
+      DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
 }

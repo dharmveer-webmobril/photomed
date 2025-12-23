@@ -1,0 +1,199 @@
+{
+  "buildFiles": [
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/@react-native-async-storage/async-storage/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/@react-native-camera-roll/camera-roll/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/@react-native-community/datetimepicker/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/@react-native-community/slider/android/src/main/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/@react-native-google-signin/google-signin/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/@rob117/react-native-selectable-text/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/@shopify/react-native-skia/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/lottie-react-native/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-blob-util/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-bootsplash/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-compressor/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-config/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-date-picker/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-gesture-handler/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-get-random-values/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-image-crop-picker/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-nitro-modules/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-reanimated/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-safe-area-context/android/src/main/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-svg/android/src/main/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-view-shot/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-webview/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native-worklets/android/build/generated/source/codegen/jni/CMakeLists.txt",
+    "/Users/ravi/Desktop/projects/PhotoMed/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/CMakeLists.txt"
+  ],
+  "cleanCommandsComponents": [
+    [
+      "/Users/ravi/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+      "-C",
+      "/Users/ravi/Desktop/projects/PhotoMed/android/app/.cxx/Debug/27835372/x86",
+      "clean"
+    ]
+  ],
+  "buildTargetsCommandComponents": [
+    "/Users/ravi/Library/Android/sdk/cmake/3.22.1/bin/ninja",
+    "-C",
+    "/Users/ravi/Desktop/projects/PhotoMed/android/app/.cxx/Debug/27835372/x86",
+    "{LIST_OF_TARGETS_TO_BUILD}"
+  ],
+  "libraries": {
+    "react_codegen_rnviewshot::@0ba03d237e60b9258a87": {
+      "artifactName": "react_codegen_rnviewshot",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_RNCConfigSpec::@89f1b79ed4954e2f2cff": {
+      "artifactName": "react_codegen_RNCConfigSpec",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_rngesturehandler_codegen::@39f233abcd2c728bc6ec": {
+      "artifactName": "react_codegen_rngesturehandler_codegen",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_ReactNativeBlobUtilSpec::@7d3cc6108106e04bb830": {
+      "artifactName": "react_codegen_ReactNativeBlobUtilSpec",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_rnskia::@376d8504f62839611b97": {
+      "artifactName": "react_codegen_rnskia",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_RNGetRandomValuesSpec::@6e1160200c59ddcfca1e": {
+      "artifactName": "react_codegen_RNGetRandomValuesSpec",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_rnsvg::@4f40eb209d0c0b4a3b65": {
+      "artifactName": "react_codegen_rnsvg",
+      "abi": "x86",
+      "output": "/Users/ravi/Desktop/projects/PhotoMed/android/app/build/intermediates/cxx/Debug/27835372/obj/x86/libreact_codegen_rnsvg.so",
+      "runtimeFiles": [
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/6bd62c5cfa2cf87555733ddb0a7bbad0/transformed/react-android-0.82.1-debug/prefab/modules/reactnative/libs/android.x86/libreactnative.so",
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/6bd62c5cfa2cf87555733ddb0a7bbad0/transformed/react-android-0.82.1-debug/prefab/modules/jsi/libs/android.x86/libjsi.so",
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/3e69f16dd2ed59beb233f0ed9b742c95/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.x86/libfbjni.so"
+      ]
+    },
+    "react_codegen_RNGoogleSignInCGen::@337b7b353bd94a4215c0": {
+      "artifactName": "react_codegen_RNGoogleSignInCGen",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_rnreanimated::@8afabad14bfffa3f8b9a": {
+      "artifactName": "react_codegen_rnreanimated",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_rnscreens::@25bcbd507e98d3a854ad": {
+      "artifactName": "react_codegen_rnscreens",
+      "abi": "x86",
+      "output": "/Users/ravi/Desktop/projects/PhotoMed/android/app/build/intermediates/cxx/Debug/27835372/obj/x86/libreact_codegen_rnscreens.so",
+      "runtimeFiles": [
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/6bd62c5cfa2cf87555733ddb0a7bbad0/transformed/react-android-0.82.1-debug/prefab/modules/reactnative/libs/android.x86/libreactnative.so",
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/6bd62c5cfa2cf87555733ddb0a7bbad0/transformed/react-android-0.82.1-debug/prefab/modules/jsi/libs/android.x86/libjsi.so",
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/3e69f16dd2ed59beb233f0ed9b742c95/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.x86/libfbjni.so"
+      ]
+    },
+    "react_codegen_NitroModulesSpec::@472a82f9c57d3d3b8644": {
+      "artifactName": "react_codegen_NitroModulesSpec",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_lottiereactnative::@0fa4dc904d7e359a99fb": {
+      "artifactName": "react_codegen_lottiereactnative",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_RNDatePickerSpecs::@c00f981c6e74346c63d4": {
+      "artifactName": "react_codegen_RNDatePickerSpecs",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_RNCSlider::@4898bc4726ecf1751b6a": {
+      "artifactName": "react_codegen_RNCSlider",
+      "abi": "x86",
+      "output": "/Users/ravi/Desktop/projects/PhotoMed/android/app/build/intermediates/cxx/Debug/27835372/obj/x86/libreact_codegen_RNCSlider.so",
+      "runtimeFiles": [
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/3e69f16dd2ed59beb233f0ed9b742c95/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.x86/libfbjni.so",
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/6bd62c5cfa2cf87555733ddb0a7bbad0/transformed/react-android-0.82.1-debug/prefab/modules/jsi/libs/android.x86/libjsi.so",
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/6bd62c5cfa2cf87555733ddb0a7bbad0/transformed/react-android-0.82.1-debug/prefab/modules/reactnative/libs/android.x86/libreactnative.so"
+      ]
+    },
+    "react_codegen_rncameraroll::@60139d220751b3dabc04": {
+      "artifactName": "react_codegen_rncameraroll",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_safeareacontext::@7984cd80db47aa7b952a": {
+      "artifactName": "react_codegen_safeareacontext",
+      "abi": "x86",
+      "output": "/Users/ravi/Desktop/projects/PhotoMed/android/app/build/intermediates/cxx/Debug/27835372/obj/x86/libreact_codegen_safeareacontext.so",
+      "runtimeFiles": [
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/3e69f16dd2ed59beb233f0ed9b742c95/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.x86/libfbjni.so",
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/6bd62c5cfa2cf87555733ddb0a7bbad0/transformed/react-android-0.82.1-debug/prefab/modules/jsi/libs/android.x86/libjsi.so",
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/6bd62c5cfa2cf87555733ddb0a7bbad0/transformed/react-android-0.82.1-debug/prefab/modules/reactnative/libs/android.x86/libreactnative.so"
+      ]
+    },
+    "react_codegen_SelectableTextViewSpec::@25dabed9e4e4672057d2": {
+      "artifactName": "react_codegen_SelectableTextViewSpec",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_RNCImageCropPickerSpec::@702b02f8d2524609d414": {
+      "artifactName": "react_codegen_RNCImageCropPickerSpec",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_RNCWebViewSpec::@eb48929f9f7453740a6c": {
+      "artifactName": "react_codegen_RNCWebViewSpec",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_RNDateTimePickerCGen::@59b70ddc31ba2f8ef1d2": {
+      "artifactName": "react_codegen_RNDateTimePickerCGen",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "appmodules::@6890427a1f51a3e7e1df": {
+      "artifactName": "appmodules",
+      "abi": "x86",
+      "output": "/Users/ravi/Desktop/projects/PhotoMed/android/app/build/intermediates/cxx/Debug/27835372/obj/x86/libappmodules.so",
+      "runtimeFiles": [
+        "/Users/ravi/Desktop/projects/PhotoMed/android/app/build/intermediates/cxx/Debug/27835372/obj/x86/libreact_codegen_RNCSlider.so",
+        "/Users/ravi/Desktop/projects/PhotoMed/android/app/build/intermediates/cxx/Debug/27835372/obj/x86/libreact_codegen_safeareacontext.so",
+        "/Users/ravi/Desktop/projects/PhotoMed/android/app/build/intermediates/cxx/Debug/27835372/obj/x86/libreact_codegen_rnscreens.so",
+        "/Users/ravi/Desktop/projects/PhotoMed/android/app/build/intermediates/cxx/Debug/27835372/obj/x86/libreact_codegen_rnsvg.so",
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/3e69f16dd2ed59beb233f0ed9b742c95/transformed/fbjni-0.7.0/prefab/modules/fbjni/libs/android.x86/libfbjni.so",
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/6bd62c5cfa2cf87555733ddb0a7bbad0/transformed/react-android-0.82.1-debug/prefab/modules/jsi/libs/android.x86/libjsi.so",
+        "/Users/ravi/.gradle/caches/9.0.0/transforms/6bd62c5cfa2cf87555733ddb0a7bbad0/transformed/react-android-0.82.1-debug/prefab/modules/reactnative/libs/android.x86/libreactnative.so"
+      ]
+    },
+    "react_codegen_RNBootSplashSpec::@05d5bd8b08339ce1ebaa": {
+      "artifactName": "react_codegen_RNBootSplashSpec",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_rnworklets::@68f58d84d4754f193387": {
+      "artifactName": "react_codegen_rnworklets",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_Compressor::@408161e29a6d5b274579": {
+      "artifactName": "react_codegen_Compressor",
+      "abi": "x86",
+      "runtimeFiles": []
+    },
+    "react_codegen_rnasyncstorage::@1596841e19ec5b9eeffe": {
+      "artifactName": "react_codegen_rnasyncstorage",
+      "abi": "x86",
+      "runtimeFiles": []
+    }
+  }
+}

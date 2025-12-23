@@ -25,6 +25,7 @@ const ScreenName = {
   SUB_MANAGE:'SubscriptionManage',
   TAG_FILTER:'TagFilter',
   DERMO_SCOPY:'DermoscopyDash',
+  DERMO_SCOPY_COMPARE:'DermoScopyImageCompare',
 };
 
 export default ScreenName;

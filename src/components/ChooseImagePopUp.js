@@ -47,7 +47,8 @@ const styles = StyleSheet.create({
         padding: moderateScale(25),
         width: '90%',
         paddingHorizontal:moderateScale(40)
-    }, txtStyle: {
+    }, 
+    txtStyle: {
         fontFamily: FONTS.medium,
         fontSize: 12,
         color: COLORS.textColor,

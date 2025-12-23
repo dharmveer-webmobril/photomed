@@ -1,3 +1,4 @@
+
 import { useRoute, useNavigation } from "@react-navigation/native";
 import React from "react";
 import {
@@ -8,49 +9,47 @@ import {
   StatusBar,
   TouchableOpacity,
   Image,
+  ScrollView,
 } from "react-native";
-import { SelectableText } from "@colaquecez/react-native-selectable-text";
+import { SelectableTextView } from '@rob117/react-native-selectable-text';
 import FONTS from "../styles/fonts";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
 const TextRecognizationUi = ({ isVisible, onClose, textData, onDone }) => {
   const handleSelection = (ev) => {
-    if (ev?.eventType === "Copy") {
-      ev?.content && onDone(ev?.content);
+    const { chosenOption, highlightedText } = ev;
+    if (chosenOption === "Copy") {
+      highlightedText && onDone(highlightedText);
     }
   };
-
+  const insets = useSafeAreaInsets()
   return (
     <Modal visible={isVisible} animationType="slide">
       <StatusBar backgroundColor="#000" translucent={false} />
       <View style={styles.modalContainer}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1}}>
+          {/* Header */}
+          <View style={[styles.headerContainer, { paddingTop: insets.top + 20 }]}>
+            <TouchableOpacity onPress={onClose} style={styles.backBtn}>
+              <Image
+                style={styles.backIcon}
+                source={require("../assets/images/icons/backIcon.png")}
+              />
+            </TouchableOpacity>
 
-        {/* Header */}
-        <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={onClose} style={styles.backBtn}>
-            <Image
-              style={styles.backIcon}
-              source={require("../assets/images/icons/backIcon.png")}
-            />
-          </TouchableOpacity>
+            <Text style={styles.headerTitle}>Patient Details</Text>
 
-          <Text style={styles.headerTitle}>Patient Details</Text>
-
-          <View style={styles.headerRightSpace} />
-        </View>
-
-        {/* Selectable Text */}
-        <SelectableText
-          menuItems={["Copy"]}
-          textComponentProps={{
-            children: (
-              <Text style={styles.recognizedText}>
-                {textData || ""}
-              </Text>
-            ),
-          }}
-          onSelection={handleSelection}
-        />
-
+            <View style={styles.headerRightSpace} />
+          </View>
+          {/* Selectable Text */}
+          <SelectableTextView
+            menuOptions={['Copy']}
+            onSelection={handleSelection}
+            style={{ margin: 20  }}
+          >
+            <Text style={styles.ocrText}>{textData || "Text not found, Please try again later"}</Text>
+          </SelectableTextView>
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -63,6 +62,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#fff",
     paddingHorizontal: 20,
+  },
+  ocrText: {
+    fontSize: 16,
+    lineHeight: 26,
+    color: "#212121",
+    fontFamily: FONTS.medium,
   },
 
   headerContainer: {

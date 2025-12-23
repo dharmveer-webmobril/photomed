@@ -108,11 +108,11 @@ const Profile = (props) => {
     //   screenName: ScreenName.SUB_MANAGE,
     // }] : []),
 
-    {
-      id: 8,
-      name: "Manage Subscription",
-      screenName: ScreenName.SUB_MANAGE,
-    },
+    // {
+    //   id: 83,
+    //   name: "Manage Subscription",
+    //   screenName: ScreenName.SUB_MANAGE,
+    // },
     {
       id: 4,
       name: "Privacy Policy",
@@ -267,6 +267,7 @@ const Profile = (props) => {
       )}
       <View style={{ flex: 1, marginBottom: verticalScale(50) }}>
         <FlatList
+        contentContainerStyle={{ paddingBottom: verticalScale(50) }}
           showsVerticalScrollIndicator={false}
           data={data}
           renderItem={({ item }) => {

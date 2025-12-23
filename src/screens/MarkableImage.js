@@ -7,7 +7,6 @@ import {
   Image,
   Alert,
   Dimensions,
-  SafeAreaView,
   TouchableOpacity,
   Text,
   FlatList,
@@ -24,7 +23,8 @@ import {
   useGetDermoScopyMolesQuery,
   usePostDermoScopyMoleMutation,
   useUpdateDermoScopyMoleMutation,
-  useUploadDropBoxImageByFolderMutation,
+  useUploadDropBoxImageByFolderForDermoMutation,
+
 } from "../redux/api/common";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -34,6 +34,8 @@ import FastImage from 'react-native-fast-image'
 import { getDriveImageMetadata } from "../utils/CommonFunction";
 import OptionsModal from "../components/OptionsModal";
 import ImageZoomModal from "../components/ImageZoomModal";
+import ScreenName from "../configs/screenName";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MarkableImage() {
 
@@ -54,7 +56,7 @@ export default function MarkableImage() {
 
   const [postDermoscopyMole] = usePostDermoScopyMoleMutation();
   const [updateDermoscopyMole] = useUpdateDermoScopyMoleMutation();
-  const [uploadDropBoxImageByFolder] = useUploadDropBoxImageByFolderMutation();
+  const [uploadDropBoxImageByFolder] = useUploadDropBoxImageByFolderForDermoMutation();
 
 
 
@@ -78,15 +80,13 @@ export default function MarkableImage() {
     setModalVisible(false);
   };
   const [zoomVisible, setZoomVisible] = useState(false);
-  const [zoomImgArr, setZoomImgArr] = useState([]);
+  const [zoomImg, setZoomImg] = useState(null);
   const [zoomIndex, setZoomIndex] = useState(0);
 
 
-  const openZoomView = (items = [], index) => {
+  const openZoomView = (items = null, index) => {
     setZoomVisible(false)
-    let data = items.map(item => { return { uri: item.path } });
-    console.log('dadada', data);
-    setZoomImgArr(data)
+    setZoomImg(items)
     setZoomIndex(index);
     setZoomVisible(true)
   }
@@ -96,9 +96,29 @@ export default function MarkableImage() {
     else getDropBoxData();
   }, []);
 
+  useEffect(() => {
+    (async () => {
+      let patientFullId = await AsyncStorage.getItem("patientId");
+      if (patientFullId) setPatientFullId(patientFullId);
+    })();
+  }, []);
+
+  const { data, refetch } = useGetDermoScopyMolesQuery(
+    { patientId: patientFullId, body, token, cloudType },
+    { skip: !patientFullId }
+  );
+
+  useEffect(() => {
+    if (patientFullId) {
+      refetch();
+    }
+  }, [patientFullId])
+
   async function getDropBoxData() {
     const folderPath = `/PhotoMed/${patientName + patientId}/Dermoscopy/${body}`;
     const path = folderPath === "" ? "" : folderPath;
+    console.log('pathpathpath', path);
+
     setIsLoading(true)
     try {
       const response = await axios({
@@ -254,23 +274,7 @@ export default function MarkableImage() {
     }
   }
 
-  useEffect(() => {
-    (async () => {
-      let patientFullId = await AsyncStorage.getItem("patientId");
-      if (patientFullId) setPatientFullId(patientFullId);
-    })();
-  }, []);
 
-  const { data, refetch } = useGetDermoScopyMolesQuery(
-    { patientId: patientFullId, body, token, cloudType },
-    { skip: !patientFullId }
-  );
-
-  useEffect(() => {
-    if (patientFullId) {
-      refetch();
-    }
-  }, [patientFullId])
 
   useEffect(() => {
     console.log('data.ResponseBody-', JSON.stringify(data, null, 2));
@@ -382,12 +386,12 @@ export default function MarkableImage() {
       mediaType: "photo",
       width: 1000,
       height: 1000,
-      compressImageQuality: 0.8,
+      compressImageQuality: 0.5,
     })
       .then((img) => {
         const newImg = { ...img };
         const uniqueKey = generateUniqueKey();
-        newImg.name = `dermo_${body}_${patientId}.jpg`;
+        newImg.name = `dermo_${body}_${uniqueKey}.jpg`;
         if (!newImg.path.startsWith("file://")) {
           newImg.path = `file://${newImg.path}`;
         }
@@ -540,6 +544,7 @@ export default function MarkableImage() {
       mediaType: "photo",
       width: 800,
       height: 800,
+      compressImageQuality: 0.5,
     })
       .then((img) => {
         const newImg = { ...img };
@@ -562,7 +567,9 @@ export default function MarkableImage() {
           )
         );
       })
-      .catch((e) => console.log("Attach photo cancelled:", e));
+      .catch((e) => console.log("Attach photo cancelled:", e)).finally(() => {
+        closeModal();
+      });
   };
 
   const onLayout = (e) => {
@@ -634,29 +641,37 @@ export default function MarkableImage() {
       const basePath = `/PhotoMed/${patientName + patientId}/Dermoscopy/${body}`;
       const rootPath = `${basePath}/${capturedImage.name}`;
 
+      console.log('640---', basePath);
+      console.log('641---', rootPath);
+      console.log('capturedImage 641---', capturedImage);
+      if (!capturedImage?.id) {
+        let res = await uploadDropBoxImageByFolder({
+          file: capturedImage,
+          path: rootPath,
+          userId: patientName + patientId,
+          accessToken,
+        }).unwrap();
 
-      await uploadDropBoxImageByFolder({
-        file: capturedImage,
-        path: rootPath,
-        userId: patientName + patientId,
-        accessToken,
-      }).unwrap();
-
+        console.log('650---', res);
+      }
 
       for (const circle of circles) {
         if (!circle.attachedImages?.length) continue;
 
         for (const img of circle.attachedImages) {
           const subPath = `${basePath}/${circle.name}/${img.name}`;
-          try {
-            await uploadDropBoxImageByFolder({
-              file: img,
-              path: subPath,
-              userId: patientName + patientId,
-              accessToken,
-            }).unwrap();
-          } catch (err) {
-            console.log(`❌ Error uploading ${img.name}:`, err);
+          console.log('subPathsubPathsubPath---', subPath);
+          if (!img?.id) {
+            try {
+              await uploadDropBoxImageByFolder({
+                file: img,
+                path: subPath,
+                userId: patientName + patientId,
+                accessToken,
+              }).unwrap();
+            } catch (err) {
+              console.log(`❌ Error uploading ${img.name}:`, err);
+            }
           }
         }
       }
@@ -678,7 +693,7 @@ export default function MarkableImage() {
 
       const rootImg = {
         uri: capturedImage?.path,
-        name: capturedImage?.name || `dermo_${body}_${patientId}.jpg`,
+        name: capturedImage?.name || `dermo_${body}.jpg`,
         type: capturedImage?.mime || "image/jpeg",
       };
 
@@ -770,7 +785,6 @@ export default function MarkableImage() {
 
   async function addCirclesDimentions(updatedList) {
     let idpatientId = await AsyncStorage.getItem("patientId");
-
     const dadada = updatedList.map((item) => ({
       name: item.name,
       center: item.center,
@@ -809,18 +823,17 @@ export default function MarkableImage() {
         visible={modalVisible}
         onClose={closeModal}
         isCompareActive={circles[tappedIndex]?.attachedImages?.length > 0 ? true : false}
-        onAddImage={() => { closeModal(); btnAttachImages(tappedIndex) }}
+        onAddImage={() => { btnAttachImages(tappedIndex) }}
         onDelete={() => { deleteImage(tappedIndex); closeModal(); }}
         onCompare={() => {
-          // console.log('circles[tappedIndex]?.attachedImages', circles[tappedIndex]?.attachedImages )
           closeModal();
-          navigate('CollageDermoscopy', { images: circles[tappedIndex].attachedImages });
+          navigate(ScreenName.DERMO_SCOPY_COMPARE, { images: circles[tappedIndex].attachedImages });
         }}
       />
       <ImageZoomModal
         visible={zoomVisible}
         onClose={() => setZoomVisible(false)}
-        imageUri={zoomImgArr}
+        imageUriJson={zoomImg}
         imageIndex={zoomIndex}
       />
 
@@ -854,7 +867,7 @@ export default function MarkableImage() {
                   resizeMode="contain"
                 />
 
-                <Svg style={StyleSheet.absoluteFill}>
+                <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
                   {circles.map((c, i) => {
                     const dims = getDisplayedImageSize();
                     if (!dims) return null;
@@ -864,7 +877,7 @@ export default function MarkableImage() {
 
                     const cx = offsetX + c.center.x * displayedWidth;
                     const cy = offsetY + c.center.y * displayedHeight;
-                    const r = c.radius * scale;
+                    const r = c.radius * displayedWidth;
 
                     return (
                       <React.Fragment key={i}>
@@ -949,7 +962,7 @@ export default function MarkableImage() {
                 {item.attachedImages && (
                   <View style={{ marginTop: 6, flexDirection: "row", flexWrap: "wrap" }}>
                     {item.attachedImages.map((img, idx) => (
-                      <TouchableOpacity onPress={() => { openZoomView(item.attachedImages, idx) }}>
+                      <TouchableOpacity key={"mark_" + index + '_' + idx} onPress={() => { openZoomView(img, idx) }}>
                         <FastImage
                           key={idx}
                           source={{ uri: img.path }}

@@ -59,6 +59,173 @@ const { width } = Dimensions.get("window");
 import uuid from "react-native-uuid";
 import { showSubscriptionAlert } from "../configs/common/showSubscriptionAlert";
 import { useGoogleDriveImages } from "../configs/hooks/getDriveImages";
+
+// Styles need to be defined before CommonComp so it can access them
+const styles = StyleSheet.create({
+  headerContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  backIcon: { height: 40, width: 40 },
+  cardContainer: {
+    paddingHorizontal: moderateScale(20),
+    paddingVertical: moderateScale(15),
+    width: "100%",
+  },
+  imgStyle: {
+    height: 75,
+    width: 75,
+    borderRadius: 75,
+    marginRight: 10,
+  },
+  title: {
+    fontFamily: FONTS.medium,
+    fontSize: 14,
+    color: COLORS.textColor,
+  },
+  Filtertag: {
+    fontFamily: FONTS.medium,
+    fontSize: 12,
+    color: COLORS.whiteColor,
+  },
+  info: {
+    fontFamily: FONTS.regular,
+    fontSize: 10,
+    color: COLORS.textColor,
+  },
+  galStyle: {
+    height: 25,
+    width: 25,
+    marginRight: moderateScale(10),
+  },
+  subContainer: {
+    ...commonStyles.flexView,
+    ...commonStyles.shadowContainer,
+    width: "100%",
+    justifyContent: "space-between",
+    padding: moderateScale(10),
+    marginVertical: verticalScale(15),
+  },
+  subTitle: {
+    color: COLORS.placeHolderTxtColor,
+    marginTop: verticalScale(60),
+    marginBottom: 10,
+    fontSize: 12,
+  },
+  commonContainer: {
+    backgroundColor: COLORS.primary,
+    height: 40,
+    width: 50,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: verticalScale(5),
+  },
+  check: {
+    height: 18,
+    width: 18,
+    borderRadius: 5,
+    borderColor: COLORS.primary,
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: moderateScale(10),
+    backgroundColor: "white",
+  },
+  bottomButtonsContainer: {
+    width: "auto",
+    height: 30,
+    width: width * 0.25,
+    marginHorizontal: width * 0.01,
+    marginTop: 9,
+  },
+  bottomBottonsWrapper: {
+    alignItems: "center",
+    alignSelf: "center",
+    position: "absolute",
+    bottom: 0,
+    width: "100%",
+    alignSelf: "center",
+  },
+  filterButton: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+  },
+  editInfoButton: {
+    width: moderateScale(120),
+    height: 30,
+    marginTop: verticalScale(10),
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  commonCompWrapper: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  commonCompTitle: {
+    fontSize: 10,
+    color: COLORS.primary,
+  },
+  wrapperPadding: {
+    padding: 15,
+  },
+  backButtonMargin: {
+    marginLeft: 10,
+  },
+  headerTitle: {
+    fontSize: 15,
+    color: "#424242",
+    marginLeft: -30,
+  },
+  cardHeaderRow: {
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  patientInfoContainer: {
+    flex: 1,
+    paddingRight: 20,
+  },
+  titleStyleSmall: {
+    fontSize: 10,
+  },
+  selectAllButton: {
+    alignItems: "center",
+    justifyContent: "flex-end",
+    paddingBottom: 5,
+  },
+  imageListWrapper: {
+    justifyContent: "center",
+    flex: 1,
+  },
+  imageListWrapperCentered: {
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+  },
+  bottomButtonsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  emptyStateContainer: {
+    alignItems: "center",
+  },
+  emptyStateButtonsContainer: {
+    justifyContent: "space-around",
+    width: "80%",
+    marginTop: 20,
+  },
+  cameraButtonTitle: {
+    fontSize: 14,
+  },
+});
+
 const PatientDetails = (props) => {
   const dispatch = useDispatch();
   const [selectedImages, setSelectedImages] = useState([]);
@@ -357,12 +524,11 @@ const PatientDetails = (props) => {
         return result;
       });
 
-      const uploadedResults = await Promise.all(uploadPromises);
+      await Promise.all(uploadPromises);
       const { data: refreshedImageUrls } = await refetch();
 
       saveCount(refreshedImageUrls?.length || 0);
     } catch (error) {
-      // console.error('Error in Dropbox upload:', error);
       throw error;
     }
   };
@@ -518,44 +684,16 @@ const PatientDetails = (props) => {
     });
   };
 
-  const CommonComp = ({
-    IconComponent,
-    title,
-    onPress,
-    commonContainer = null,
-    titleStyle = null,
-  }) => {
-    return (
-      <View style={{ justifyContent: "center", alignItems: "center" }}>
-        <TouchableOpacity
-          onPress={onPress}
-          style={[styles.commonContainer, commonContainer]}
-        >
-          {IconComponent && <IconComponent />}
-        </TouchableOpacity>
-        <Text
-          style={[
-            styles.title,
-            { fontSize: 10, color: COLORS.primary },
-            titleStyle,
-          ]}
-        >
-          {title}
-        </Text>
-      </View>
-    );
-  };
-
   return (
-    <WrapperContainer wrapperStyle={[{ padding: 15 }]}>
+    <WrapperContainer wrapperStyle={styles.wrapperPadding}>
       <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={() => goBack()} style={{ marginLeft: 10 }}>
+        <TouchableOpacity onPress={() => goBack()} style={styles.backButtonMargin}>
           <Image
             style={styles.backIcon}
             source={require("../assets/images/icons/backIcon.png")}
           />
         </TouchableOpacity>
-        <Text style={{ fontSize: 15, color: "#424242", marginLeft: -30 }}>
+        <Text style={styles.headerTitle}>
           Patient Details
         </Text>
         <View />
@@ -573,7 +711,7 @@ const PatientDetails = (props) => {
         <View
           style={[
             commonStyles.flexView,
-            { justifyContent: "space-between", width: "100%" },
+            styles.cardHeaderRow,
           ]}
         >
           <View style={commonStyles.flexView}>
@@ -581,7 +719,7 @@ const PatientDetails = (props) => {
               source={patientProfileImages}
               style={styles.imgStyle} // You can pass a custom style if needed
             />
-            <View style={{ flex: 1, paddingRight: 20 }}>
+            <View style={styles.patientInfoContainer}>
               <Text style={styles.title}>{patient?.full_name}</Text>
               <Text style={styles.info}>{patient?.dob}</Text>
               {patient?.mobile && (
@@ -593,27 +731,27 @@ const PatientDetails = (props) => {
             </View>
           </View>
         </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View style={styles.buttonRow}>
           <CustomBtn
             onPress={() =>
               navigate(ScreenName.EDIT_PATIENT, {
                 patient,
                 imageCount:
-                  provider == "google" ? images.length : imageUrls.length,
+                  provider === "google" ? images.length : imageUrls.length,
               })
             }
-            titleStyle={{ fontSize: 10 }}
-            btnStyle={{ width: 150, height: 30, marginTop: verticalScale(10) }}
-            title={"Edit Patient Information"}
+            titleStyle={styles.titleStyleSmall}
+            btnStyle={styles.editInfoButton}
+            title={"Edit Information"}
           />
-          <CustomBtn
-            onPress={() => {
-              navigate(ScreenName.DERMO_SCOPY)
-            }}
-            titleStyle={{ fontSize: 10 }}
-            btnStyle={{ width: 150, height: 30, marginTop: verticalScale(10) }}
-            title={"Dermoscopy"}
-          />
+            <CustomBtn
+              onPress={() => {
+                navigate(ScreenName.DERMO_SCOPY)
+              }}
+              titleStyle={styles.titleStyleSmall}
+              btnStyle={styles.editInfoButton}
+              title={"Dermoscopy"}
+            />
         </View>
       </View>
       <View style={styles.subContainer}>
@@ -631,11 +769,7 @@ const PatientDetails = (props) => {
           onPress={selectAllImages}
           style={[
             commonStyles.flexView,
-            {
-              alignItems: "center",
-              justifyContent: "flex-end",
-              paddingBottom: 5,
-            },
+            styles.selectAllButton,
           ]}
         >
           <View style={styles.check}>
@@ -649,11 +783,7 @@ const PatientDetails = (props) => {
       ) : null}
       {patientImages?.length >= 1 || imageUrls?.length >= 1 ? (
         <View
-          style={{
-            alignItems: images?.length >= 3 ? "center" : null,
-            justifyContent: "center",
-            flex: 1,
-          }}
+          style={images?.length >= 3 ? styles.imageListWrapperCentered : styles.imageListWrapper}
         >
           <PatientImageList
             data={provider == "google" ? patientImages : imageUrls}
@@ -667,29 +797,23 @@ const PatientDetails = (props) => {
             }}
           />
           <View style={styles.bottomBottonsWrapper}>
-            <View
-              style={{
-                flexDirection: "row",
-                flexWrap: "wrap",
-                justifyContent: "space-between",
-              }}
-            >
+            <View style={styles.bottomButtonsRow}>
               <CustomBtn
-                titleStyle={{ fontSize: 10 }}
+                titleStyle={styles.titleStyleSmall}
                 btnStyle={styles.bottomButtonsContainer}
                 title={"Add Image"}
                 onPress={_chooseFile}
               />
               <CustomBtn
                 onPress={() => navigateCameraGrid()}
-                titleStyle={{ fontSize: 10 }}
+                titleStyle={styles.titleStyleSmall}
                 btnStyle={styles.bottomButtonsContainer}
                 title={"Camera"}
               />
               {selectedImages?.length >= 1 && (
                 <CustomBtn
                   onPress={() => setIsVisible(true)}
-                  titleStyle={{ fontSize: 10 }}
+                  titleStyle={styles.titleStyleSmall}
                   btnStyle={styles.bottomButtonsContainer}
                   title={"Delete"}
                 />
@@ -697,7 +821,7 @@ const PatientDetails = (props) => {
               {selectedImages?.length > 0 && selectedImages?.length <= 3 && (
                 <CustomBtn
                   onPress={() => btnCollage("withSelectedImage")}
-                  titleStyle={{ fontSize: 10 }}
+                  titleStyle={styles.titleStyleSmall}
                   btnStyle={styles.bottomButtonsContainer}
                   title={"Add Collage"}
                 />
@@ -708,7 +832,7 @@ const PatientDetails = (props) => {
                     onPress={() => {
                       btnAddTag();
                     }}
-                    titleStyle={{ fontSize: 10 }}
+                    titleStyle={styles.titleStyleSmall}
                     btnStyle={styles.bottomButtonsContainer}
                     title={"Add Tag"}
                   />
@@ -719,7 +843,7 @@ const PatientDetails = (props) => {
           </View>
         </View>
       ) : (
-        <View style={{ alignItems: "center" }}>
+        <View style={styles.emptyStateContainer}>
           <Text style={styles.info}>Upload your new photo</Text>
           <Text style={styles.info}>Number of upload images: 0</Text>
           <Text style={[styles.info, styles.subTitle]}>
@@ -728,7 +852,7 @@ const PatientDetails = (props) => {
           <View
             style={[
               commonStyles.flexView,
-              { justifyContent: "space-around", width: "80%", marginTop: 20 },
+              styles.emptyStateButtonsContainer,
             ]}
           >
             <CommonComp
@@ -740,7 +864,7 @@ const PatientDetails = (props) => {
               onPress={() => navigateCameraGrid()}
               title={"Camera"}
               commonContainer={{ height: 90, width: 90 }}
-              titleStyle={{ fontSize: 14 }}
+              titleStyle={styles.cameraButtonTitle}
               IconComponent={AddCamera}
             />
             <CommonComp
@@ -755,100 +879,32 @@ const PatientDetails = (props) => {
   );
 };
 
-export default PatientDetails;
+const CommonComp = ({
+  IconComponent,
+  title,
+  onPress,
+  commonContainer = null,
+  titleStyle = null,
+}) => {
+  return (
+    <View style={styles.commonCompWrapper}>
+      <TouchableOpacity
+        onPress={onPress}
+        style={[styles.commonContainer, commonContainer]}
+      >
+        {IconComponent && <IconComponent />}
+      </TouchableOpacity>
+      <Text
+        style={[
+          styles.title,
+          styles.commonCompTitle,
+          titleStyle,
+        ]}
+      >
+        {title}
+      </Text>
+    </View>
+  );
+};
 
-const styles = StyleSheet.create({
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  backIcon: { height: 40, width: 40 },
-  cardContainer: {
-    paddingHorizontal: moderateScale(20),
-    paddingVertical: moderateScale(15),
-    width: "100%",
-  },
-  imgStyle: {
-    height: 75,
-    width: 75,
-    borderRadius: 75,
-    marginRight: 10,
-  },
-  title: {
-    fontFamily: FONTS.medium,
-    fontSize: 14,
-    color: COLORS.textColor,
-  },
-  Filtertag: {
-    fontFamily: FONTS.medium,
-    fontSize: 12,
-    color: COLORS.whiteColor,
-  },
-  info: {
-    fontFamily: FONTS.regular,
-    fontSize: 10,
-    color: COLORS.textColor,
-  },
-  galStyle: {
-    height: 25,
-    width: 25,
-    marginRight: moderateScale(10),
-  },
-  subContainer: {
-    ...commonStyles.flexView,
-    ...commonStyles.shadowContainer,
-    width: "100%",
-    justifyContent: "space-between",
-    padding: moderateScale(10),
-    marginVertical: verticalScale(15),
-  },
-  subTitle: {
-    color: COLORS.placeHolderTxtColor,
-    marginTop: verticalScale(60),
-    marginBottom: 10,
-    fontSize: 12,
-  },
-  commonContainer: {
-    backgroundColor: COLORS.primary,
-    height: 40,
-    width: 50,
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: verticalScale(5),
-  },
-  check: {
-    height: 18,
-    width: 18,
-    borderRadius: 5,
-    borderColor: COLORS.primary,
-    borderWidth: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: moderateScale(10),
-    backgroundColor: "white",
-  },
-  bottomButtonsContainer: {
-    width: "auto",
-    height: 30,
-    width: width * 0.25,
-    marginHorizontal: width * 0.01,
-    marginTop: 9,
-  },
-  bottomBottonsWrapper: {
-    alignItems: "center",
-    alignSelf: "center",
-    position: "absolute",
-    bottom: 0,
-    width: "100%",
-    alignSelf: "center",
-  },
-  filterButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-  },
-});
+export default PatientDetails;

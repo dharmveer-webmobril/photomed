@@ -8,27 +8,23 @@ import {
   View,
   RefreshControl,
   TextInput,
-  Platform,
   useWindowDimensions,
   Alert,
+  ActivityIndicator,
 } from "react-native";
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import WrapperContainer from "../../components/WrapperContainer";
-import SubscriptionExpiredModal from "../../components/SubscriptionExpiredModal";
 import commonStyles from "../../styles/commonStyles";
 import { imagePath } from "../../configs/imagePath";
 import useTokenManagement from "../../configs/useTokenManagement";
 import {
   configUrl,
   getMySubscriptionDetails,
-  getUserPlans,
-  validateReceiptData,
+
   validateSubscription,
 } from "../../configs/api";
-import { SwiperFlatList } from "react-native-swiper-flatlist";
 import COLORS from "../../styles/colors";
 import {
-  height,
   moderateScale,
   verticalScale,
 } from "../../styles/responsiveLayoute";
@@ -37,10 +33,8 @@ import { navigate } from "../../navigators/NavigationService";
 import ScreenName from "../../configs/screenName";
 import {
   useGetBannersQuery,
-  useGetItemsQuery,
-  useGetUserProfileQuery,
-  useSearchPatientQuery,
-} from "../../redux/api/common"; // Changed to query
+  useSearchPatientMutation,
+} from "../../redux/api/common";
 import { useDispatch, useSelector } from "react-redux";
 import Loading from "../../components/Loading";
 import CustomBtn from "../../components/CustomBtn";
@@ -50,15 +44,22 @@ import ImageWithLoader from "../../components/ImageWithLoader";
 import { logout, updateSubscription } from "../../redux/slices/authSlice";
 import { removeData } from "../../configs/helperFunction";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   setCurrentPatient,
   setPatientImages,
   setUserSubscription,
 } from "../../redux/slices/patientSlice";
-import Orientation from "react-native-orientation-locker";
 const { width } = Dimensions.get("window");
 import Swiper from "react-native-swiper";
+import ImageCropPicker from "react-native-image-crop-picker";
+
+const formatUrl = (url) => {
+  let formattedUrl = url.replace(/\\/g, "/");
+  return encodeURI(formattedUrl);
+};
+
+
 const Home = () => {
   const dispatch = useDispatch();
   const provider = useSelector((state) => state.auth.cloudType);
@@ -69,24 +70,20 @@ const Home = () => {
     scopes: ["email", "profile", "https://www.googleapis.com/auth/drive.file"],
   });
 
+  const { width, height } = useWindowDimensions();
+
   const token = useSelector((state) => state.auth?.user);
   const accessToken = useSelector((state) => state.auth.accessToken);
-  const [refreshing, setRefreshing] = useState(false); // State for pull-to-refresh
-  const [patients, setPatients] = useState(null); // State for pull-to-refresh
-  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false); // State for pull-to-refresh
-  const [isSubscriptionModal, setIsSubscriptionModal] = useState(false); // State for pull-to-refresh
-
-  const {
-    data: banner,
-    isLoading: loading,
-    refetch: refetchBanner,
-  } = useGetBannersQuery();
+  const [refreshing, setRefreshing] = useState(false);
+  const [patients, setPatients] = useState(null);
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchData, setSearchData] = useState();
+  const [searchPatient, { data: patientsData, isLoading: isPatientSearching }] = useSearchPatientMutation()
+  const { data: banner, isLoading: loading, refetch: refetchBanner, } = useGetBannersQuery();
   const banners = banner?.ResponseBody;
 
-  // const { data: profileData, isLoading: profileLoading, isError: err, error } = useGetUserProfileQuery({ token });
-  // if (profileData) {
-  //   console.log('profileDataprofileData', profileData);
-  // }
 
   const showSubscriptionAlert = () => {
     Alert.alert(
@@ -133,13 +130,14 @@ const Home = () => {
       setIsSubscriptionLoading(false);
     }
   }
+
   const userId = useSelector((state) => state.auth.userId);
   async function getMySubscription() {
     try {
       if (token && userId) {
         let res = await getMySubscriptionDetails(token, userId);
         console.log("getMySubscriptionDetails res", res);
-        
+
         dispatch(updateSubscription(res));
       }
     } catch (error) {
@@ -159,50 +157,58 @@ const Home = () => {
   useFocusEffect(
     useCallback(() => {
       setSearchTerm("");
+      setSearchData({ searchText: '', imageFile: null });
       dispatch(setPatientImages([]));
     }, [])
   );
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await refetchBanner();
-    setRefreshing(false);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      handleSearchPatient();
+    }, [searchData])
+  );
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-
-  // Debounce effect
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 500);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchTerm]);
-
-  // API query runs only when debouncedSearchTerm changes
-  const {
-    data: patientsData,
-    isLoading,
-    isError,
-  } = useSearchPatientQuery({
-    term: debouncedSearchTerm, // your search input value
-    token: token, // your auth token
-  });
 
   useEffect(() => {
     setPatients(patientsData?.ResponseBody?.patientData || []);
   }, [patientsData]);
 
-  const formatUrl = (url) => {
-    // Replace backslashes with forward slashes
-    let formattedUrl = url.replace(/\\/g, "/");
-    // Encode the URI to handle special characters
-    return encodeURI(formattedUrl);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refetchBanner();
+    await clearInput();
+    handleSearchPatient()
+    setRefreshing(false);
+  }, []);
+
+  const handleSearchPatient = async () => {
+
+    try {
+      const formData = new FormData();
+      if (searchData?.searchText) {
+        formData.append("search", searchData?.searchText);
+      }
+
+      if (searchData?.imageFile) {
+        formData.append("face", {
+          uri: searchData?.imageFile.path,
+          name: searchData?.imageFile.fileName || "face.jpg",
+          type: searchData?.imageFile.type || "image/jpeg",
+        });
+      }
+
+      console.log('formDataformData', formData);
+      let res = await searchPatient({ token, formData }).unwrap();
+    } catch (error) {
+      console.log('errorerror', error);
+      let errorMessage = error?.data?.ResponseBody?.error ||  "Something went wrong!";
+      Toast.show(errorMessage, Toast.LONG);
+    } finally {
+      setIsLoading(false)
+    }
+
   };
-  const { width, height } = useWindowDimensions();
+
 
   const goPatientDetailPage = async (item) => {
     await removeData("patientFolderId");
@@ -267,49 +273,154 @@ const Home = () => {
     );
   };
 
+  const openCamera = () => {
+    ImageCropPicker.openCamera({
+      cropping: false,
+      mediaType: "photo",
+      width: 200,
+      height: 200,
+
+    }).then((img) => {
+      mangeSearchImg(img)
+    }).catch((e) => console.log("Attach photo cancelled:", e));
+  }
+
+  const chooseImage = () => {
+    ImageCropPicker.openPicker({
+      cropping: false,
+      mediaType: "photo",
+      // width: 200,
+      // height: 200,
+    }).then(async (img) => {
+      mangeSearchImg(img)
+    });
+  }
+
+  const mangeSearchImg = (img) => {
+    let imgFile = {
+      path: img.path || img.uri,
+      name: img.fileName || "face.jpg",
+      type: img.type || "image/jpeg",
+    }
+    if (!imgFile.path.startsWith("file://")) {
+      imgFile.path = `file://${imgFile.path}`;
+    }
+
+    setSearchTerm('')
+    setSearchData(({ searchText: '', imageFile: imgFile }));
+  }
+
+  const clearFaceImage = () => {
+    setSearchData({ imageFile: null });
+  };
+
+  const [timeoutToClear, setTimeoutToClear] = useState();
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(timeoutToClear);
+    };
+  }, []);
+
+  const debounce = (callback, alwaysCall, ms) => {
+    return (...args) => {
+      alwaysCall(...args);
+      clearTimeout(timeoutToClear);
+      setTimeoutToClear(
+        setTimeout(() => {
+          callback(...args);
+        }, ms)
+      );
+    };
+  };
+
+  const setSearchTextAlways = (txt) => {
+    setSearchTerm(txt);
+  };
+
+  const searchRestra = async (txt) => {
+    setSearchData(prev => ({ searchText: txt, imageFile: null }));
+  };
+
+  const debouncedSearch = debounce(
+    searchRestra,
+    setSearchTextAlways,
+    800
+  );
+
+  const clearInput = async () => {
+    setSearchTerm("");
+    setSearchData(prev => ({ searchText: '', imageFile: null }));
+  }
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   return (
-    <WrapperContainer
-      wrapperStyle={[commonStyles.innerContainer, { paddingHorizontal: 0 }]}
-    >
-      <SubscriptionExpiredModal
-        visible={isSubscriptionModal}
-        onViewPlans={() => {
-          setIsSubscriptionModal(false);
-          navigate("SubscriptionManage", { token: token }); // Or your view plans screen
-        }}
-      />
-      <Loading visible={isSubscriptionLoading || isLoading} />
-      <View style={{ paddingHorizontal: 20 }}>
-        <View style={[styles.textInputContainerStyle]}>
+    <WrapperContainer wrapperStyle={[commonStyles.innerContainer, { paddingHorizontal: 0 }]}>
+      <Loading visible={isSubscriptionLoading} />
+      <View style={styles.searchWrapper}>
+        {/* Search Bar */}
+        <View style={styles.searchContainer}>
           <Image
-            resizeMode="contain"
             source={imagePath.search}
-            style={{ marginHorizontal: 9.5 }}
+            resizeMode="contain"
+            style={styles.searchIcon}
           />
+
           <TextInput
-            style={styles.textinputStyle} 
-            placeholder={"Search..."}
-            placeholderTextColor={COLORS.textColor}
+            style={styles.searchInput}
+            placeholder="Search patient..."
+            placeholderTextColor={COLORS.placeHolderTxtColor}
             value={searchTerm}
-            // onChangeText={debouncedSearchPatient}
-            onChangeText={setSearchTerm}
+            onChangeText={debouncedSearch}
             autoCapitalize="none"
+            returnKeyType="search"
           />
-          {searchTerm.length > 0 && ( // Show CrossIcon only if there's text in the input
+
+          {searchTerm?.length > 0 && (
             <TouchableOpacity
-              onPress={() => {
-                setSearchTerm("");
-              }}
-              style={{
-                justifyContent: "center",
-                alignItems: "flex-end",
-                padding: 9.5,
-              }}
+              onPress={clearInput}
+              style={styles.iconBtn}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <CrossIcon height={20} width={20} />
             </TouchableOpacity>
           )}
+
+          <TouchableOpacity
+            onPress={() =>
+              Alert.alert("Search by face", "Choose option", [
+                { text: "Camera", onPress: openCamera },
+                { text: "Gallery", onPress: chooseImage },
+                { text: "Cancel", style: "cancel" },
+              ])
+            }
+            style={styles.iconBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Image
+              source={require("../../assets/images/icons/cam.png")}
+              style={styles.cameraIcon}
+            />
+          </TouchableOpacity>
         </View>
+
+        {/* Face Preview */}
+        {searchData?.imageFile && (
+          <View style={styles.facePreviewWrapper}>
+            <Image
+              source={{ uri: searchData.imageFile.path }}
+              style={styles.faceImage}
+            />
+            <TouchableOpacity
+              onPress={clearFaceImage}
+              style={styles.faceRemoveBtn}
+            >
+              <Image
+                source={require("../../assets/images/icons/close.png")}
+                style={{ height: 10, width: 10 }}
+              />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
 
       <View style={{ flex: 1 }}>
@@ -336,42 +447,27 @@ const Home = () => {
           ListFooterComponent={<View style={{ height: verticalScale(40) }} />}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              {searchTerm ? (
-                // Message for local search when no results match the search query
+              {isPatientSearching ? (
+                <ActivityIndicator size="large" color={COLORS.primary} />
+              ) : (searchTerm || searchData?.imageFile) ? (
                 <>
-                  <Text style={styles.emptyText}>
-                    No matching patients found.
-                  </Text>
-                  <Text style={[styles.emptyText, { fontSize: 12 }]}>
-                    Try adjusting your search criteria or adding a new patient
-                    if they aren't in the list. You can also search using tags.
+                  <Text style={styles.emptyTitle}>No patients found</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Try different keywords or search by face again.
                   </Text>
                 </>
               ) : (
-                // Default message when the list is empty from the API response
                 <>
-                  {!isLoading && (
-                    <>
-                      <Text style={styles.emptyText}>
-                        You don't have any patients added yet.
-                      </Text>
-                      <Text style={[styles.emptyText, { fontSize: 12 }]}>
-                        Start managing your patients by adding them here. Once
-                        added, you’ll be able to track their information and
-                        stay updated.
-                      </Text>
-                      <CustomBtn
-                        onPress={() => navigate(ScreenName.ADD_PATIENT)}
-                        titleStyle={{ fontSize: 10 }}
-                        btnStyle={{
-                          width: 150,
-                          height: 30,
-                          marginTop: verticalScale(10),
-                        }}
-                        title={"Add New Patient"}
-                      />
-                    </>
-                  )}
+                  <Text style={styles.emptyTitle}>No patients yet</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Start adding patients to manage their records efficiently.
+                  </Text>
+                  <CustomBtn
+                    title="Add New Patient"
+                    onPress={() => navigate(ScreenName.ADD_PATIENT)}
+                    btnStyle={styles.addBtn}
+                    titleStyle={styles.addBtnText}
+                  />
                 </>
               )}
             </View>
@@ -380,9 +476,9 @@ const Home = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor={COLORS.primary} // Spinner color for iOS
-              colors={[COLORS.primary, "#4C9CCF"]} // Spinner colors for Android
-              progressBackgroundColor={COLORS.whiteColor} // Background color for Android spinner
+              tintColor={COLORS.primary}
+              colors={[COLORS.primary, "#4C9CCF"]}
+              progressBackgroundColor={COLORS.whiteColor}
             />
           }
         />
@@ -473,11 +569,11 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   plusTxt: {
-    fontSize: 10, // Smaller font size for '+'
+    fontSize: 10,
     fontFamily: FONTS.medium,
-    position: "absolute", // Absolute positioning
-    top: 5, // Move '+' upward
-    right: -8, // Adjust horizontal position if needed
+    position: "absolute",
+    top: 5,
+    right: -8,
   },
   emptyContainer: {
     flex: 1,
@@ -496,13 +592,14 @@ const styles = StyleSheet.create({
   textInputContainerStyle: {
     borderColor: COLORS.borderColor,
     borderWidth: 1,
-    width: "100%",
     borderRadius: 40,
-    height: 40.5,
+
+    height: 50,
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 20,
     paddingHorizontal: 5,
+
   },
   textinputStyle: {
     textAlignVertical: "top",
@@ -517,4 +614,105 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginLeft: 10,
   },
+  facePreviewContainer: {
+    position: "relative",
+    marginRight: 8,
+  },
+  faceThumbnail: {
+    width: 45,
+    height: 45,
+    borderRadius: 45 / 2,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
+  removeFaceBtn: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    backgroundColor: COLORS.primary,
+    borderRadius: 12.5,
+    width: 25,
+    height: 25,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+
+  // search backgroundImage
+  searchWrapper: {
+    paddingTop: 10,
+    paddingBottom: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+    width: "90%",
+    alignSelf: 'center'
+  },
+
+  searchContainer: {
+    flex: 1,
+    height: 52,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: COLORS.borderColor,
+    backgroundColor: COLORS.whiteColor,
+    paddingHorizontal: 14,
+  },
+
+  searchIcon: {
+    height: 18,
+    width: 18,
+    tintColor: COLORS.placeHolderTxtColor,
+    marginRight: 10,
+  },
+
+  searchInput: {
+    flex: 1,
+    fontSize: 14,
+    color: COLORS.textColor,
+    fontFamily: FONTS.regular,
+    paddingVertical: 0,
+  },
+
+  iconBtn: {
+    height: 36,
+    width: 36,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 4,
+  },
+
+  cameraIcon: {
+    height: 22,
+    width: 22,
+    tintColor: COLORS.primary,
+  },
+
+  facePreviewWrapper: {
+    marginLeft: 10,
+    position: "relative",
+  },
+
+  faceImage: {
+    height: 44,
+    width: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: COLORS.primary,
+  },
+
+  faceRemoveBtn: {
+    position: "absolute",
+    top: -6,
+    right: -6,
+    height: 20,
+    width: 20,
+    borderRadius: 10,
+    backgroundColor: COLORS.primary,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
 });

@@ -26,10 +26,10 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>com.googleusercontent.apps.944528607298-mq2mfkmjupkjshkgu89ltmj5nhda2teo</string>
+			<string>com.googleusercontent.apps.880972773465-ar96g95vtcm7m8q2k6aaktpmhvpfn22v</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.944528607298-mq2mfkmjupkjshkgu89ltmj5nhda2teo</string>
+				<string>com.googleusercontent.apps.880972773465-ar96g95vtcm7m8q2k6aaktpmhvpfn22v</string>
 			</array>
 		</dict>
 		<dict>
@@ -43,6 +43,8 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>about</string>
@@ -78,6 +80,8 @@
 	<string>PhotoMed needs access to your Microphone for audio recording.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>PhotoMed needs access to your Photo Library to upload profile photos securely.</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 	<key>UIAppFonts</key>
 	<array>
 		<string>Poppins-Bold.ttf</string>
@@ -98,6 +102,8 @@
 		<string>arm64</string>
 	</array>
 	<key>UIRequiresFullScreen</key>
+	<true/>
+	<key>UIStatusBarHidden</key>
 	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>

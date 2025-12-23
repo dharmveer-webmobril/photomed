@@ -1,12 +1,39 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import RNFS from "react-native-fs";
 import { Platform } from "react-native";
-import { atob, btoa } from "react-native-quick-base64";
+// import { atob, btoa } from "react-native-quick-base64";
+import base64 from 'react-native-base64';
 // Define the API
+
+
+const TIMEOUT = 180000; // 3 minutes
+
+const baseQueryWithTimeout = fetchBaseQuery({
+  baseUrl: "https://photomedpro.com:10049/api/",
+  fetchFn: async (input, init) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+
+    try {
+      const response = await fetch(input, {
+        ...init,
+        signal: controller.signal,
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  },
+});
+
+
 export const commonApi = createApi({
-  baseQuery: fetchBaseQuery({
-    baseUrl: "https://photomedpro.com:10049/api/",
-  }),
+  // baseQuery: fetchBaseQuery({
+  //   baseUrl: "https://photomedpro.com:10049/api/",
+  // }),
+  baseQuery: baseQueryWithTimeout,
   tagTypes: [
     "Patient",
     "Banner",
@@ -34,7 +61,7 @@ export const commonApi = createApi({
         body: JSON.stringify({
           social_id,
           full_name,
-          login_type, // e.g., 'google'
+          login_type,
           email,
           device_id,
           device_type,
@@ -42,22 +69,37 @@ export const commonApi = createApi({
         }),
       }),
     }),
-    searchPatient: builder.query({
-      query: ({ term = "", token }) => {
-        const searchQuery = term?.trim()
-          ? `getpatients?search=${encodeURIComponent(term)}`
-          : `getpatients`; // no search param -> get all
-
-        return {
-          url: searchQuery,
-          method: "GET",
+    searchPatient: builder.mutation({
+      query: ({ token, formData = null }) => {
+        // const searchQuery = term?.trim() ? `getpatients?search=${encodeURIComponent(term)}` : `getpatients`;
+        const hasFormData = formData && formData._parts && formData._parts.length > 0;
+        const req = {
+          url: "getpatients",
+          method: "POST",
           headers: {
-            Authorization: `Bearer ${token}`, // Add token here
-            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         };
+
+        if (hasFormData) {
+          req.body = formData;
+        }
+        return req;
       },
       providesTags: ["Patient"],
+    }),
+    addBodyParts: builder.mutation({
+      query: ({ data, token }) => {
+        const req = {
+          url: "add-body-parts",
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: data
+        };
+        return req;
+      },
     }),
     // Fetch a list of patients
     getPatients: builder.query({
@@ -107,14 +149,14 @@ export const commonApi = createApi({
 
     // Add a new patient
     addPatient: builder.mutation({
-      query: ({ token, patientData }) => ({
+      query: ({ token, formData }) => ({
         url: "addpatient",
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
         },
-        body: JSON.stringify(patientData),
+        body: formData,
       }),
       invalidatesTags: ["Patient"],
     }),
@@ -662,7 +704,12 @@ export const commonApi = createApi({
           }
 
           const fileData = await RNFS.readFile(actualPath, "base64");
-          const binaryData = Uint8Array.from(atob(fileData), (c) =>
+          // const binaryData = Uint8Array.from(atob(fileData), (c) =>
+          //   c.charCodeAt(0)
+          // );
+          const binaryString = base64.decode(fileData);
+
+          const binaryData = Uint8Array.from(binaryString, (c) =>
             c.charCodeAt(0)
           );
 
@@ -708,19 +755,34 @@ export const commonApi = createApi({
         try {
           let { uri, name } = file;
 
-          console.log("uri-----", uri);
-          // if (!uri.startsWith('file://')) {
-          //   uri = `file://${uri}`;
-          // }
           const path = `/PhotoMed/${userId}/All Images/${name}`;
-          const fileData = await fetch(uri);
-          const blob = await fileData.blob();
+          
+          let body;
+          
+          // iOS doesn't support fetch() with file:// URIs, use RNFS instead
+          if (Platform.OS === 'android') {
+            const localPath = uri.replace("file://", "");
+            // Read file as base64 and convert to binary
+            const base64Data = await RNFS.readFile(localPath, "base64");
+            // Convert base64 to Uint8Array
+            const binaryString = base64.decode(base64Data);
+            body = Uint8Array.from(
+              binaryString,
+              c => c.charCodeAt(0)
+            );
+          } else {
+            // Android: Use blob approach (faster)
+            const fileData = await fetch(uri);
+            body = await fileData.blob();
+          }
+          
           const metadata = {
             path,
             mode: "add",
             autorename: true,
             mute: false,
           };
+          
           const response = await fetch(
             "https://content.dropboxapi.com/2/files/upload",
             {
@@ -730,7 +792,7 @@ export const commonApi = createApi({
                 "Content-Type": "application/octet-stream",
                 "Dropbox-API-Arg": JSON.stringify(metadata),
               },
-              body: blob,
+              body: body,
             }
           );
 
@@ -940,8 +1002,10 @@ export const commonApi = createApi({
 
     uploadDropBoxImageByFolder: builder.mutation({
       async queryFn({ file, path, userId, accessToken },) {
-        try { 
+        console.log('filefile', path, accessToken);
+        try {
           let { path: filePath, name } = file;
+          console.log('filePathfilePathfilePath', filePath);
           const fileData = await fetch(filePath);
           const blob = await fileData.blob();
           const metadata = {
@@ -972,6 +1036,59 @@ export const commonApi = createApi({
             return { error: rawResponse || "Failed to upload file" };
           }
         } catch (error) {
+          console.log('errorerrorerror 992', error);
+          return { error: error.message || "An unknown error occurred" };
+        }
+      },
+
+    }),
+    uploadDropBoxImageByFolderForDermo: builder.mutation({
+      async queryFn({ file, path, userId, accessToken },) {
+        console.log('filefile', path, accessToken);
+        try {
+          let { path: filePath, name } = file;
+          console.log('filePathfilePathfilePath', filePath);
+          // ✅ Ensure local file path (no file://)
+          const localPath = file.path.replace("file://", "");
+
+          // ✅ Read file as base64
+          const base64Data = await RNFS.readFile(localPath, "base64");
+
+          const binaryString = base64.decode(base64Data);
+          // ✅ Convert base64 to binary
+          const binary = Uint8Array.from(
+            binaryString,
+            c => c.charCodeAt(0)
+          );
+          const metadata = {
+            path,
+            mode: "add",
+            autorename: true,
+            mute: false,
+          };
+          const response = await fetch(
+            "https://content.dropboxapi.com/2/files/upload",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/octet-stream",
+                "Dropbox-API-Arg": JSON.stringify(metadata),
+              },
+              body: binary,
+            }
+          );
+
+          const rawResponse = await response.text();
+
+          if (response.ok) {
+            const responseData = JSON.parse(rawResponse);
+            return { data: responseData };
+          } else {
+            return { error: rawResponse || "Failed to upload file" };
+          }
+        } catch (error) {
+          console.log('errorerrorerror 992', error);
           return { error: error.message || "An unknown error occurred" };
         }
       },
@@ -1015,7 +1132,17 @@ export const commonApi = createApi({
         body: JSON.stringify(data),
       }),
     }),
-
+    postPatientTags: builder.mutation({
+      query: ({ token, tags, patientId }) => ({
+        url: `addtags/${patientId}`,
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: tags,
+      }),
+    }),
   }),
 });
 
@@ -1053,9 +1180,12 @@ export const {
   useDeleteTagSubTagMutation,
   usePostAttachImageWithTagMutation,
   useLazyGetAttachImageWithTagQuery,
-  useSearchPatientQuery,
+  useSearchPatientMutation,
   useUploadDropBoxImageByFolderMutation,
+  useUploadDropBoxImageByFolderForDermoMutation,
   usePostDermoScopyMoleMutation,
   useUpdateDermoScopyMoleMutation,
-  useGetDermoScopyMolesQuery
+  useGetDermoScopyMolesQuery,
+  usePostPatientTagsMutation,
+  useAddBodyPartsMutation
 } = commonApi;

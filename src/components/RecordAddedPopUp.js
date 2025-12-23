@@ -1,4 +1,4 @@
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Image, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import React from 'react'
 import COLORS from '../styles/colors'
 import { moderateScale, verticalScale } from '../styles/responsiveLayoute'
@@ -14,9 +14,9 @@ const RecordAddedPopUp = ({ visible, onPressCancel }) => {
             visible={visible}>
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.4)', padding: moderateScale(40) }}>
                 <View style={styles.popUpContainer}>
-                    <TouchableOpacity onPress={onPressCancel}
+                    <TouchableOpacity onPress={()=>onPressCancel()}
                     style={styles.crossIcon}>
-                        <CrossIcon />
+                        <Image source={require('../assets/images//icons/close.png')} style={{ tintColor: COLORS.primary, height: 25, width: 25 }} />
                     </TouchableOpacity>
                     <CheckIcon />
                     <Text style={[styles.txtStyle, { marginVertical: verticalScale(10) }]}>Patient Record Added</Text>
@@ -53,6 +53,7 @@ const styles = StyleSheet.create({
     crossIcon: {
         position: 'absolute',
         right: moderateScale(15),
-        top: verticalScale(10)
+        top: verticalScale(10),
+        zIndex:99999
     }
 })
