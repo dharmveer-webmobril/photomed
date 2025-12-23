@@ -31,6 +31,7 @@ local.properties
 # =====================
 # iOS / Xcode
 # =====================
+ios/dSYMs/
 ios/build/
 DerivedData/
 xcuserdata/
