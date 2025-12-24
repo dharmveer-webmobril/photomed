@@ -136,6 +136,7 @@ const CameraGrid = (props) => {
   const { width: screenWidth } = useWindowDimensions();
   const [selectedRatio, setSelectedRatio] = useState(ASPECT_RATIOS['1:1']);
   const targetRatio = RATIO_VALUES[selectedRatio];
+  let height = screenWidth * targetRatio;
 
   const format = useCameraFormat(device, [
     // Highest possible video resolution first
@@ -157,7 +158,6 @@ const CameraGrid = (props) => {
       console.log('No suitable format found for', selectedRatio);
     }
   }, [format, selectedRatio]);
-  let height = screenWidth * targetRatio;
 
   // end new====================
 
@@ -495,7 +495,7 @@ const CameraGrid = (props) => {
             />
             {ghostImage && (
               <Animated.View
-                style={[styles.overlayImage, { windowWidth, height }, animatedStyle]}
+                style={[styles.overlayImage, { width: windowWidth, height:(selectedRatio==='1:1' && Platform.OS === 'ios') ? height+verticalScale(70) : height }, animatedStyle]}
               >
                 <FastImage
                   source={{
@@ -504,7 +504,8 @@ const CameraGrid = (props) => {
                         ? ghostImage?.webContentLink
                         : ghostImage?.publicUrl,
                   }}
-                  style={[styles.overlayImage, { windowWidth, height }]}
+                  // resizeMode="contain"
+                  style={[styles.overlayImage, { windowWidth, height:(selectedRatio==='1:1' && Platform.OS === 'ios') ? height+verticalScale(70) : height }]}
                 />
               </Animated.View>
             )}

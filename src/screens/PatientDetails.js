@@ -747,6 +747,7 @@ const PatientDetails = (props) => {
             <CustomBtn
               onPress={() => {
                 navigate(ScreenName.DERMO_SCOPY)
+                // navigate('BodyPartSelector')
               }}
               titleStyle={styles.titleStyleSmall}
               btnStyle={styles.editInfoButton}

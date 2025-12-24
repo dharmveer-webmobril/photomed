@@ -20,169 +20,209 @@ import { imagePath } from '../../configs/imagePath';
 import { useAddBodyPartsMutation } from '../../redux/api/common';
 import { useCurrentUserProfileQuery } from '../../redux/api/user';
 import { useSelector } from 'react-redux';
-import { bodyData } from '../../utils';
 import Loading from '../../components/Loading';
 export default function DermoscopyDash() {
     const [body, setBody] = useState('');
     const [bodyError, setBodyError] = useState('');
     const [isOpenModdal, setIsOpenmodal] = useState(false);
+    const [isViewSelectModal, setIsViewSelectModal] = useState(false);
+    const [selectedView, setSelectedView] = useState(null); // 'front' or 'back'
     const [searchTerm, setSearchTerm] = useState("");
-    const [addedBodyPart, setAddedBodyPart] = useState([]);
     const token = useSelector((state) => state.auth?.user);
-    const [bodyPart, setBodyPart] = useState([
+
+    // Standard body parts - Front view
+    const [frontBodyParts, setFrontBodyParts] = useState([
         { title: "Head" },
-        { title: "Forehead" },
-        { title: "Eyes" },
-        { title: "Eyelids" },
-        { title: "Nose" },
-        { title: "Cheeks" },
-        { title: "Mouth" },
-        { title: "Lips" },
         { title: "Neck" },
-        { title: "Chest" },
+        { title: "Arm R" },
+        { title: "Arm L" },
+        { title: "Hand R" },
+        { title: "Hand L" },
+        { title: "Thorax" },
         { title: "Abdomen" },
-        { title: "Navel" },
-        { title: "Pelvis" },
-
-        { title: "Left Shoulder" },
-        { title: "Right Shoulder" },
-        { title: "Left Arm" },
-        { title: "Right Arm" },
-        { title: "Left Elbow" },
-        { title: "Right Elbow" },
-        { title: "Left Forearm" },
-        { title: "Right Forearm" },
-        { title: "Left Wrist" },
-        { title: "Right Wrist" },
-        { title: "Left Hand" },
-        { title: "Right Hand" },
-        { title: "Left Fingers" },
-        { title: "Right Fingers" },
-
-        { title: "Left Thigh" },
-        { title: "Right Thigh" },
-        { title: "Left Knee" },
-        { title: "Right Knee" },
-        { title: "Left Leg" },
-        { title: "Right Leg" },
-        { title: "Left Ankle" },
-        { title: "Right Ankle" },
-        { title: "Left Foot" },
-        { title: "Right Foot" },
-        { title: "Left Toes" },
-        { title: "Right Toes" },
-
-        { title: "Back" },
-        { title: "Upper Back" },
-        { title: "Middle Back" },
-        { title: "Lower Back" },
-        { title: "Left Back" },
-        { title: "Right Back" },
-        { title: "Back of Neck" },
-        { title: "Back of Head" },
-        { title: "Left Shoulder Back" },
-        { title: "Right Shoulder Back" },
-        { title: "Left Arm Back" },
-        { title: "Right Arm Back" },
-        { title: "Left Elbow Back" },
-        { title: "Right Elbow Back" },
-        { title: "Left Forearm Back" },
-        { title: "Right Forearm Back" },
-        { title: "Left Hand Back" },
-        { title: "Right Hand Back" },
-        { title: "Left Thigh Back" },
-        { title: "Right Thigh Back" },
-        { title: "Left Knee Back" },
-        { title: "Right Knee Back" },
-        { title: "Left Leg Back" },
-        { title: "Right Leg Back" },
-        { title: "Left Ankle Back" },
-        { title: "Right Ankle Back" },
-        { title: "Left Foot Back" },
-        { title: "Right Foot Back" }
+        { title: "Leg R" },
+        { title: "Leg L" },
+        { title: "Foot R" },
+        { title: "Foot L" },
     ]);
 
-    // -------- NEW: NORMAL SEARCH (NO DEBOUNCE) -------- //
-    const filteredBodyParts = bodyPart.filter(item =>
+    // Standard body parts - Back view
+    const [backBodyParts, setBackBodyParts] = useState([
+        { title: "Head" },
+        { title: "Neck" },
+        { title: "Arm R" },
+        { title: "Arm L" },
+        { title: "Hand R" },
+        { title: "Hand L" },
+        { title: "Thorax" },
+        { title: "Abdomen" },
+        { title: "Leg R" },
+        { title: "Leg L" },
+        { title: "Foot R" },
+        { title: "Foot L" },
+    ]);
+
+    // Filter based on search
+    const filteredFrontParts = frontBodyParts.filter(item =>
+        item.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    const filteredBackParts = backBodyParts.filter(item =>
         item.title.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const onPressPart = (part) => {
-        navigate('MarkableImage', { body: part });
+    const onPressPart = (part, view) => {
+        navigate('MarkableImage', { body: part, view: view }); // 'front' or 'back'
     };
 
     const [submit, { isLoading }] = useAddBodyPartsMutation();
-    const { data: userDetail, isLoading: isLoadingUser, error, refetch, } = useCurrentUserProfileQuery({ token });
-    useEffect(() => {
-        refetch()
-    }, [])
+    const { data: userDetail, isLoading: isLoadingUser, refetch } = useCurrentUserProfileQuery({ token });
 
     useEffect(() => {
-        let incoming = [...addedBodyPart];
-        let bodies = [...bodyPart];
-        if (incoming.length > 0) {
+        refetch();
+    }, [refetch]);
 
-            const existingSet = new Set(bodies.map(item => item.title.toLowerCase()));
+    useEffect(() => {
+        if (userDetail?.succeeded && userDetail?.ResponseBody?.customBodyParts) {
+            const customParts = userDetail.ResponseBody.customBodyParts;
+            console.log('customBodyParts', customParts);
 
-            incoming.forEach(item => {
-                const lower = item.toLowerCase();
-                if (!existingSet.has(lower)) {
-                    bodies.unshift({ title: item });
-                    existingSet.add(lower);
+            // Handle the new structure: { front: [...], back: [...] }
+            if (customParts && typeof customParts === 'object' && !Array.isArray(customParts)) {
+                // Update front body parts - merge custom parts with standard parts
+                if (customParts.front && Array.isArray(customParts.front)) {
+                    const frontCustomParts = customParts.front.map(item => ({ title: item }));
+                    setFrontBodyParts(prev => {
+                        const existingTitles = new Set(prev.map(p => p.title.toLowerCase()));
+                        const newParts = frontCustomParts.filter(p => !existingTitles.has(p.title.toLowerCase()));
+                        return [...prev, ...newParts];
+                    });
                 }
-            });
 
-            setBodyPart(bodies)
+                // Update back body parts - merge custom parts with standard parts
+                if (customParts.back && Array.isArray(customParts.back)) {
+                    const backCustomParts = customParts.back.map(item => ({ title: item }));
+                    setBackBodyParts(prev => {
+                        const existingTitles = new Set(prev.map(p => p.title.toLowerCase()));
+                        const newParts = backCustomParts.filter(p => !existingTitles.has(p.title.toLowerCase()));
+                        return [...prev, ...newParts];
+                    });
+                }
+            }
         }
-    }, [userDetail, addedBodyPart])
+    }, [userDetail]);
 
-    useEffect(() => {
-        if (userDetail?.succeeded && userDetail?.ResponseBody && userDetail?.ResponseBody?.customBodyParts && userDetail?.ResponseBody?.customBodyParts?.length > 0) {
-            console.log('userDetailuserDetail', userDetail)
-            // customBodyParts
-            setAddedBodyPart(userDetail?.ResponseBody?.customBodyParts)
-        }
-    }, [userDetail,])
+    const renderFrontBackRow = ({ item, index }) => {
+        const frontItem = filteredFrontParts[index] || null;
+        const backItem = filteredBackParts[index] || null;
 
-    const renderBodyBox = ({ item }) => (
-        <TouchableOpacity
-            onPress={() => onPressPart(item.title)}
-            style={styles.bodyBox}
-        >
-            <Text style={styles.bodyTitle}>{item.title}</Text>
-        </TouchableOpacity>
-    );
+        return (
+            <View style={styles.rowContainer}>
+                <View style={styles.columnContainer}>
+                    {frontItem ? (
+                        <TouchableOpacity
+                            onPress={() => onPressPart(frontItem.title, 'front')}
+                            style={styles.bodyBox}
+                        >
+                            <Text style={styles.bodyTitle}>{frontItem.title}</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={[styles.bodyBox, styles.emptyBox]} />
+                    )}
+                </View>
+                <View style={styles.columnContainer}>
+                    {backItem ? (
+                        <TouchableOpacity
+                            onPress={() => onPressPart(backItem.title, 'back')}
+                            style={styles.bodyBox}
+                        >
+                            <Text style={styles.bodyTitle}>{backItem.title}</Text>
+                        </TouchableOpacity>
+                    ) : (
+                        <View style={[styles.bodyBox, styles.emptyBox]} />
+                    )}
+                </View>
+            </View>
+        );
+    };
 
     const clearInput = () => {
         setSearchTerm("");
     };
 
+    const handleAddButtonPress = () => {
+        setIsViewSelectModal(true);
+        setBody("");
+        setBodyError("");
+    };
+
+    const handleViewSelect = (view) => {
+        setSelectedView(view);
+        setIsViewSelectModal(false);
+        setIsOpenmodal(true);
+    };
+
     const addBoadyPart = async () => {
-        let alreadyHave = bodyPart.findIndex(el => el.title?.toLocaleLowerCase() == body?.toLocaleLowerCase())
+        if (!selectedView) {
+            setBodyError("Please select Front or Back view first");
+            return;
+        }
+
+        const targetList = selectedView === 'front' ? frontBodyParts : backBodyParts;
+        let alreadyHave = targetList.findIndex(el => el.title?.toLocaleLowerCase() === body?.toLocaleLowerCase());
+
         if (!body?.trim()) {
-            setBodyError("Enter body part name")
-            return
+            setBodyError("Enter body part name");
+            return;
         }
 
         if (alreadyHave >= 0) {
-            setBodyError("Alredy have this body part")
-            return
+            setBodyError("Already have this body part");
+            return;
         }
 
+        // Add to local state
+        if (selectedView === 'front') {
+            setFrontBodyParts(prev => [{ title: body }, ...prev]);
+        } else {
+            setBackBodyParts(prev => [{ title: body }, ...prev]);
+        }
+
+        // Prepare data in the new format: { front: [...], back: [...] }
+        // Get all body parts from display lists (including standard ones)
+        const allFrontParts = frontBodyParts.map(p => p.title);
+        const allBackParts = backBodyParts.map(p => p.title);
+
+        // Define standard parts that should not be sent to API
+        const standardParts = ['Head', 'Neck', 'Arm R', 'Arm L', 'Hand R', 'Hand L', 'Thorax', 'Abdomen', 'Leg R', 'Leg L', 'Foot R', 'Foot L'];
+
+        // Filter out standard parts - only send custom parts to API
+        const frontParts = allFrontParts.filter(part =>
+            !standardParts.some(std => std.toLowerCase() === part.toLowerCase())
+        );
+        const backParts = allBackParts.filter(part =>
+            !standardParts.some(std => std.toLowerCase() === part.toLowerCase())
+        );
+
+        // Save to API in the new format
         let data = {
-            bodyParts: [...addedBodyPart, body]
-        }
-
+            bodyParts: {
+                front: frontParts,
+                back: backParts
+            }
+        };
+        console.log('data------', data);
         try {
             let res = await submit({ data, token }).unwrap();
+            console.log('res------', res);
             if (res?.succeeded) {
                 refetch();
             }
-        } catch (error) {
-            console.log('error', error);
+        } catch (err) {
+            console.log('error', err);
         } finally {
             setIsOpenmodal(false);
-            setBody("")
+            setBody("");
+            setSelectedView(null);
         }
     }
 
@@ -202,8 +242,8 @@ export default function DermoscopyDash() {
 
                 <Text style={styles.title}>Patient Details</Text>
 
-                <TouchableOpacity style={styles.headerMenuBtn} onPress={() => { setIsOpenmodal(true); setBody("") }}>
-                    <Text style={{ color: '#fff', fontSize: 20 }}>+</Text>
+                <TouchableOpacity style={styles.headerMenuBtn} onPress={handleAddButtonPress}>
+                    <Text style={styles.addButtonText}>+</Text>
                 </TouchableOpacity>
             </View>
 
@@ -212,7 +252,7 @@ export default function DermoscopyDash() {
                 <Image
                     resizeMode="contain"
                     source={imagePath.search}
-                    style={{ marginHorizontal: 9.5 }}
+                    style={styles.searchIcon}
                 />
                 <TextInput
                     style={styles.textinputStyle}
@@ -225,56 +265,100 @@ export default function DermoscopyDash() {
                 {searchTerm.length > 0 && (
                     <TouchableOpacity
                         onPress={clearInput}
-                        style={{ padding: 9.5 }}
+                        style={styles.clearButton}
                     >
                         <CrossIcon height={25} width={25} />
                     </TouchableOpacity>
                 )}
             </View>
 
-            {/* List */}
+            {/* Two Column Header */}
+            <View style={styles.headerRow}>
+                <View style={styles.columnHeader}>
+                    <Text style={styles.columnHeaderText}>Front View</Text>
+                </View>
+                <View style={styles.columnHeader}>
+                    <Text style={styles.columnHeaderText}>Back View</Text>
+                </View>
+            </View>
+
+            {/* Two Column List */}
             <FlatList
-                data={filteredBodyParts}   // ← SEARCH APPLIED
-                renderItem={renderBodyBox}
+                data={Array.from({ length: Math.max(filteredFrontParts.length, filteredBackParts.length) }, (_, i) => i)}
+                renderItem={renderFrontBackRow}
                 keyExtractor={(item, index) => index.toString()}
-                numColumns={2}
-                columnWrapperStyle={styles.columnWrapper}
                 contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
             />
 
-            {/* Modal */}
+            {/* View Selection Modal (Front/Back) */}
             <Modal
                 animationType="slide"
                 transparent={true}
-                visible={isOpenModdal}
-                onRequestClose={() => { setIsOpenmodal(false); setBodyError(""); setBody('') }}
+                visible={isViewSelectModal}
+                onRequestClose={() => { setIsViewSelectModal(false); }}
                 statusBarTranslucent
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalBox}>
-
-                        <TouchableOpacity style={styles.modalCloseBtn} onPress={() => { setIsOpenmodal(false); setBodyError(""); setBody('') }}>
+                        <TouchableOpacity style={styles.modalCloseBtn} onPress={() => { setIsViewSelectModal(false); }}>
                             <Image
                                 source={require('../../assets/images/close.png')}
                                 style={styles.closeIcon}
                             />
                         </TouchableOpacity>
 
-                        <Text style={styles.modalTitle}>Add Body Part</Text>
+                        <Text style={styles.modalTitle}>Select View</Text>
+
+                        <TouchableOpacity
+                            style={[styles.viewOption, styles.viewOptionFront]}
+                            onPress={() => handleViewSelect('front')}
+                        >
+                            <Text style={styles.viewOptionText}>Front View</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                            style={[styles.viewOption, styles.viewOptionBack]}
+                            onPress={() => handleViewSelect('back')}
+                        >
+                            <Text style={styles.viewOptionText}>Back View</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Add Body Part Modal */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={isOpenModdal}
+                onRequestClose={() => { setIsOpenmodal(false); setBodyError(""); setBody(''); setSelectedView(null); }}
+                statusBarTranslucent
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalBox}>
+                        <TouchableOpacity style={styles.modalCloseBtn} onPress={() => { setIsOpenmodal(false); setBodyError(""); setBody(''); setSelectedView(null); }}>
+                            <Image
+                                source={require('../../assets/images/close.png')}
+                                style={styles.closeIcon}
+                            />
+                        </TouchableOpacity>
+
+                        <Text style={styles.modalTitle}>
+                            Add Body Part ({selectedView === 'front' ? 'Front' : 'Back'} View)
+                        </Text>
 
                         <AppTextInput
-                            inputContainerStyle={{ marginBottom: 10 }}
+                            inputContainerStyle={styles.inputContainer}
                             value={body}
                             onChangeText={(txt) => { setBodyError(""); setBody(txt) }}
                             placeholder="Body Part"
                             placeHolderTxtColor={COLORS.placeHolderTxtColor}
                         />
-                        <Text style={{ color: 'red', fontSize: 12 }}>{bodyError}</Text>
+                        <Text style={styles.errorText}>{bodyError}</Text>
                         <CustomBtn
                             onPress={() => { addBoadyPart() }}
                             title="Add"
-
                             btnStyle={styles.modalBtn}
                             isLoadin={isLoading}
                         />
@@ -323,19 +407,62 @@ const styles = StyleSheet.create({
         backgroundColor: '#32327C',
         borderRadius: 8,
     },
+    addButtonText: {
+        color: '#fff',
+        fontSize: 20,
+    },
     backIcon: { height: 30, width: 30 },
     title: { fontSize: 16, color: '#424242', fontWeight: '600' },
+    searchIcon: {
+        marginHorizontal: 9.5,
+    },
+    clearButton: {
+        padding: 9.5,
+    },
+    inputContainer: {
+        marginBottom: 10,
+    },
+    errorText: {
+        color: 'red',
+        fontSize: 12,
+    },
 
     columnWrapper: { justifyContent: 'space-between' },
     listContent: { paddingHorizontal: 10, paddingBottom: 20 },
-    bodyBox: {
+    headerRow: {
+        flexDirection: 'row',
+        paddingHorizontal: 10,
+        marginBottom: 10,
+    },
+    columnHeader: {
         flex: 1,
+        paddingVertical: 10,
+        alignItems: 'center',
+    },
+    columnHeaderText: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#32327C',
+    },
+    rowContainer: {
+        flexDirection: 'row',
+        marginBottom: 8,
+    },
+    columnContainer: {
+        flex: 1,
+        marginHorizontal: 4,
+    },
+    bodyBox: {
         backgroundColor: '#F7F8FA',
         borderRadius: 10,
         padding: 12,
-        marginVertical: 8,
-        marginHorizontal: 4,
         elevation: 2,
+        minHeight: 50,
+        justifyContent: 'center',
+    },
+    emptyBox: {
+        backgroundColor: 'transparent',
+        elevation: 0,
     },
     bodyTitle: {
         fontSize: 15,
@@ -373,4 +500,25 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     modalBtn: { marginTop: 30 },
+    viewOption: {
+        padding: 15,
+        borderRadius: 10,
+        marginVertical: 8,
+        alignItems: 'center',
+    },
+    viewOptionFront: {
+        backgroundColor: '#E3F2FD',
+        borderWidth: 2,
+        borderColor: '#2196F3',
+    },
+    viewOptionBack: {
+        backgroundColor: '#FFF3E0',
+        borderWidth: 2,
+        borderColor: '#FF9800',
+    },
+    viewOptionText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#32327C',
+    },
 });

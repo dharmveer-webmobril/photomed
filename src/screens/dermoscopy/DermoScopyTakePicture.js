@@ -25,6 +25,7 @@ import { goBack } from "../../navigators/NavigationService";
 import ImageWithLoader from "../../components/ImageWithLoader";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { generateUniqueKey } from "../../configs/api";
+import { verticalScale } from "../../styles/responsiveLayoute";
 
 
 const ASPECT_RATIOS = {
@@ -203,13 +204,15 @@ export default function DermoScopyImageCompare() {
                 {selectedImage && (
                     <Animated.View 
                         pointerEvents="none" 
-                        style={[styles.overlayImage, {width: screenWidth, height }, animatedStyle]}
+                        style={[styles.overlayImage,animatedStyle,(selectedRatio==='1:1' && Platform.OS === 'ios') ? {height:height+verticalScale(70)} : {height:height}]}
                         key={`overlay-${selectedRatio}`}
                     >
                         <FastImage
                             key={`ghost-image-${selectedRatio}`}
                             source={{ uri: selectedImage.path }}
-                            style={[styles.overlayImage, { width:screenWidth, height }]}
+                            resizeMode="cover"
+
+                            style={[styles.overlayImage, { width:screenWidth, height:(selectedRatio==='1:1' && Platform.OS === 'ios')  ? height+verticalScale(70) : height }]}
                         />
                     </Animated.View>
                 )}
@@ -500,6 +503,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         pointerEvents: "box-none",
+        bottom:2
     },
     controlsRowCompare: {
         marginTop: 20,
@@ -527,9 +531,9 @@ const styles = StyleSheet.create({
         tintColor: COLORS.whiteColor,
     },
     captureBtn: {
-        width: 70,
-        height: 70,
-        borderRadius: 35,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
         backgroundColor: COLORS.whiteColor,
         borderWidth: 4,
         borderColor: COLORS.primary,
@@ -538,9 +542,9 @@ const styles = StyleSheet.create({
         marginHorizontal: 20,
     },
     captureBtnInner: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         backgroundColor: COLORS.primary,
     },
     captureBtnDisabled: {

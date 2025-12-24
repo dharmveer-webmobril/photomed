@@ -30,6 +30,7 @@ import MarkableImage from "../screens/MarkableImage";
 import DermoScopyImageCompare from "../screens/dermoscopy/DermoScopyImageCompare";
 import DermoScopyTakePicture from "../screens/dermoscopy/DermoScopyTakePicture";
 import { IAPProvider } from "../configs/IAPContext";
+import BodyPartSelector from "../screens/dermoscopy/BodyPartSelector";
 
 const Stack = createNativeStackNavigator();
 
@@ -106,6 +107,15 @@ const MainStack = () => {
       <Stack.Screen
         name={"DermoscopyCollage"}
         component={DermoscopyCollage}
+        options={{
+          headerShown: true,
+          headerTintColor: COLORS.textColor,
+          headerTitle: "Comapre",
+        }}
+      />
+      <Stack.Screen
+        name={"BodyPartSelector"}
+        component={BodyPartSelector}
         options={{
           headerShown: true,
           headerTintColor: COLORS.textColor,
