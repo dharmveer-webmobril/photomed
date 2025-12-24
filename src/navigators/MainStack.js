@@ -28,6 +28,7 @@ import { Image, TouchableOpacity } from "react-native";
 import SubscriptionManage from "../screens/Auth/SubscriptionManage";
 import MarkableImage from "../screens/MarkableImage";
 import DermoScopyImageCompare from "../screens/dermoscopy/DermoScopyImageCompare";
+import DermoScopyTakePicture from "../screens/dermoscopy/DermoScopyTakePicture";
 import { IAPProvider } from "../configs/IAPContext";
 
 const Stack = createNativeStackNavigator();
@@ -245,6 +246,14 @@ const MainStack = () => {
       <Stack.Screen
         name={ScreenName.DERMO_SCOPY_COMPARE}
         component={DermoScopyImageCompare}
+        options={{
+          headerShown: false,
+          headerTintColor: COLORS.textColor,
+        }}
+      />
+      <Stack.Screen
+        name={ScreenName.DERMO_SCOPY_CAMERA}
+        component={DermoScopyTakePicture}
         options={{
           headerShown: false,
           headerTintColor: COLORS.textColor,

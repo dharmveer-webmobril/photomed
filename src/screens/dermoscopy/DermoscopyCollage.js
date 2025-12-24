@@ -22,12 +22,9 @@ export default function CollageDermoscopy() {
   useEffect(() => {
     setImageArr(images)
     if (images?.length > 0) {
-      setFirstBoximage(images[0])
+      setFirstBoximage(images[images?.length-1])
     }
   }, [images])
-
-  console.log('imageimageimage--', images);
-  console.log('imageArrimageArrimageArr--', imageArr);
 
   const openCamera = () => {
     ImageCropPicker.openCamera({

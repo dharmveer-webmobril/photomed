@@ -26,6 +26,7 @@ const ScreenName = {
   TAG_FILTER:'TagFilter',
   DERMO_SCOPY:'DermoscopyDash',
   DERMO_SCOPY_COMPARE:'DermoScopyImageCompare',
+  DERMO_SCOPY_CAMERA:'DermoScopyTakePicture',
 };
 
 export default ScreenName;

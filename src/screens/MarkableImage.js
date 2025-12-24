@@ -18,7 +18,7 @@ import { useSelector } from "react-redux";
 import ViewShot from "react-native-view-shot";
 import Loading from "../components/Loading";
 import { goBack, navigate } from "../navigators/NavigationService";
-import ImageCropPicker from "react-native-image-crop-picker";
+import ScreenName from "../configs/screenName";
 import {
   useGetDermoScopyMolesQuery,
   usePostDermoScopyMoleMutation,
@@ -34,7 +34,6 @@ import FastImage from 'react-native-fast-image'
 import { getDriveImageMetadata } from "../utils/CommonFunction";
 import OptionsModal from "../components/OptionsModal";
 import ImageZoomModal from "../components/ImageZoomModal";
-import ScreenName from "../configs/screenName";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MarkableImage() {
@@ -381,24 +380,19 @@ export default function MarkableImage() {
   }, [capturedImage?.path, capturedImage?.id, cloudType, accessToken]);
 
   const openCamera = () => {
-    ImageCropPicker.openCamera({
-      cropping: false,
-      mediaType: "photo",
-      width: 1000,
-      height: 1000,
-      compressImageQuality: 0.5,
-    })
-      .then((img) => {
-        const newImg = { ...img };
-        const uniqueKey = generateUniqueKey();
-        newImg.name = `dermo_${body}_${uniqueKey}.jpg`;
-        if (!newImg.path.startsWith("file://")) {
-          newImg.path = `file://${newImg.path}`;
+    navigate(ScreenName.DERMO_SCOPY_CAMERA, {
+      body,
+      onSave: (capturedImages) => {
+        if (capturedImages && capturedImages.length > 0) {
+          const newImg = capturedImages[0]; // Take the first image for main image
+          if (!newImg.path.startsWith("file://")) {
+            newImg.path = `file://${newImg.path}`;
+          }
+          setCapturedImage(newImg);
+          setCircles([]);
         }
-        setCapturedImage(newImg);
-        setCircles([]);
-      })
-      .catch((e) => console.log("Camera cancelled or error:", e));
+      },
+    });
   };
 
   const isMarkingEnabled = !!capturedImage?.path;
@@ -539,37 +533,38 @@ export default function MarkableImage() {
   );
 
   const btnAttachImages = (tappedIndex) => {
-    ImageCropPicker.openCamera({
-      cropping: false,
-      mediaType: "photo",
-      width: 800,
-      height: 800,
-      compressImageQuality: 0.5,
-    })
-      .then((img) => {
-        const newImg = { ...img };
-        const uniqueKey = generateUniqueKey();
-        // Use the real unique mole name (not index)
-        newImg.name = `${circles[tappedIndex].name}_${body}_${uniqueKey}.jpg`;
-        if (!newImg.path.startsWith("file://")) {
-          newImg.path = `file://${newImg.path}`;
+    const existingImages = circles[tappedIndex]?.attachedImages || [];
+    navigate(ScreenName.DERMO_SCOPY_CAMERA, {
+      body,
+      circleName: circles[tappedIndex]?.name,
+      images: existingImages.length > 0 ? existingImages : undefined, // Pass existing images for ghost overlay if available
+      onSave: (capturedImages) => {
+        if (capturedImages && capturedImages.length > 0) {
+          // Process all captured images
+          const processedImages = capturedImages.map((img) => {
+            const processedImg = { ...img };
+            if (!processedImg.path.startsWith("file://")) {
+              processedImg.path = `file://${processedImg.path}`;
+            }
+            return processedImg;
+          });
+
+          setCircles((prev) =>
+            prev.map((circle, idx) =>
+              idx === tappedIndex
+                ? {
+                  ...circle,
+                  attachedImages: circle.attachedImages
+                    ? [...circle.attachedImages, ...processedImages]
+                    : processedImages,
+                }
+                : circle
+            )
+          );
         }
-        setCircles((prev) =>
-          prev.map((circle, idx) =>
-            idx === tappedIndex
-              ? {
-                ...circle,
-                attachedImages: circle.attachedImages
-                  ? [...circle.attachedImages, newImg]
-                  : [newImg],
-              }
-              : circle
-          )
-        );
-      })
-      .catch((e) => console.log("Attach photo cancelled:", e)).finally(() => {
         closeModal();
-      });
+      },
+    });
   };
 
   const onLayout = (e) => {
@@ -827,7 +822,8 @@ export default function MarkableImage() {
         onDelete={() => { deleteImage(tappedIndex); closeModal(); }}
         onCompare={() => {
           closeModal();
-          navigate(ScreenName.DERMO_SCOPY_COMPARE, { images: circles[tappedIndex].attachedImages });
+          // navigate(ScreenName.DERMO_SCOPY_COMPARE, { images: circles[tappedIndex].attachedImages });
+          navigate('DermoscopyCollage', { images: circles[tappedIndex].attachedImages });
         }}
       />
       <ImageZoomModal

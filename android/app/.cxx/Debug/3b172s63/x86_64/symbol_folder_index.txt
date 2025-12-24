@@ -1,0 +1,1 @@
+/Users/ravi/Desktop/projects/photomed/android/app/build/intermediates/cxx/Debug/3b172s63/obj/x86_64

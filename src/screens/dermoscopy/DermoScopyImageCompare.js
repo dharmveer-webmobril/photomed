@@ -125,7 +125,7 @@ export default function DermoScopyImageCompare() {
                     format={format}
                     isActive={true}
                     photo={true}
-                    resizeMode="cover"
+                    resizeMode="contain"
                 />
 
                 {/* Ghost Overlay */}
