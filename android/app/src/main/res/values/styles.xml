@@ -10,4 +10,11 @@
         <item name="bootSplashLogo">@drawable/bootsplash_logo</item>
         <item name="postBootSplashTheme">@style/AppTheme</item>
     </style>
+    <style name="CropPickerTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:fitsSystemWindows">true</item>
+    </style>
+
 </resources>
