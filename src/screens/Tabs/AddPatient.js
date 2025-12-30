@@ -178,24 +178,38 @@ const AddPatient = () => {
 
   const openCamera = () => {
     ImageCropPicker.openCamera({
-      cropping: false,
+      cropping: true,
       mediaType: "photo",
       width: 200,
       height: 200,
+      compressImageQuality: 0.4,
     }).then((img) => {
       funcManageImage(img)
-    }).catch((e) => console.log("Attach photo cancelled:", e));
+    }).catch((er) => {
+      console.log('errrorororo', er);
+      if (er?.message?.includes('User did not grant camera permission.')) {
+        Toast.show("To take a photo, please allow camera access for PhotoMed Pro in your device settings.");
+        return;
+      }
+    })
   }
 
   const chooseImage = () => {
     ImageCropPicker.openPicker({
-      cropping: false,
+      cropping: true,
       mediaType: "photo",
       width: 200,
       height: 200,
+      compressImageQuality: 0.4,
     }).then(async (img) => {
       funcManageImage(img)
-    });
+    }).catch((er) => {
+      console.log('errrorororo', er);
+      if (er?.message?.includes('User did not grant library permission.')) {
+        Toast.show("To select a photo, please allow photo access for PhotoMed Pro in your device settings.");
+        return;
+      }
+    })
   }
 
   const funcManageImage = async (img) => {
@@ -203,14 +217,13 @@ const AddPatient = () => {
     if (!newImg.path.startsWith("file://")) {
       newImg.path = `file://${newImg.path}`;
     }
-    console.log('newImgnewImg--', newImg);
 
     if (pickerType === 'profile') {
       setImage(newImg)
     } else {
       const result = await TextRecognition.recognize(newImg.path);
       console.log('resultresultresult--', result);
-      if (result && result.text) {
+      if (result && result?.text) {
         setTextData(result.text);
         setTextSelectorModal(true)
       }
@@ -246,6 +259,7 @@ const AddPatient = () => {
   };
 
 
+  
 
   return (
     <WrapperContainer wrapperStyle={commonStyles.innerContainer} >

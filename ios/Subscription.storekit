@@ -1,0 +1,173 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "049F2243",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6753164448",
+    "_developerTeamID" : "QK8H32366Q",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 788771774.19031501,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Load Products"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Purchase"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Verification"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Store Sync"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Subscription Status"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "App Transaction"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Manage Subscriptions Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Refund Request Sheet"
+      },
+      {
+        "current" : null,
+        "enabled" : false,
+        "name" : "Offer Code Redeem Sheet"
+      }
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21793192",
+      "localizations" : [
+
+      ],
+      "name" : "com.photomedprosubscription",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 4,
+          "internalID" : "6753579198",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "com.photomedonemonth",
+              "displayName" : "com.photomedonemonth",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.photomedonemonth1",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "com.photomedonemonth1",
+          "subscriptionGroupID" : "21793192",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "14.99",
+          "familyShareable" : false,
+          "groupNumber" : 3,
+          "internalID" : "6753578845",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "com.photomedthreemonth",
+              "displayName" : "com.photomedthreemonth",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.photomedthreemonth1",
+          "recurringSubscriptionPeriod" : "P3M",
+          "referenceName" : "com.photomedthreemonth1",
+          "subscriptionGroupID" : "21793192",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "49.99",
+          "familyShareable" : false,
+          "groupNumber" : 5,
+          "internalID" : "6753579436",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "com.photomedyearlyplan",
+              "displayName" : "com.photomedyearlyplan",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.photomedyearlyplan1",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "com.photomedyearlyplan1",
+          "subscriptionGroupID" : "21793192",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

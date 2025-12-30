@@ -418,7 +418,7 @@ const CameraGrid = (props) => {
   if (!device) {
     return (
       <View style={styles.centeredFull}>
-        <Text style={styles.txtStyle}>No Camera Available</Text>
+        <Text style={styles.txtStyle}>To take a photo, please allow camera access for PhotoMed Pro in your device settings.</Text>
       </View>
     );
   }

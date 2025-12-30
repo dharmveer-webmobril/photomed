@@ -1,5 +1,5 @@
 
-import { View, Text, StatusBar, SafeAreaView } from 'react-native'
+import { View, Text, StatusBar } from 'react-native'
 import React, { useEffect } from 'react'
 import BootSplash from "react-native-bootsplash";
 import { notificationListener, requestUserPermission, } from "./src/configs/PushNotification";
@@ -10,7 +10,7 @@ import { Provider, useSelector } from "react-redux";
 import AppNavigator from "./src/navigators/AppNavigator";
 import UpdateChecker from "./src/screens/UpdateCheck";
 import { store } from "./src/redux/store";
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 // if (!global.atob) {
 //   global.atob = atob;
 // }
@@ -42,13 +42,13 @@ export default function App() {
   }, []);
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <MenuProvider>
-        <Provider store={store}>
-          <StatusBar backgroundColor={"white"} barStyle={"dark-content"} />
-          <AppNavigator />
-        </Provider>
-        <UpdateChecker />
-      </MenuProvider>
+        <MenuProvider>
+          <Provider store={store}>
+            <StatusBar backgroundColor={"white"} barStyle={"dark-content"} />
+            <AppNavigator />
+          </Provider>
+          <UpdateChecker />
+        </MenuProvider>
     </SafeAreaView>
   )
 }

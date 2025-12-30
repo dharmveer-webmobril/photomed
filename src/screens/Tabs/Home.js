@@ -200,8 +200,8 @@ const Home = () => {
       console.log('formDataformData', formData);
       let res = await searchPatient({ token, formData }).unwrap();
     } catch (error) {
-      console.log('errorerror', error);
-      let errorMessage = error?.data?.ResponseBody?.error ||  "Something went wrong!";
+      console.log('handleSearchPatient errorerror', error);
+      let errorMessage = error?.data?.ResponseBody?.error || "Data not found..";
       Toast.show(errorMessage, Toast.LONG);
     } finally {
       setIsLoading(false)
@@ -275,24 +275,37 @@ const Home = () => {
 
   const openCamera = () => {
     ImageCropPicker.openCamera({
-      cropping: false,
+      cropping: true,
       mediaType: "photo",
       width: 200,
       height: 200,
-
+      compressImageQuality: 0.4
     }).then((img) => {
       mangeSearchImg(img)
-    }).catch((e) => console.log("Attach photo cancelled:", e));
+    }).catch((er) => {
+      console.log('errrorororo', er);
+      if (er?.message?.includes('User did not grant camera permission.')) {
+        Toast.show("To take a photo, please allow camera access for PhotoMed Pro in your device settings.");
+        return;
+      }
+    })
   }
 
   const chooseImage = () => {
     ImageCropPicker.openPicker({
-      cropping: false,
+      cropping: true,
       mediaType: "photo",
-      // width: 200,
-      // height: 200,
+      width: 200,
+      height: 200,
+      compressImageQuality: 0.4
     }).then(async (img) => {
       mangeSearchImg(img)
+    }).catch((er) => {
+      console.log('errrorororo', er);
+      if (er?.message?.includes('User did not grant library permission.')) {
+        Toast.show("To select a photo, please allow photo access for PhotoMed Pro in your device settings.");
+        return;
+      }
     });
   }
 

@@ -80,6 +80,8 @@
 	<string>PhotoMed needs access to your Microphone for audio recording.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>PhotoMed needs access to your Photo Library to upload profile photos securely.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>PhotoMed needs access to your Photo Library to upload profile photos securely.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>

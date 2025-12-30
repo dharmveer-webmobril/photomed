@@ -634,7 +634,7 @@ const PatientDetails = (props) => {
         multiple: true,
         mediaType: "photo",
         cropping: true,
-      });
+      })
 
       const mappedFileDetails = fileDetails.map((file) => ({
         uri: file.path,
@@ -654,6 +654,12 @@ const PatientDetails = (props) => {
         await handleDropboxUpload(mappedFileDetails);
       }
     } catch (error) {
+
+      if (error?.message?.includes('User did not grant library permission.')) {
+        Toast.show("To select a photo, please allow photo access for PhotoMed Pro in your device settings.");
+        return;
+      }
+
       console.error("Error during file selection or upload:", error);
       // Optionally, handle user cancellation or display a message
       Toast.show(error.message || "User has cancelled the flow");
@@ -667,7 +673,7 @@ const PatientDetails = (props) => {
     //   showSubscriptionAlert(navigate);
     //   return;
     // }
-    type == "withSelectedImage"
+    type === "withSelectedImage"
       ? navigate(ScreenName.COLLAGE_ADD, {
         images: collageImages,
         preData: preData,

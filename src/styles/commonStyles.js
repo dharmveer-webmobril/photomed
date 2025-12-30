@@ -1,7 +1,7 @@
 import { StyleSheet } from 'react-native';
 import COLORS from './colors';
 import FONTS from './fonts';
-import { moderateScale, verticalScale } from './responsiveLayoute';
+import {  verticalScale } from './responsiveLayoute';
 const commonStyles = StyleSheet.create({
   container: {
     flex: 1,
@@ -12,7 +12,7 @@ const commonStyles = StyleSheet.create({
     backgroundColor: COLORS.whiteColor
   },
   flexView: {
-    // justifyContent:'space-between',
+    justifyContent:'space-between',
     alignItems: 'center',
     flexDirection: 'row',
   },

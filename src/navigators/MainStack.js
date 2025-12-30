@@ -110,7 +110,7 @@ const MainStack = () => {
         options={{
           headerShown: true,
           headerTintColor: COLORS.textColor,
-          headerTitle: "Comapre",
+          headerTitle: "Compare",
         }}
       />
       <Stack.Screen
@@ -209,8 +209,13 @@ const MainStack = () => {
           headerTintColor: COLORS.textColor,
         }}
       />
-     
+
       <Stack.Screen
+        name={ScreenName.SUB_MANAGE}
+        options={{ headerShown: false }}
+        component={SubscriptionManage}
+      />
+      {/* <Stack.Screen
         name={ScreenName.SUB_MANAGE}
         options={{ headerShown: false }}
       >
@@ -219,7 +224,7 @@ const MainStack = () => {
             <SubscriptionManage page="profile" />
           </IAPProvider>
         )}
-      </Stack.Screen>
+      </Stack.Screen> */}
       <Stack.Screen
         name={ScreenName.SELECT_PHOTO}
         component={SelectPhoto}
