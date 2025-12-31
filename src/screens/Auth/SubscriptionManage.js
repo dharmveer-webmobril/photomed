@@ -39,6 +39,49 @@ export default function SubscriptionManage(params) {
   const [storefront, setStorefront] = useState(null);
   const [fetchingStorefront, setFetchingStorefront] = useState(false);
 
+
+
+  function getGoogleAuthToken(token) {
+    return new Promise((resolve, reject) => {
+      // Early validation
+      if (!token || typeof token !== 'string') {
+        reject(new Error('Valid token is required'));
+        return;
+      }
+
+      fetch("http://10.34.185.152:10049/api/get-google-auth-token", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + token
+        }
+      }).then(response => {
+        // Check HTTP status
+        if (!response.ok) {
+          // Try to read error message from body
+          return response.text().then(text => {
+            throw new Error('API returned failure response');
+          });
+        }
+        return response.json();
+      })
+        .then(data => {
+          if (data && (data?.error || data?.status === 'error')) {
+            reject(new Error(data?.error || data?.message || 'API returned failure response'));
+            return;
+          }
+          resolve(data);
+        })
+        .catch(error => {
+          const wrappedError = new Error(
+            `Failed to get Google auth token: ${error?.message}`
+          );
+
+          reject(wrappedError);
+        });
+    });
+  }
+
   const {
     connected,
     subscriptions,
@@ -65,16 +108,63 @@ export default function SubscriptionManage(params) {
       setPurchaseResult(
         `Purchase completed successfully (state: ${purchase.purchaseState}).`,
       );
+      const productId = purchase.productId ?? '';
+      // const googleAuthToken = await getGoogleAuthToken(token);
+      // console.log('googleAuthToken--------', googleAuthToken);
+      console.log('productId--------', productId);
 
 
-      if (Platform.OS === "ios") {
-        const transactionId = purchase?.transactionId;
-        const purchaseToken = purchase?.purchaseToken;
-        const receipt = purchase?.transactionReceipt;
-        const receiptData = purchase?.receiptData;
-        // const receiptData = purchase.receiptData;
+      if (purchase) {
+        let bodyData;
+        if (Platform.OS === "android") {
+          const purchaseData = Array.isArray(purchase) ? purchase[0] : purchase;
+          bodyData = JSON.stringify({
+            receipt: {
+              purchaseToken: purchaseData.purchaseToken || "",
+              subscriptionId: purchaseData.productId || "",
+              packageName: "com.photomedPro.com",
+            },
+            platform: "android",
+            userId,
+          });
+        } else {
+          bodyData = JSON.stringify({
+            receipt: purchase.transactionReceipt,
+            platform: Platform.OS,
+            transactionId: purchase.transactionId,
+            userId,
+          });
+        }
+
+        console.log("Purchase verification body:", bodyData);
+
+        // Verify purchase with backend
+        const response = await fetch(
+          "http://10.34.185.152:10049/api/verify-inapp-receipt",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: bodyData,
+          }
+        );
+
+        const responseData = await response.json();
+        console.log("verify-inapp-receipt response:", JSON.stringify(responseData, null, 2));
+        Alert.alert("Success", "Purchase verified and activated!");
       }
-      if (Platform.OS === "android") { }
+
+
+      // if (Platform.OS === "ios") {
+      //   const transactionId = purchase?.transactionId;
+      //   const purchaseToken = purchase?.purchaseToken;
+      //   const receipt = purchase?.transactionReceipt;
+      //   const receiptData = purchase?.receiptData;
+      //   // const receiptData = purchase.receiptData;
+      // }
+      // if (Platform.OS === "android") { }
 
       // ──────────────────────────────────────────────────────────────────────
       // Step 4: VERIFY PURCHASE
@@ -129,8 +219,11 @@ export default function SubscriptionManage(params) {
     },
   });
 
+
+
   // 🔹 Fetch products once connected
   useEffect(() => {
+
     if (!connected) return;
     fetchProducts({ skus, type: 'subs' })
       .then(() => {
@@ -182,7 +275,7 @@ export default function SubscriptionManage(params) {
         Alert.alert('Subscription Failed', err.message);
       });
     },
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [subscriptions, userId],
   );
   return (

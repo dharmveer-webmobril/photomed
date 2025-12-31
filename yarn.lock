@@ -7511,10 +7511,10 @@ react-native-htmlview@^0.17.0:
     entities "^1.1.1"
     htmlparser2-without-node-native "^3.9.2"
 
-react-native-iap@^14.6.0:
-  version "14.6.0"
-  resolved "https://registry.yarnpkg.com/react-native-iap/-/react-native-iap-14.6.0.tgz#d7118c884906120d78eec9f23f269e5baa316dd0"
-  integrity sha512-BlgzDjOwmBY5qQL9ex4MXBxTlHs0wqlIXBcV3WWHmetguXLHGod/WbvJ04XB8Ey4q4ZjZhmtO/Rq0Lxb3Srbgw==
+react-native-iap@^14.7.0:
+  version "14.7.0"
+  resolved "https://registry.yarnpkg.com/react-native-iap/-/react-native-iap-14.7.0.tgz#af7d2614a215af4217c0b0aba940675a2f118552"
+  integrity sha512-6qJWD6bY4GhX39Aly0mY7mcgKGdaWRYweJL1aCTfFSuvUI8b55V0ascBSroUBp/axRRXfoyGOp5jPl5RJitMVQ==
 
 react-native-image-crop-picker@^0.51.1:
   version "0.51.1"
