@@ -108,11 +108,11 @@ const Profile = (props) => {
     //   screenName: ScreenName.SUB_MANAGE,
     // }] : []),
 
-    {
-      id: 83,
-      name: "Manage Subscription",
-      screenName: ScreenName.SUB_MANAGE,
-    },
+    // {
+    //   id: 83,
+    //   name: "Manage Subscription",
+    //   screenName: ScreenName.SUB_MANAGE,
+    // },
     {
       id: 4,
       name: "Privacy Policy",

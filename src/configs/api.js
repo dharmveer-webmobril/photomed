@@ -18,8 +18,8 @@ import { BASEURL, DROPBOX_CLIENT_ID, DROPBOX_CLIENT_SECRET, GOOGLE_CLIENT_ID, GO
 import Config from 'react-native-config';
 
 export const configUrl = {
-  // imageUrl: "https://photomedpro.com:10049/",
-  imageUrl: "http://10.34.185.152:10049/",
+  imageUrl: "https://photomedpro.com:10049/",
+  // imageUrl: "http://10.34.185.152:10049/",
   BASE_URL: BASEURL || Config.BASEURL,
   defaultUser: "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
   DROPBOX_CLIENT_ID: DROPBOX_CLIENT_ID || Config.DROPBOX_CLIENT_ID,

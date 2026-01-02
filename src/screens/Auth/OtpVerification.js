@@ -28,7 +28,7 @@ const OtpVerification = (props) => {
     useRequestCodeMutation();
   const [token, setToken] = useState(props.route.params.userToken);
   const [verifyEmailMutation, { isLoading }] = useVerifyEmailMutation();
-  const [verifyEmailMutation1, { isLoading:isLoading1 }] = useVerifyEmailForgotMutation();
+  const [verifyEmailMutation1, { isLoading: isLoading1 }] = useVerifyEmailForgotMutation();
   const isConnected = useSelector((state) => state.network.isConnected);
   const preScreen = props.route.params.screenName;
   const email = props.route.params.email;
@@ -70,7 +70,7 @@ const OtpVerification = (props) => {
         email,
         otp: otpInput,
       };
-      const response = ScreenName.OTP_VERIFICATION ? await verifyEmailMutation1({ token, data: { otp: otpInput } }) : await verifyEmailMutation({ token, data: data });
+      const response = preScreen === ScreenName.OTP_VERIFICATION ? await verifyEmailMutation1({ token, data: { otp: otpInput } }) : await verifyEmailMutation({ token, data: data });
       console.log("response:-------", response);
 
       if (response.data?.succeeded) {

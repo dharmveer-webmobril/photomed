@@ -9,7 +9,8 @@ import base64 from 'react-native-base64';
 const TIMEOUT = 180000; // 3 minutes
 
 const baseQueryWithTimeout = fetchBaseQuery({
-  baseUrl: "http://10.34.185.152:10049/api/",
+  baseUrl: "https://photomedpro.com:10049/api/",
+  // baseUrl: "http://10.34.185.152:10049/api/",
   fetchFn: async (input, init) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);

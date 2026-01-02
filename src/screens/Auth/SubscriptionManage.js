@@ -49,7 +49,7 @@ export default function SubscriptionManage(params) {
         return;
       }
 
-      fetch("http://10.34.185.152:10049/api/get-google-auth-token", {
+      fetch("https://photomedpro.com:10049/api/get-google-auth-token", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -140,7 +140,7 @@ export default function SubscriptionManage(params) {
 
         // Verify purchase with backend
         const response = await fetch(
-          "http://10.34.185.152:10049/api/verify-inapp-receipt",
+          "https://photomedpro.com:10049/api/verify-inapp-receipt",
           {
             method: "POST",
             headers: {
