@@ -236,9 +236,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginRight: moderateScale(10),
         backgroundColor: 'white'
-    }, checkTxt: {
+    },
+    checkTxt: {
         fontSize: 14,
         fontFamily: FONTS.regular,
-        color: COLORS.textColor
+        color: COLORS.textColor,
+        marginTop:-4
     }
 })
