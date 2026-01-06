@@ -91,7 +91,7 @@ export const IAPProvider = ({ children }) => {
         const { transactionReceipt, productId } = latestPurchase;
 
         const response = await fetch(
-          "https://photomedpro.com:10049/api/check-inapp-subscription",
+          "http://169.254.43.190:10049/api/check-inapp-subscription",
           {
             method: "POST",
             headers: {

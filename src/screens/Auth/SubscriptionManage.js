@@ -1,4 +1,4 @@
-import { requestPurchase, useIAP } from 'react-native-iap';
+import { getActiveSubscriptions, getAvailablePurchases, requestPurchase, useIAP } from 'react-native-iap';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   View,
@@ -49,7 +49,7 @@ export default function SubscriptionManage(params) {
         return;
       }
 
-      fetch("https://photomedpro.com:10049/api/get-google-auth-token", {
+      fetch("http://192.168.1.29:10049/api/get-google-auth-token", {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -89,141 +89,146 @@ export default function SubscriptionManage(params) {
     finishTransaction,
     verifyPurchase,
     verifyPurchaseWithProvider,
-  } = useIAP({
-    // ────────────────────────────────────────────────────────────────────────
-    // Step 2a: Purchase Success Handler
-    // ────────────────────────────────────────────────────────────────────────
-    onPurchaseSuccess: async (purchase) => {
-      const { purchaseToken: tokenToMask, ...rest } = purchase;
-      const masked = {
-        ...rest,
-        ...(tokenToMask ? { purchaseToken: 'hidden' } : {}),
-      };
-      console.log('Purchase successful:', masked);
-      console.log('Purchase successful purchase:', JSON.stringify(purchase, null, 2));
-      console.log('[PurchaseFlow] purchaseState:', purchase.purchaseState);
-      setLastPurchase(purchase);
-      setIsProcessing(false);
+  } =
+    useIAP({
+      // ────────────────────────────────────────────────────────────────────────
+      // Step 2a: Purchase Success Handler
+      // ────────────────────────────────────────────────────────────────────────
+      // onPurchaseSuccess: async (purchase) => {
+      //   const { purchaseToken: tokenToMask, ...rest } = purchase;
 
-      setPurchaseResult(
-        `Purchase completed successfully (state: ${purchase.purchaseState}).`,
-      );
-      const productId = purchase.productId ?? '';
-      // const googleAuthToken = await getGoogleAuthToken(token);
-      // console.log('googleAuthToken--------', googleAuthToken);
-      console.log('productId--------', productId);
+      //   console.log('Purchase successful purchase:', JSON.stringify(purchase, null, 2));
+      //   console.log('[PurchaseFlow] purchaseState:', purchase.purchaseState);
+      //   setLastPurchase(purchase);
+      //   setIsProcessing(false);
+
+      //   setPurchaseResult(
+      //     `Purchase completed successfully (state: ${purchase.purchaseState}).`,
+      //   );
+      //   const productId = purchase.productId ?? '';
+      //   // const googleAuthToken = await getGoogleAuthToken(token);
+      //   // console.log('googleAuthToken--------', googleAuthToken);
+      //   console.log('productId--------', productId);
 
 
-      if (purchase) {
-        let bodyData;
-        if (Platform.OS === "android") {
-          const purchaseData = Array.isArray(purchase) ? purchase[0] : purchase;
-          bodyData = JSON.stringify({
-            receipt: {
-              purchaseToken: purchaseData.purchaseToken || "",
-              subscriptionId: purchaseData.productId || "",
-              packageName: "com.photomedPro.com",
-            },
-            platform: "android",
-            userId,
-          });
-        } else {
-          bodyData = JSON.stringify({
-            receipt: purchase.transactionReceipt,
-            platform: Platform.OS,
-            transactionId: purchase.transactionId,
-            userId,
-          });
-        }
+      //   if (purchase) {
+      //     const responseData = await verifyWithBackend(purchase);
+      //     console.log('responseData--------', responseData);
+      //   }
 
-        console.log("Purchase verification body:", bodyData);
+      //   try {
+      //     await finishTransaction({
+      //       purchase,
+      //       isConsumable: false,
+      //     });
+      //   } catch (error) {
+      //     console.warn('[PurchaseFlow] finishTransaction failed:', error);
+      //   }
 
-        // Verify purchase with backend
-        const response = await fetch(
-          "https://photomedpro.com:10049/api/verify-inapp-receipt",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: bodyData,
-          }
-        );
+      //   Alert.alert('Success', 'Purchase completed successfully!');
+      // },
 
-        const responseData = await response.json();
-        console.log("verify-inapp-receipt response:", JSON.stringify(responseData, null, 2));
-        Alert.alert("Success", "Purchase verified and activated!");
+      // // ────────────────────────────────────────────────────────────────────────
+      // // Step 2b: Purchase Error Handler
+      // // ────────────────────────────────────────────────────────────────────────
+      // onPurchaseError: (error) => {
+      //   console.error('Purchase failed:', error);
+      //   console.error('Error code:', error.code);
+      //   console.error(
+      //     'Is user cancelled:',
+      //     error.code === 'UserCancelled',
+      //   );
+
+      //   setIsProcessing(false);
+
+      // },
+    });
+
+
+  async function verifyWithBackend(purchase) {
+    console.log('purchase--------verifyWithBackend--------', purchase);
+    let bodyData;
+    if (Platform.OS === "android") {
+      const purchaseData = Array.isArray(purchase) ? purchase[0] : purchase;
+      bodyData = JSON.stringify({
+        receipt: {
+          purchaseToken: purchaseData.purchaseToken || "",
+          subscriptionId: purchaseData.productId || "",
+          packageName: "com.photomedPro.com",
+        },
+        platform: "android",
+        userId,
+      });
+    } else {
+      bodyData = JSON.stringify({
+        receipt: purchase.purchaseToken,
+        platform: Platform.OS,
+        transactionId: purchase.originalTransactionIdentifierIOS,
+        userId,
+      });
+    }
+
+    console.log("Purchase verification body:", bodyData);
+    const response = await fetch(
+      "http://192.168.1.29:10049/api/verify-inapp-receipt-new",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: bodyData,
       }
+    );
+    const responseData = await response.json();
+    console.log("verify-inapp-receipt response:", JSON.stringify(responseData, null, 2));
+    return responseData;
+  }
+
+  const getActiveSubscriptions1 = async () => {
+    const activeSubs = await getAvailablePurchases();
+    // const activeSubs = await getActiveSubscriptions();
+    console.log('\n===== Active Subscriptions Check =====');
+    console.log('Total subscriptions:', activeSubs.length);
+    console.log('Full data:', JSON.stringify(activeSubs, null, 2));
 
 
-      // if (Platform.OS === "ios") {
-      //   const transactionId = purchase?.transactionId;
-      //   const purchaseToken = purchase?.purchaseToken;
-      //   const receipt = purchase?.transactionReceipt;
-      //   const receiptData = purchase?.receiptData;
-      //   // const receiptData = purchase.receiptData;
-      // }
-      // if (Platform.OS === "android") { }
+    // verify-inapp-receipt-new
 
-      // ──────────────────────────────────────────────────────────────────────
-      // Step 4: VERIFY PURCHASE
-      // ──────────────────────────────────────────────────────────────────────
-      // Choose verification method based on user selection:
-      // - 'ignore': Skip verification (testing only)
-      // - 'local': Direct API verification with Apple/Google
-      // - 'iapkit': Server-side verification via IAPKit
+    // Verify purchase with backend
 
+    if (activeSubs.length <= 0) return;
+    let bodyData = JSON.stringify({
+      receipt: activeSubs[0].purchaseToken,
+      platform: Platform.OS,
+      transactionId: activeSubs[0].transactionId,
+      userId,
+    });
 
-      // ──────────────────────────────────────────────────────────────────────
-      // Step 5: GRANT ENTITLEMENT
-      // ──────────────────────────────────────────────────────────────────────
-      // TODO: In production, update your backend here:
-      // - Save purchase record to database
-      // - Unlock premium features for user
-      // - Update user's subscription status
-      // Example: await yourBackend.grantEntitlement(purchase);
-
-      // ──────────────────────────────────────────────────────────────────────
-      // Step 6: FINISH TRANSACTION
-      // ──────────────────────────────────────────────────────────────────────
-      // CRITICAL: Always finish transactions!
-      // - Consumables: Set isConsumable: true to allow re-purchase
-      // - Non-consumables: Set isConsumable: false
-      // - Failing to finish will cause issues on next app launch
-      try {
-        await finishTransaction({
-          purchase,
-          isConsumable: false,
-        });
-      } catch (error) {
-        console.warn('[PurchaseFlow] finishTransaction failed:', error);
+    console.log('bodyData--------', bodyData);
+    const response = await fetch(
+      "http://192.168.1.29:10049/api/verify-inapp-receipt-new",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: bodyData,
       }
+    );
 
-      Alert.alert('Success', 'Purchase completed successfully!');
-    },
+    const responseData = await response.json();
+    console.log("verify-inapp-receipt response:", JSON.stringify(responseData, null, 2));
+  }
 
-    // ────────────────────────────────────────────────────────────────────────
-    // Step 2b: Purchase Error Handler
-    // ────────────────────────────────────────────────────────────────────────
-    onPurchaseError: (error) => {
-      console.error('Purchase failed:', error);
-      console.error('Error code:', error.code);
-      console.error(
-        'Is user cancelled:',
-        error.code === 'UserCancelled',
-      );
-
-      setIsProcessing(false);
-
-    },
-  });
-
+  useEffect(() => {
+    getActiveSubscriptions1();
+  }, []);
 
 
   // 🔹 Fetch products once connected
   useEffect(() => {
-
     if (!connected) return;
     fetchProducts({ skus, type: 'subs' })
       .then(() => {
@@ -268,16 +273,34 @@ export default function SubscriptionManage(params) {
           },
         },
         type: 'subs',
+      }).then(async (purchase) => {
+        getActiveSubscriptions1();
       }).catch((err) => {
         console.warn('requestPurchase failed:', err);
         setIsProcessing(false);
         setPurchaseResult(`❌ Subscription failed: ${err.message}`);
         Alert.alert('Subscription Failed', err.message);
       });
+      
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [subscriptions, userId],
   );
+
+  const handleCancelPlan = async () => {
+    try {
+      Alert.alert(
+        "Cancel Subscription",
+        Platform.OS === "ios"
+          ? "To cancel your subscription, please open the Settings app on your iPhone, go to your Apple ID → Subscriptions, and manage it there."
+          : "To cancel your subscription, please open the Google Play Store app, tap on your profile → Payments & subscriptions → Subscriptions, and manage it there.",
+        [{ text: "OK", style: "default" }]
+      );
+    } catch (error) {
+      console.error("Failed to open subscription management:", error);
+      Alert.alert("Error", "Failed to open subscription management.");
+    }
+  };
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.header}>
