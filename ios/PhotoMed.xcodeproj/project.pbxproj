@@ -8,21 +8,23 @@
 
 /* Begin PBXBuildFile section */
 		00E356F31AD99517003FC87E /* PhotoMedTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* PhotoMedTests.m */; };
+		035FDAEB703240FDAE083E4D /* Poppins-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DF62DC22B2644596A5620204 /* Poppins-ExtraBold.ttf */; };
+		11255C985B954E41A75B15A8 /* Poppins-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FED18D1C74954E25BC65AEA9 /* Poppins-SemiBold.ttf */; };
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
 		29FE14799C6244AAA0E26CF7 /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ABB9B78D7DE543D0BD192A84 /* Colors.xcassets */; };
+		2B3F2EED9D484CEBA53CE00C /* Poppins-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7968703060A446CE8652ED1D /* Poppins-Medium.ttf */; };
 		411FACD82E8CE68200676888 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 411FACD72E8CE68200676888 /* GoogleService-Info.plist */; };
+		412A89F32F10D26D002CEE22 /* RCTSelectableTextView.m in Sources */ = {isa = PBXBuildFile; fileRef = 412A89F02F10D26D002CEE22 /* RCTSelectableTextView.m */; };
+		412A89F42F10D26D002CEE22 /* RCTSelectableTextViewManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 412A89F22F10D26D002CEE22 /* RCTSelectableTextViewManager.m */; };
 		41C106F12E8F8F28008C3471 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 41C106F02E8F8F28008C3471 /* StoreKit.framework */; };
 		456AFD43DA6403C4F79B7747 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = EEA43ADFC18C5373B8ECE54E /* PrivacyInfo.xcprivacy */; };
+		46AF9E2706AC4A22B6D1AA84 /* Poppins-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5A238C36DE1F4036A309734F /* Poppins-Regular.ttf */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		D9196DDFC23F43CD86D5D053 /* Poppins-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9049AE41861E48F8BE898963 /* Poppins-Bold.ttf */; };
 		DAE23254B9EC43D4BCED2221 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AFABCC1ECF4D4224BF025292 /* BootSplash.storyboard */; };
 		E48AAAB008FDA4AE8D695936 /* libPods-PhotoMed.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A08B857FDF5313369067C4B1 /* libPods-PhotoMed.a */; };
-		D9196DDFC23F43CD86D5D053 /* Poppins-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9049AE41861E48F8BE898963 /* Poppins-Bold.ttf */; };
-		035FDAEB703240FDAE083E4D /* Poppins-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DF62DC22B2644596A5620204 /* Poppins-ExtraBold.ttf */; };
-		2B3F2EED9D484CEBA53CE00C /* Poppins-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7968703060A446CE8652ED1D /* Poppins-Medium.ttf */; };
-		46AF9E2706AC4A22B6D1AA84 /* Poppins-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5A238C36DE1F4036A309734F /* Poppins-Regular.ttf */; };
-		11255C985B954E41A75B15A8 /* Poppins-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FED18D1C74954E25BC65AEA9 /* Poppins-SemiBold.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,20 +50,24 @@
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = PhotoMed/main.m; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = PhotoMed/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		411FACD72E8CE68200676888 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		412A89EF2F10D26D002CEE22 /* RCTSelectableTextView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTSelectableTextView.h; sourceTree = "<group>"; };
+		412A89F02F10D26D002CEE22 /* RCTSelectableTextView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTSelectableTextView.m; sourceTree = "<group>"; };
+		412A89F12F10D26D002CEE22 /* RCTSelectableTextViewManager.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RCTSelectableTextViewManager.h; sourceTree = "<group>"; };
+		412A89F22F10D26D002CEE22 /* RCTSelectableTextViewManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = RCTSelectableTextViewManager.m; sourceTree = "<group>"; };
 		413E56A42CE482D700BEFB66 /* PhotoMed.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = PhotoMed.entitlements; path = PhotoMed/PhotoMed.entitlements; sourceTree = "<group>"; };
 		41C106F02E8F8F28008C3471 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		5A238C36DE1F4036A309734F /* Poppins-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Regular.ttf"; path = "../src/assets/fonts/Poppins-Regular.ttf"; sourceTree = "<group>"; };
+		7968703060A446CE8652ED1D /* Poppins-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Medium.ttf"; path = "../src/assets/fonts/Poppins-Medium.ttf"; sourceTree = "<group>"; };
 		7A0ED58C184F801E455C5B9B /* Pods-PhotoMed.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-PhotoMed.release.xcconfig"; path = "Target Support Files/Pods-PhotoMed/Pods-PhotoMed.release.xcconfig"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = PhotoMed/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		9049AE41861E48F8BE898963 /* Poppins-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Bold.ttf"; path = "../src/assets/fonts/Poppins-Bold.ttf"; sourceTree = "<group>"; };
 		A08B857FDF5313369067C4B1 /* libPods-PhotoMed.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-PhotoMed.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ABB9B78D7DE543D0BD192A84 /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = PhotoMed/Colors.xcassets; sourceTree = "<group>"; };
 		AFABCC1ECF4D4224BF025292 /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = PhotoMed/BootSplash.storyboard; sourceTree = "<group>"; };
+		DF62DC22B2644596A5620204 /* Poppins-ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-ExtraBold.ttf"; path = "../src/assets/fonts/Poppins-ExtraBold.ttf"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		EEA43ADFC18C5373B8ECE54E /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = PhotoMed/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		9049AE41861E48F8BE898963 /* Poppins-Bold.ttf */ = {isa = PBXFileReference; name = "Poppins-Bold.ttf"; path = "../src/assets/fonts/Poppins-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		DF62DC22B2644596A5620204 /* Poppins-ExtraBold.ttf */ = {isa = PBXFileReference; name = "Poppins-ExtraBold.ttf"; path = "../src/assets/fonts/Poppins-ExtraBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		7968703060A446CE8652ED1D /* Poppins-Medium.ttf */ = {isa = PBXFileReference; name = "Poppins-Medium.ttf"; path = "../src/assets/fonts/Poppins-Medium.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		5A238C36DE1F4036A309734F /* Poppins-Regular.ttf */ = {isa = PBXFileReference; name = "Poppins-Regular.ttf"; path = "../src/assets/fonts/Poppins-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
-		FED18D1C74954E25BC65AEA9 /* Poppins-SemiBold.ttf */ = {isa = PBXFileReference; name = "Poppins-SemiBold.ttf"; path = "../src/assets/fonts/Poppins-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		FED18D1C74954E25BC65AEA9 /* Poppins-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-SemiBold.ttf"; path = "../src/assets/fonts/Poppins-SemiBold.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +122,10 @@
 				AFABCC1ECF4D4224BF025292 /* BootSplash.storyboard */,
 				ABB9B78D7DE543D0BD192A84 /* Colors.xcassets */,
 				411FACD72E8CE68200676888 /* GoogleService-Info.plist */,
+				412A89EF2F10D26D002CEE22 /* RCTSelectableTextView.h */,
+				412A89F02F10D26D002CEE22 /* RCTSelectableTextView.m */,
+				412A89F12F10D26D002CEE22 /* RCTSelectableTextViewManager.h */,
+				412A89F22F10D26D002CEE22 /* RCTSelectableTextViewManager.m */,
 			);
 			name = PhotoMed;
 			sourceTree = "<group>";
@@ -374,6 +384,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */,
+				412A89F32F10D26D002CEE22 /* RCTSelectableTextView.m in Sources */,
+				412A89F42F10D26D002CEE22 /* RCTSelectableTextViewManager.m in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

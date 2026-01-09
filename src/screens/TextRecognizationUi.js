@@ -1,5 +1,5 @@
 import { useRoute, useNavigation } from "@react-navigation/native";
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,13 +9,19 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { SelectableText } from "@colaquecez/react-native-selectable-text";
+import SelectableTextInput from "../components/SelectableTextInput";
 import FONTS from "../styles/fonts";
 
 const TextRecognizationUi = ({ isVisible, onClose, textData, onDone }) => {
+  const [copiedText, setCopiedText] = useState("");
+
   const handleSelection = (ev) => {
     if (ev?.eventType === "Copy") {
-      ev?.content && onDone(ev?.content);
+      const selectedText = ev?.content || "";
+      setCopiedText(selectedText);
+      if (onDone) {
+        onDone(selectedText);
+      }
     }
   };
 
@@ -39,17 +45,17 @@ const TextRecognizationUi = ({ isVisible, onClose, textData, onDone }) => {
         </View>
 
         {/* Selectable Text */}
-        <SelectableText
-          menuItems={["Copy"]}
-          textComponentProps={{
-            children: (
-              <Text style={styles.recognizedText}>
-                {textData || ""}
-              </Text>
-            ),
-          }}
-          onSelection={handleSelection}
-        />
+        <View style={styles.textContainer}>
+          <SelectableTextInput
+            text={textData || ""}
+            menuItems={["Copy"]}
+            onSelection={handleSelection}
+            style={styles.selectableTextContainer}
+          />
+        </View>
+
+        {/* Input Box for Copied Text */}
+        
 
       </View>
     </Modal>
@@ -91,12 +97,44 @@ const styles = StyleSheet.create({
     width: 40,
   },
 
+  textContainer: {
+    flex: 1,
+    marginTop: 10,
+  },
+  selectableTextContainer: {
+    flex: 1,
+    width: '100%',
+  },
   recognizedText: {
     color: "#424242",
-    marginTop: 30,
     textAlign: "justify",
     fontSize: 16,
     fontFamily: FONTS.medium,
     lineHeight: 20,
+  },
+  inputContainer: {
+    borderTopWidth: 1,
+    borderTopColor: "#e0e0e0",
+    paddingTop: 15,
+    paddingBottom: 15,
+    backgroundColor: "#f5f5f5",
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: "#424242",
+    marginBottom: 8,
+    fontFamily: FONTS.medium,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: "#d0d0d0",
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: "#fff",
+    color: "#424242",
+    fontSize: 14,
+    fontFamily: FONTS.regular,
+    minHeight: 80,
+    textAlignVertical: "top",
   },
 });

@@ -11,7 +11,6 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
-    "@colaquecez/react-native-selectable-text": "^1.62.7",
     "@invertase/react-native-apple-authentication": "^2.4.1",
     "@notifee/react-native": "^9.1.2",
     "@openspacelabs/react-native-zoomable-view": "2.3.1",

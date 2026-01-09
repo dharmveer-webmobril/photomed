@@ -1087,11 +1087,6 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@colaquecez/react-native-selectable-text@^1.62.7":
-  version "1.62.7"
-  resolved "https://registry.yarnpkg.com/@colaquecez/react-native-selectable-text/-/react-native-selectable-text-1.62.7.tgz#bcb7a5b3322b41911aa5ef32d934426a9cd77ce7"
-  integrity sha512-5MUYQcv/yrxwlQdGmVTzN5w9EBJF6zZhgy+eeZd5yCYio5M2PRrSC6RIQQ34Ekkx+2G9K3hKSnkXWj1w0jClCQ==
-
 "@egjs/hammerjs@^2.0.17":
   version "2.0.17"
   resolved "https://registry.yarnpkg.com/@egjs/hammerjs/-/hammerjs-2.0.17.tgz#5dc02af75a6a06e4c2db0202cae38c9263895124"
