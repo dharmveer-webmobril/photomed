@@ -8,6 +8,8 @@ import {
   StatusBar,
   TouchableOpacity,
   Image,
+  TextInput,
+  ScrollView,
 } from "react-native";
 import SelectableTextInput from "../components/SelectableTextInput";
 import FONTS from "../styles/fonts";
