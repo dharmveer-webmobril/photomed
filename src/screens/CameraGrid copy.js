@@ -25,7 +25,7 @@ import FONTS from "../styles/fonts";
 import { moderateScale, verticalScale } from "../styles/responsiveLayoute";
 import ScaleIcon from "../assets/SvgIcons/ScaleIcon";
 import CustToast from "../components/CustToast";
-import { goBack, navigate } from "../navigators/NavigationService";
+import { navigate } from "../navigators/NavigationService";
 import ScreenName from "../configs/screenName";
 import Loading from "../components/Loading";
 import CustomBtn from "../components/CustomBtn";
@@ -59,9 +59,12 @@ import {
   setCurrentPatient,
   setPatientImages,
 } from "../redux/slices/patientSlice";
-const windowWidth = Dimensions.get("window").width;
-import { combinedData, askForDermoScopy } from "../utils";
 import FastImage from "react-native-fast-image";
+const windowWidth = Dimensions.get("window").width;
+const windowHeight = Dimensions.get("window").height;
+// import ImageResizer from 'react-native-image-resizer';
+import { showSubscriptionAlert } from "../configs/common/showSubscriptionAlert";
+import { combinedData, askForDermoScopy } from "../utils";
 /* -------------------- Aspect Ratios (FULL removed as requested) -------------------- */
 const ASPECT_RATIOS = {
   '16:9': '16:9',
@@ -108,6 +111,16 @@ const CameraGrid = (props) => {
     setZoomLevel((prev) => (prev === 1 ? 2 : 1)); // Example zoom toggle logic
   };
 
+  const changeAspectRatio = (ratio) => {
+    setActiveAspectRatio((prev) => (prev === ratio ? "4:3" : ratio)); // Toggle between current and default
+  };
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value, // Control opacity based on slider value
+    };
+  });
+
   const [cameraPermission, setCameraPermission] = useState(null);
   const [deletedPopup, setDeletePopup] = useState(false);
   const [selectedImgIndex, setSelectedImgIndex] = useState(-1);
@@ -129,14 +142,11 @@ const CameraGrid = (props) => {
 
 
   const device = useCameraDevice(isFrontCamera ? "front" : "back");
-  const changeAspectRatio = (ratio) => {
-    setActiveAspectRatio((prev) => (prev === ratio ? "4:3" : ratio)); // Toggle between current and default
-  };
   // new====================
-  const { width: screenWidth } = useWindowDimensions();
-  const [selectedRatio, setSelectedRatio] = useState(ASPECT_RATIOS['1:1']);
+
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const [selectedRatio, setSelectedRatio] = useState(ASPECT_RATIOS['4:3']); // Default to 4:3
   const targetRatio = RATIO_VALUES[selectedRatio];
-  let height = screenWidth * targetRatio;
 
   const format = useCameraFormat(device, [
     // Highest possible video resolution first
@@ -158,14 +168,30 @@ const CameraGrid = (props) => {
       console.log('No suitable format found for', selectedRatio);
     }
   }, [format, selectedRatio]);
-
   // end new====================
 
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      opacity: opacity.value,
-    };
-  });
+
+  // const format = useCameraFormat(device, [
+  //   { photoAspectRatio: aspectRatios[aspectRatio] },
+  //   { photoResolution: Math.max(width, height) },
+  // ]);
+  // let { width } = useWindowDimensions();
+
+  // const aspectRatios = {
+  //   "16:9": 16 / 9,
+  //   "4:3": 4 / 3,
+  //   "1:1": 1 / 1,
+  // };
+
+  // let height = width * aspectRatios[aspectRatio];
+
+  function getHeight() {
+    return Platform.OS === "ios" && aspectRatio === "1:1" && !Platform.isPad
+      ? height + verticalScale(70)
+      : height;
+  }
+
+
 
   useEffect(() => {
     if (props.route.params?.preScreen == "Image_View") {
@@ -323,10 +349,10 @@ const CameraGrid = (props) => {
   const needSubscription = !subscription?.hasSubscription || !subscription?.isActive || subscription?.isExpired;
 
   const _chooseFile = async () => {
-    if (needSubscription) {
-      showSubscriptionAlert(navigate);
-      return;
-    }
+    // if (needSubscription) {
+    //   showSubscriptionAlert(navigate);
+    //   return;
+    // }
     if (loacalImageArr?.length <= 0) {
       Alert.alert(
         "Validation Error",
@@ -395,6 +421,10 @@ const CameraGrid = (props) => {
     }
   };
 
+
+
+
+
   const toggleCamera = () => {
     setIsFrontCamera((prevState) => !prevState); // Toggle between front and back camera
   };
@@ -409,16 +439,16 @@ const CameraGrid = (props) => {
 
   if (cameraPermission === null) {
     return (
-      <View style={styles.centeredFull}>
-        <Text style={[styles.txtStyle, styles.loadingText]}>Loading...</Text>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={[styles.txtStyle, { fontSize: 16 }]}>Loading...</Text>
       </View>
     );
   }
 
   if (!device) {
     return (
-      <View style={styles.centeredFull}>
-        <Text style={styles.txtStyle}>To take a photo, please allow camera access for PhotoMed Pro in your device settings.</Text>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text style={styles.txtStyle}>No Camera Available</Text>
       </View>
     );
   }
@@ -460,82 +490,181 @@ const CameraGrid = (props) => {
   };
 
   return (
-    <WrapperContainer wrapperStyle={styles.wrapper}>
+    <WrapperContainer wrapperStyle={{ flex: 1 }}>
       <Loading visible={loading} />
-      <TouchableOpacity onPress={() => goBack()} style={styles.backIconcontainer}>
-        <Image
-          style={styles.backIcon}
-          source={require("../assets/images/icons/backIcon.png")}
-        />
-      </TouchableOpacity>
-      {/* camera view================ */}
-      {device && (
-        <View style={styles.flex1}>
 
-          <View style={styles.cameraWrapper}>
+      <DeleteImagePopUp
+        title={`Delete photo`}
+        onPressCancel={() => setDeletePopup(false)}
+        onPressDelete={() => {
+          onLocalImageRemove();
+        }}
+        visible={deletedPopup}
+      />
+
+      <DeleteImagePopUp
+        title={`Create a collage of the photo with the ghost photo?`}
+        subtitle=""
+        onPressCancel={() => setIsVisible(false)}
+        cancel="No"
+        deleteTxt="Yes"
+        onPressDelete={onPressCollage}
+        visible={visible}
+      />
+      {device && (
+        <View style={{ flex: 1 }}>
+          {/* <View
+            style={[
+              {
+                width: width,
+                height: getHeight() > windowHeight ? windowHeight : getHeight(),
+                alignItems: "center",
+                overflow: "hidden",
+              },
+            ]}
+          >
             <Camera
-              style={StyleSheet.absoluteFill }
+              ref={cameraRef}
+              style={[
+                { alignItems: "center", overflow: "hidden" },
+                {
+                  width: width,
+                  height:
+                    getHeight() > windowHeight ? windowHeight : getHeight(),
+                },
+              ]}
+              device={device}
+              isActive={true}
+              format={format}
+              photo={true}
+              zoom={zoomLevel}
+              preset="photo"
+              ratio={aspectRatio}
+              resizeMode={"contain"}
+            />
+
+
+            {selectedGridItem &&
+              selectedCategory != 6 &&
+              selectedGridItem?.message && (
+                <CustToast height={height} message={selectedGridItem.message} />
+              )}
+
+            <SelectedGridOverlay
+              selectedGridItem={selectedGridItem}
+              selectedCategory={selectedCategory}
+              height={getHeight() > windowHeight ? windowHeight : getHeight()}
+              width={width}
+            />
+          </View> */}
+          <View style={styles.cameraWrapper}>
+
+            <Camera
+              style={StyleSheet.absoluteFill}
               ref={cameraRef}
               device={device}
               format={format}
               isActive={true}
               photo={true}
-              resizeMode="contain"
+              resizeMode="contain" // Always contain → black bars + full FOV (no distortion)
             />
-            {selectedGridItem &&
-              selectedCategory !== 6 &&
-              selectedGridItem?.message && (
-                <CustToast height={height} message={selectedGridItem.message} />
-              )}
-            <SelectedGridOverlay
-              selectedGridItem={selectedGridItem}
-              selectedCategory={selectedCategory}
-              height={height}
-              width={windowWidth}
-            />
-            {ghostImage && (
-              <Animated.View
-                style={[styles.overlayImage, { width: windowWidth, height:(selectedRatio==='1:1' && Platform.OS === 'ios') ? height+verticalScale(70) : height }, animatedStyle]}
-              >
-                <FastImage
-                  source={{
-                    uri:
-                      provider === "google"
-                        ? ghostImage?.webContentLink
-                        : ghostImage?.publicUrl,
-                  }}
-                  // resizeMode="contain"
-                  style={[styles.overlayImage, { windowWidth, height:(selectedRatio==='1:1' && Platform.OS === 'ios') ? height+verticalScale(70) : height }]}
-                />
-              </Animated.View>
-            )}
           </View>
 
+          {/* Overlay Image */}
+          {ghostImage && (
+            <Animated.View
+              style={[styles.overlayImage, { width, height }, animatedStyle]}
+            >
+              <FastImage
+                source={{
+                  uri:
+                    provider == "google"
+                      ? ghostImage?.webContentLink
+                      : ghostImage?.publicUrl,
+                }}
+                style={[styles.overlayImage, { width, height }]}
+              />
+            </Animated.View>
+          )}
         </View>
       )}
-{/* buttons----------------------- */}
-      <View style={styles.footerAbsolute}>
-
-        {
-          activeAspectRatio &&
-          <View style={[styles.controls]}>
-            {RATIO_ORDER.map((ratio) => (
-              <TouchableOpacity
-                key={ratio}
-                onPress={() => setSelectedRatio(ratio)}
-                style={styles.button}
-              >
-                <Text style={styles.ratioTextWhite}>{ratio}</Text>
-              </TouchableOpacity>
-            ))}
+      {/* Footer View */}
+      <View style={{ marginBottom: 10 }}>
+        {loacalImageArr.length > 0 && (
+          <View style={{ flexDirection: "row", justifyContent: "center" }}>
+            {loacalImageArr.map((item, index) => {
+              return (
+                <TouchableOpacity
+                  onLongPress={() => {
+                    setDeletePopup(true);
+                    setSelectedImgIndex(index);
+                  }}
+                  style={{
+                    height: 30,
+                    width: 30,
+                    borderRadius: 5,
+                    marginHorizontal: 6,
+                    overflow: "hidden",
+                  }}
+                >
+                  <Image
+                    style={{
+                      height: "100%",
+                      width: "100%",
+                    }}
+                    source={{
+                      uri: item.path,
+                    }}
+                  />
+                </TouchableOpacity>
+              );
+            })}
           </View>
-        }
+        )}
+        {activeAspectRatio && (
+          <View style={[styles.controls]}>
+            <TouchableOpacity
+              onPress={() => setAspectRatio("1:1")}
+              style={styles.button}
+            >
+              <Text style={styles.buttonText}>1:1</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setAspectRatio("4:3")}
+              style={styles.button}
+            >
+              <Text style={styles.buttonText}>4:3</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setAspectRatio("16:9")}
+              style={styles.button}
+            >
+              <Text style={styles.buttonText}>16:9</Text>
+            </TouchableOpacity>
+          </View>
+        )}
         {/* Camera Controls */}
-        <View style={[commonStyles.flexView, styles.controlsWrapper]}>
-          <View style={styles.controlCenter}>
+        <View
+          style={[
+            commonStyles.flexView,
+            {
+              alignSelf: "center",
+              marginTop: verticalScale(10),
+              width: Platform.isPad ? "12%" : "20%",
+              justifyContent: Platform.isPad ? "center" : "space-between",
+            },
+          ]}
+        >
+          <View style={{ justifyContent: "center", alignItems: "center" }}>
             <TouchableOpacity
               onPress={toggleZoom}
-              style={[styles.actionBtn, activeZoom ? styles.actionBtnActive : styles.actionBtnInactive]}
+              style={[
+                styles.actionBtn,
+                {
+                  backgroundColor: activeZoom ? COLORS.primary : COLORS.white,
+                  alignItems: "center",
+                },
+              ]}
             >
               <SearchIcon
                 tintColor={activeZoom ? COLORS.whiteColor : COLORS.primary}
@@ -543,16 +672,23 @@ const CameraGrid = (props) => {
                 width={19.13}
               />
             </TouchableOpacity>
-            <Text style={styles.txtStyle}>2x</Text>
+            <Text style={[styles.txtStyle]}>2x</Text>
           </View>
-          {
-            !Platform.isPad && <View style={styles.controlCenter}>
+          {!Platform.isPad && (
+            <View style={{ justifyContent: "center", alignItems: "center" }}>
               <TouchableOpacity
                 disabled={
-                  selectedCategory === 1 || selectedCategory === 6 ? false : true
+                  selectedCategory == 1 || selectedCategory == 6 ? false : true
                 }
                 onPress={() => changeAspectRatio("1:1")}
-                style={[styles.actionBtn, activeAspectRatio ? styles.actionBtnActive : styles.actionBtnInactive]}
+                style={[
+                  styles.actionBtn,
+                  {
+                    backgroundColor: activeAspectRatio
+                      ? COLORS.primary
+                      : COLORS.white,
+                  },
+                ]}
               >
                 <ScaleIcon
                   tintColor={
@@ -562,45 +698,86 @@ const CameraGrid = (props) => {
                   width={19.13}
                 />
               </TouchableOpacity>
-              <Text style={styles.txtStyle}>{selectedRatio}</Text>
+              <Text style={styles.txtStyle}>{aspectRatio}</Text>
             </View>
-          }
+          )}
         </View>
 
         {/* Camera Capture Buttons */}
-        <View style={styles.captureControls}>
+        <View
+          style={[
+            commonStyles.flexView,
+            { justifyContent: "space-between", padding: moderateScale(10) },
+          ]}
+        >
           <TouchableOpacity
             disabled={loacalImageArr?.length < 1 ? true : false}
             onPress={() => {
               _chooseFile();
             }}
-            style={[styles.actionBtn, styles.uploadBtn, { marginTop: verticalScale(40) }]}
+            style={[styles.actionBtn, { height: 42, width: 42 }]}
           >
-            <Image style={styles.uploadImage} source={{ uri: `file://'${imageSource}` }} />
-            <Image style={styles.uploadArrow} source={require(`../assets/images/upload_arrow.png`)} />
+            <Image
+              style={{
+                height: 42,
+                width: 42,
+                borderRadius: 10,
+                zIndex: 10,
+              }}
+              source={{
+                uri: `file://'${imageSource}`,
+              }}
+            />
+            <Image
+              style={{
+                height: 22,
+                width: 22,
+                borderRadius: 8,
+                position: "absolute",
+                zIndex: 999,
+              }}
+              source={require(`../assets/images/upload_arrow.png`)}
+            />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => capturePhoto()}
             style={styles.captureContainer}
           >
-            <View style={styles.capture} />
+            <View style={styles.capture}></View>
           </TouchableOpacity>
           <TouchableOpacity onPress={toggleCamera} style={styles.camBtn}>
-            <Image style={styles.switchIcon} source={require("../assets/images/icons/switch.png")} />
+            <Image
+              style={{ height: 21, width: 21, tintColor: COLORS.whiteColor }}
+              source={require("../assets/images/icons/switch.png")}
+            />
           </TouchableOpacity>
         </View>
 
-
-        {selectedCategory !== 6 ? (
+        {/* Render Grid Items */}
+        {selectedCategory != 6 ? (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={[commonStyles.flexView, styles.gridScrollContent]}
+            contentContainerStyle={[
+              commonStyles.flexView,
+              {
+                alignSelf: "center",
+                marginLeft: 10,
+                width: "100%",
+                justifyContent: "center",
+              },
+            ]}
           >
             {getCategoryData().map((item) => (
               <TouchableOpacity
                 key={item.id + "ImgData"}
-                style={[styles.iconContainer, selectedGridItem?.id === item.id && styles.iconSelected]}
+                style={[
+                  styles.iconContainer,
+                  selectedGridItem?.id === item.id && {
+                    borderWidth: 1,
+                    borderColor: COLORS.primary, // Apply border when item is selected
+                  },
+                ]}
                 onPress={() => setSelectedGridItem(item)} // Set the selected grid item
               >
                 <item.icon />
@@ -608,9 +785,9 @@ const CameraGrid = (props) => {
             ))}
           </ScrollView>
         ) : (
-          <View style={styles.centerGhostWrapper}>
-            {selectedCategory === 6 && (
-              <View style={styles.ghostContainer}>
+          <View style={{ justifyContent: "center", alignItems: "center" }}>
+            {selectedCategory == 6 && (
+              <View style={{ height: verticalScale(90), alignItems: "center" }}>
                 <FlatList
                   horizontal
                   data={(provider === "google"
@@ -630,7 +807,14 @@ const CameraGrid = (props) => {
                         }}
 
                       >
-                        <View style={selectedGhostImage === item ? styles.ghostItemSelected : styles.ghostItem}>
+                        <View style={[selectedGhostImage === item && {
+                          borderColor: COLORS.primary,
+                          borderWidth: 2,
+
+                        }, {
+                          marginHorizontal: 5, borderRadius: 5,
+                          overflow: "hidden"
+                        }]}>
                           <ImageWithLoader
                             uri={
                               provider === "google"
@@ -650,12 +834,25 @@ const CameraGrid = (props) => {
                 />
 
                 {images?.length || imageUrls?.length > 0 ? (
-                  <View style={[commonStyles.flexView, styles.ghostControls]}>
+                  <View
+                    style={[
+                      commonStyles.flexView,
+                      { marginTop: 10, alignSelf: "center" },
+                    ]}
+                  >
                     {ghostImage && (
                       <>
                         <View>
                           <GhostIcon height={25} width={25} />
-                          <Text style={styles.percentageText}>{percentage}%</Text>
+                          <Text
+                            style={{
+                              color: COLORS.textColor,
+                              fontSize: 12,
+                              fontFamily: FONTS.medium,
+                            }}
+                          >
+                            {percentage}%
+                          </Text>
                         </View>
                         <Slider
                           style={styles.slider}
@@ -676,19 +873,36 @@ const CameraGrid = (props) => {
                     {!ghostImage && (
                       <CustomBtn
                         // onPress={() => chooseImage()}
-                        titleStyle={styles.customBtnTitle}
-                        btnStyle={styles.customBtn}
+                        titleStyle={{ fontSize: 10 }}
+                        btnStyle={{
+                          height: 30,
+                          width: "30%",
+                          marginBottom: verticalScale(8),
+                        }}
                         title={"Select Ghost Photo"}
                       />
                     )}
                   </View>
                 ) : (
-                  <Text style={[styles.txtStyle, styles.noPhotoText]}>No Photo Available.</Text>
+                  <Text
+                    style={[
+                      styles.txtStyle,
+                      {
+                        marginBottom: 20,
+                        color: COLORS.textColor,
+                        fontFamily: FONTS.bold,
+                        fontSize: 14,
+                      },
+                    ]}
+                  >
+                    No Photo Available.
+                  </Text>
                 )}
               </View>
             )}
           </View>
         )}
+
         {/* Category Selection */}
         <ScrollView
           horizontal
@@ -702,46 +916,29 @@ const CameraGrid = (props) => {
                 setSelectedCategory(item.id);
                 setSelectedGridItem(item.data[0]);
 
-                if (item.id !== 6) {
+                if (item.id != 6) {
                   setPercentage(50);
                   setGhostImage(null);
                   setSelectedGhostImage(null);
                 }
 
-                if (selectedCategory !== 1 || selectedCategory !== 6) {
+                if (selectedCategory != 1 || selectedCategory != 6) {
                   setActiveAspectRatio(false);
                   setAspectRatio("1:1");
-                  setSelectedRatio(ASPECT_RATIOS['1:1'])
                 }
               }}
-              style={[styles.category, item.id === selectedCategory && styles.categoryActive]}
+              style={[
+                styles.category,
+                { borderBottomWidth: item.id === selectedCategory ? 2.4 : 0 },
+              ]}
             >
-              <Text style={[styles.txtStyle, styles.categoryText]}>
+              <Text style={[styles.txtStyle, { fontSize: 12 }]}>
                 {item.name}
               </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
-
-      <DeleteImagePopUp
-        title={`Delete photo`}
-        onPressCancel={() => setDeletePopup(false)}
-        onPressDelete={() => {
-          onLocalImageRemove();
-        }}
-        visible={deletedPopup}
-      />
-
-      <DeleteImagePopUp
-        title={`Create a collage of the photo with the ghost photo?`}
-        subtitle=""
-        onPressCancel={() => setIsVisible(false)}
-        cancel="No"
-        deleteTxt="Yes"
-        onPressDelete={onPressCollage}
-        visible={visible}
-      />
     </WrapperContainer>
   );
 };
@@ -749,17 +946,9 @@ const CameraGrid = (props) => {
 export default CameraGrid;
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 10,
-  },
-  backIcon: { height: 40, width: 40 },
   cameraWrapper: {
     flex: 1,
-    justifyContent: "center",
-    backgroundColor: '#fff'
+    backgroundColor: 'black', // Shows as black bars with 'contain'
   },
   camera: {
     flex: 1,
@@ -797,7 +986,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     padding: 10,
     borderRadius: 8,
-    marginTop: verticalScale(40)
+    marginBottom: moderateScale(5),
   },
   capture: {
     height: 46,
@@ -852,7 +1041,7 @@ const styles = StyleSheet.create({
   overlayImage: {
     height: "100%",
     width: windowWidth,
-    // position: "absolute", // Make the image overlay the camera
+    position: "absolute", // Make the image overlay the camera
     // top: 0,
     // left: 0,
     // right: 0,
@@ -883,70 +1072,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.blackColor,
   },
-  /* added styles for moved inline styles */
-  wrapper: {
-    flex: 1,
-  },
-  centeredFull: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  loadingText: {
-    fontSize: 16,
-  },
-  flex1: { flex: 1 },
-  footerAbsolute: {
-    marginBottom: 10,
-    position: 'absolute',
-    bottom: 0,
-    alignItems: 'center',
-    left: 0,
-    right: 0,
-  },
-  ratioTextWhite: { color: '#fff' },
-  controlsWrapper: {
-    alignSelf: "center",
-    marginTop: verticalScale(10),
-    width: Platform.isPad ? "12%" : "20%",
-    justifyContent: Platform.isPad ? "center" : "space-between",
-  },
-  controlCenter: {
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  actionBtnActive: {
-    backgroundColor: COLORS.primary,
-    zIndex: 9,
-  },
-  actionBtnInactive: {
-    backgroundColor: COLORS.white,
-    zIndex: 9,
-  },
-  captureControls: {
-    justifyContent: "space-between",
-    padding: moderateScale(10),
-    alignItems: 'center',
-    flexDirection: 'row',
-    width: "100%",
-  },
-  uploadBtn: { height: 42, width: 42 },
-  uploadImage: { height: 42, width: 42, borderRadius: 10, zIndex: 10 },
-  uploadArrow: { height: 22, width: 22, borderRadius: 8, position: 'absolute', zIndex: 999, tintColor: '#fff' },
-  switchIcon: { height: 21, width: 21, tintColor: COLORS.whiteColor },
-  gridScrollContent: { alignSelf: "center", marginLeft: 10, width: "100%", justifyContent: "center" },
-  centerGhostWrapper: { justifyContent: "center", alignItems: "center" },
-  ghostContainer: { height: verticalScale(90), alignItems: "center" },
-  ghostItem: { marginHorizontal: 5, borderRadius: 5, overflow: "hidden" },
-  ghostItemSelected: { marginHorizontal: 5, borderRadius: 5, overflow: "hidden", borderColor: COLORS.primary, borderWidth: 2 },
-  ghostControls: { marginTop: 10, alignSelf: "center" },
-  percentageText: { color: COLORS.textColor, fontSize: 12, fontFamily: FONTS.medium },
-  customBtnTitle: { fontSize: 10 },
-  customBtn: { height: 30, width: "30%", marginBottom: verticalScale(8) },
-  noPhotoText: { marginBottom: 20, color: COLORS.textColor, fontFamily: FONTS.bold, fontSize: 14 },
-  iconSelected: { borderWidth: 1, borderColor: COLORS.primary },
-  categoryActive: { borderBottomWidth: 2.4 },
-  categoryText: { fontSize: 12 },
-
-  backIconcontainer: { padding: 10, position: "absolute", left: 10, zIndex: 999, borderRadius: 100 },
 });
+

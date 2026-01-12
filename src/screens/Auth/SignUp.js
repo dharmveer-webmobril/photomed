@@ -107,7 +107,7 @@ const SignUp = () => {
             const device_id = await DeviceInfo.getUniqueId() || 'default_device_id'; // Default value if not set
             const fcmToken = await getData('fcmToken') || 'abcd1234'; // Default value if not set
             const response = await signUpMutation({ full_name, email, password, mobile, device_type, device_id, fcmToken });
-            console.log('responseresponse',JSON.stringify(response, null, 2));
+            console.log('responseresponse', JSON.stringify(response, null, 2));
 
             if (response.data?.succeeded) {
                 // Toast.show(`Your otp is : ${response.data.ResponseBody.otp}`);
@@ -178,7 +178,7 @@ const SignUp = () => {
                     keyboardType={'number-pad'}
                     leftIcon={imagePath.mobile} />
                 <View
-                    style={[commonStyles.flexView, { alignSelf: 'flex-start', marginLeft: 2, width: '100%', alignItems: 'flex-start' }]}
+                    style={[{ alignSelf: 'flex-start', marginLeft: 2, width: '100%', alignItems: 'flex-start', flexDirection: 'row' }]}
                 >
                     <TouchableOpacity onPress={() => toggleTerms(!terms)}
                         style={styles.check}>
@@ -186,9 +186,9 @@ const SignUp = () => {
                     </TouchableOpacity>
                     <Text style={styles.checkTxt}>By signing up you accept the{' '}
                         <Text onPress={() => navigate(ScreenName.TERMS, { slug: 'about-us', screenName: ScreenName.TERMS })}
-                            style={{ fontFamily: FONTS.medium, color: COLORS.primary }}>Terms and {'\n'}Conditions</Text>
-                        <Text onPress={() => navigate('Privacy Policy', { slug: 'privacy-policy', screenName: 'Privacy Policy' })}
-                            style={{ fontFamily: FONTS.medium, color: COLORS.primary }}> & Privacy Policy</Text>
+                            style={{ fontFamily: FONTS.medium, color: COLORS.primary }}>Terms and Conditions <Text style={{ color: '#000' }}>&amp;</Text><Text onPress={() => navigate('Privacy Policy', { slug: 'privacy-policy', screenName: 'Privacy Policy' })}
+                                style={{ fontFamily: FONTS.medium, color: COLORS.primary }}> Privacy Policy</Text></Text>
+
                     </Text>
                 </View>
                 <CustomBtn onPress={handleRegister}
@@ -236,9 +236,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginRight: moderateScale(10),
         backgroundColor: 'white'
-    }, checkTxt: {
+    },
+    checkTxt: {
         fontSize: 14,
         fontFamily: FONTS.regular,
-        color: COLORS.textColor
+        color: COLORS.textColor,
+        marginTop:-4
     }
 })

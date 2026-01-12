@@ -7,7 +7,6 @@ import {
   Image,
   Alert,
   Dimensions,
-  SafeAreaView,
   TouchableOpacity,
   Text,
   FlatList,
@@ -19,12 +18,13 @@ import { useSelector } from "react-redux";
 import ViewShot from "react-native-view-shot";
 import Loading from "../components/Loading";
 import { goBack, navigate } from "../navigators/NavigationService";
-import ImageCropPicker from "react-native-image-crop-picker";
+import ScreenName from "../configs/screenName";
 import {
   useGetDermoScopyMolesQuery,
   usePostDermoScopyMoleMutation,
   useUpdateDermoScopyMoleMutation,
-  useUploadDropBoxImageByFolderMutation,
+  useUploadDropBoxImageByFolderForDermoMutation,
+
 } from "../redux/api/common";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -34,6 +34,7 @@ import FastImage from 'react-native-fast-image'
 import { getDriveImageMetadata } from "../utils/CommonFunction";
 import OptionsModal from "../components/OptionsModal";
 import ImageZoomModal from "../components/ImageZoomModal";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function MarkableImage() {
 
@@ -50,11 +51,11 @@ export default function MarkableImage() {
   const drawingScaleRef = useRef(1);
   const cloudType = useSelector((state) => state.auth.cloudType);
   const route = useRoute();
-  const { body } = route?.params || {};
+  const { body, view } = route?.params || {}; // 'front' or 'back'
 
   const [postDermoscopyMole] = usePostDermoScopyMoleMutation();
   const [updateDermoscopyMole] = useUpdateDermoScopyMoleMutation();
-  const [uploadDropBoxImageByFolder] = useUploadDropBoxImageByFolderMutation();
+  const [uploadDropBoxImageByFolder] = useUploadDropBoxImageByFolderForDermoMutation();
 
 
 
@@ -78,15 +79,13 @@ export default function MarkableImage() {
     setModalVisible(false);
   };
   const [zoomVisible, setZoomVisible] = useState(false);
-  const [zoomImgArr, setZoomImgArr] = useState([]);
+  const [zoomImg, setZoomImg] = useState(null);
   const [zoomIndex, setZoomIndex] = useState(0);
 
 
-  const openZoomView = (items = [], index) => {
+  const openZoomView = (items = null, index) => {
     setZoomVisible(false)
-    let data = items.map(item => { return { uri: item.path } });
-    console.log('dadada', data);
-    setZoomImgArr(data)
+    setZoomImg(items)
     setZoomIndex(index);
     setZoomVisible(true)
   }
@@ -94,11 +93,32 @@ export default function MarkableImage() {
   useEffect(() => {
     if (cloudType === 'google') getDriveData()
     else getDropBoxData();
+  }, [cloudType, view, body]);
+
+  useEffect(() => {
+    (async () => {
+      let patientFullId = await AsyncStorage.getItem("patientId");
+      if (patientFullId) setPatientFullId(patientFullId);
+    })();
   }, []);
 
+  const { data, refetch } = useGetDermoScopyMolesQuery(
+    { patientId: patientFullId, body, token, cloudType },
+    { skip: !patientFullId }
+  );
+
+  useEffect(() => {
+    if (patientFullId) {
+      refetch();
+    }
+  }, [patientFullId, refetch]);
+
   async function getDropBoxData() {
-    const folderPath = `/PhotoMed/${patientName + patientId}/Dermoscopy/${body}`;
+    const basePath = `/PhotoMed/${patientName + patientId}/Dermoscopy`;
+    const folderPath = view ? `${basePath}/${view}/${body}` : `${basePath}/${body}`; // front/back comes before body part
     const path = folderPath === "" ? "" : folderPath;
+    console.log('pathpathpath', path);
+
     setIsLoading(true)
     try {
       const response = await axios({
@@ -217,7 +237,7 @@ export default function MarkableImage() {
         setLoading(false);
         return;
       }
-      // Step 2: Locate the patient folder inside "PhotoMed"
+      // Step 2: Locate the "Dermoscopy" folder inside patient folder
       const dermofolderId = await getFolderId(
         'Dermoscopy',
         accessToken,
@@ -228,18 +248,34 @@ export default function MarkableImage() {
         setLoading(false);
         return;
       }
-      // Step 2: Locate the patient folder inside "PhotoMed"
+      // Step 3: Locate the view folder (front/back) inside "Dermoscopy"
+      let targetFolderId = dermofolderId;
+      if (view) {
+        const viewFolderId = await getFolderId(
+          view, // 'front' or 'back'
+          accessToken,
+          dermofolderId
+        );
+        if (viewFolderId) {
+          targetFolderId = viewFolderId;
+        } else {
+          // If view folder doesn't exist, fallback to dermofolderId
+          targetFolderId = dermofolderId;
+        }
+      }
+      // Step 4: Locate the body part folder inside view folder (or dermoscopy if no view)
       const bodyfolderId = await getFolderId(
         body,
         accessToken,
-        dermofolderId
+        targetFolderId
       );
       if (!bodyfolderId) {
         console.error("bodyfolderId folder not found");
         setLoading(false);
         return;
       }
-      const folderData = await getAllImagesRecursively(accessToken, bodyfolderId)
+      targetFolderId = bodyfolderId;
+      const folderData = await getAllImagesRecursively(accessToken, targetFolderId)
       if (folderData && folderData.length > 0) {
         console.log('---folderData---', JSON.stringify(folderData, null, 2));
         let rootImage = folderData.filter(item => item.folderName === 'root');
@@ -254,23 +290,7 @@ export default function MarkableImage() {
     }
   }
 
-  useEffect(() => {
-    (async () => {
-      let patientFullId = await AsyncStorage.getItem("patientId");
-      if (patientFullId) setPatientFullId(patientFullId);
-    })();
-  }, []);
 
-  const { data, refetch } = useGetDermoScopyMolesQuery(
-    { patientId: patientFullId, body, token, cloudType },
-    { skip: !patientFullId }
-  );
-
-  useEffect(() => {
-    if (patientFullId) {
-      refetch();
-    }
-  }, [patientFullId])
 
   useEffect(() => {
     console.log('data.ResponseBody-', JSON.stringify(data, null, 2));
@@ -377,24 +397,19 @@ export default function MarkableImage() {
   }, [capturedImage?.path, capturedImage?.id, cloudType, accessToken]);
 
   const openCamera = () => {
-    ImageCropPicker.openCamera({
-      cropping: false,
-      mediaType: "photo",
-      width: 1000,
-      height: 1000,
-      compressImageQuality: 0.8,
-    })
-      .then((img) => {
-        const newImg = { ...img };
-        const uniqueKey = generateUniqueKey();
-        newImg.name = `dermo_${body}_${patientId}.jpg`;
-        if (!newImg.path.startsWith("file://")) {
-          newImg.path = `file://${newImg.path}`;
+    navigate(ScreenName.DERMO_SCOPY_CAMERA, {
+      body,
+      onSave: (capturedImages) => {
+        if (capturedImages && capturedImages.length > 0) {
+          const newImg = capturedImages[0]; // Take the first image for main image
+          if (!newImg.path.startsWith("file://")) {
+            newImg.path = `file://${newImg.path}`;
+          }
+          setCapturedImage(newImg);
+          setCircles([]);
         }
-        setCapturedImage(newImg);
-        setCircles([]);
-      })
-      .catch((e) => console.log("Camera cancelled or error:", e));
+      },
+    });
   };
 
   const isMarkingEnabled = !!capturedImage?.path;
@@ -535,34 +550,38 @@ export default function MarkableImage() {
   );
 
   const btnAttachImages = (tappedIndex) => {
-    ImageCropPicker.openCamera({
-      cropping: false,
-      mediaType: "photo",
-      width: 800,
-      height: 800,
-    })
-      .then((img) => {
-        const newImg = { ...img };
-        const uniqueKey = generateUniqueKey();
-        // Use the real unique mole name (not index)
-        newImg.name = `${circles[tappedIndex].name}_${body}_${uniqueKey}.jpg`;
-        if (!newImg.path.startsWith("file://")) {
-          newImg.path = `file://${newImg.path}`;
+    const existingImages = circles[tappedIndex]?.attachedImages || [];
+    navigate(ScreenName.DERMO_SCOPY_CAMERA, {
+      body,
+      circleName: circles[tappedIndex]?.name,
+      images: existingImages.length > 0 ? existingImages : undefined, // Pass existing images for ghost overlay if available
+      onSave: (capturedImages) => {
+        if (capturedImages && capturedImages.length > 0) {
+          // Process all captured images
+          const processedImages = capturedImages.map((img) => {
+            const processedImg = { ...img };
+            if (!processedImg.path.startsWith("file://")) {
+              processedImg.path = `file://${processedImg.path}`;
+            }
+            return processedImg;
+          });
+
+          setCircles((prev) =>
+            prev.map((circle, idx) =>
+              idx === tappedIndex
+                ? {
+                  ...circle,
+                  attachedImages: circle.attachedImages
+                    ? [...circle.attachedImages, ...processedImages]
+                    : processedImages,
+                }
+                : circle
+            )
+          );
         }
-        setCircles((prev) =>
-          prev.map((circle, idx) =>
-            idx === tappedIndex
-              ? {
-                ...circle,
-                attachedImages: circle.attachedImages
-                  ? [...circle.attachedImages, newImg]
-                  : [newImg],
-              }
-              : circle
-          )
-        );
-      })
-      .catch((e) => console.log("Attach photo cancelled:", e));
+        closeModal();
+      },
+    });
   };
 
   const onLayout = (e) => {
@@ -631,32 +650,41 @@ export default function MarkableImage() {
 
   const addToDropBox = async () => {
     try {
-      const basePath = `/PhotoMed/${patientName + patientId}/Dermoscopy/${body}`;
-      const rootPath = `${basePath}/${capturedImage.name}`;
+      const basePath = `/PhotoMed/${patientName + patientId}/Dermoscopy`;
+      const viewPath = view ? `${basePath}/${view}/${body}` : `${basePath}/${body}`; // front/back comes before body part
+      const rootPath = `${viewPath}/${capturedImage.name}`;
 
+      console.log('640---', basePath);
+      console.log('641---', rootPath);
+      console.log('capturedImage 641---', capturedImage);
+      if (!capturedImage?.id) {
+        let res = await uploadDropBoxImageByFolder({
+          file: capturedImage,
+          path: rootPath,
+          userId: patientName + patientId,
+          accessToken,
+        }).unwrap();
 
-      await uploadDropBoxImageByFolder({
-        file: capturedImage,
-        path: rootPath,
-        userId: patientName + patientId,
-        accessToken,
-      }).unwrap();
-
+        console.log('650---', res);
+      }
 
       for (const circle of circles) {
         if (!circle.attachedImages?.length) continue;
 
         for (const img of circle.attachedImages) {
-          const subPath = `${basePath}/${circle.name}/${img.name}`;
-          try {
-            await uploadDropBoxImageByFolder({
-              file: img,
-              path: subPath,
-              userId: patientName + patientId,
-              accessToken,
-            }).unwrap();
-          } catch (err) {
-            console.log(`❌ Error uploading ${img.name}:`, err);
+          const subPath = `${viewPath}/${circle.name}/${img.name}`;
+          console.log('subPathsubPathsubPath---', subPath);
+          if (!img?.id) {
+            try {
+              await uploadDropBoxImageByFolder({
+                file: img,
+                path: subPath,
+                userId: patientName + patientId,
+                accessToken,
+              }).unwrap();
+            } catch (err) {
+              console.log(`❌ Error uploading ${img.name}:`, err);
+            }
           }
         }
       }
@@ -668,23 +696,49 @@ export default function MarkableImage() {
 
   const addToDrive = async () => {
     try {
-      const baseFolder = `/PhotoMed/${patientName + patientId}/Dermoscopy/${body}`;
+      const baseFolder = `/PhotoMed/${patientName + patientId}/Dermoscopy`;
 
-      const bodyFolderId = await safeCreateFolder(
-        baseFolder,
+      // Get Dermoscopy folder ID first
+      const dermoscopyFolderPath = `${baseFolder}`;
+      const dermoscopyFolderId = await safeCreateFolder(
+        dermoscopyFolderPath,
         accessToken,
         "root"
       );
 
+      // Create front/back folder first if view is specified
+      let targetFolderId;
+      if (view) {
+        const viewFolderPath = `${baseFolder}/${view}`;
+        const viewFolderId = await safeCreateFolder(
+          viewFolderPath,
+          accessToken,
+          "root"
+        );
+        // Then create body part folder inside view folder using createFolderInParentAndCheck
+        targetFolderId = await createFolderInParentAndCheck(
+          body,
+          viewFolderId,
+          accessToken
+        );
+      } else {
+        // If no view, create body part folder directly in Dermoscopy
+        targetFolderId = await createFolderInParentAndCheck(
+          body,
+          dermoscopyFolderId,
+          accessToken
+        );
+      }
+
       const rootImg = {
         uri: capturedImage?.path,
-        name: capturedImage?.name || `dermo_${body}_${patientId}.jpg`,
+        name: capturedImage?.name || `dermo_${body}.jpg`,
         type: capturedImage?.mime || "image/jpeg",
       };
 
       // Upload main image only if not already uploaded
       if (!capturedImage?.id) {
-        await uploadFileToDrive(rootImg, bodyFolderId, accessToken);
+        await uploadFileToDrive(rootImg, targetFolderId, accessToken);
       }
 
       // Upload moles
@@ -693,7 +747,7 @@ export default function MarkableImage() {
 
         const subFolderId = await createFolderInParentAndCheck(
           circle.name,
-          bodyFolderId,
+          targetFolderId, // Use targetFolderId (which includes front/back if specified)
           accessToken
         );
 
@@ -770,7 +824,6 @@ export default function MarkableImage() {
 
   async function addCirclesDimentions(updatedList) {
     let idpatientId = await AsyncStorage.getItem("patientId");
-
     const dadada = updatedList.map((item) => ({
       name: item.name,
       center: item.center,
@@ -809,18 +862,18 @@ export default function MarkableImage() {
         visible={modalVisible}
         onClose={closeModal}
         isCompareActive={circles[tappedIndex]?.attachedImages?.length > 0 ? true : false}
-        onAddImage={() => { closeModal(); btnAttachImages(tappedIndex) }}
+        onAddImage={() => { btnAttachImages(tappedIndex); setModalVisible(false); }}
         onDelete={() => { deleteImage(tappedIndex); closeModal(); }}
         onCompare={() => {
-          // console.log('circles[tappedIndex]?.attachedImages', circles[tappedIndex]?.attachedImages )
           closeModal();
-          navigate('CollageDermoscopy', { images: circles[tappedIndex].attachedImages });
+          // navigate(ScreenName.DERMO_SCOPY_COMPARE, { images: circles[tappedIndex].attachedImages });
+          navigate('DermoscopyCollage', { images: circles[tappedIndex].attachedImages });
         }}
       />
       <ImageZoomModal
         visible={zoomVisible}
         onClose={() => setZoomVisible(false)}
-        imageUri={zoomImgArr}
+        imageUriJson={zoomImg}
         imageIndex={zoomIndex}
       />
 
@@ -828,7 +881,7 @@ export default function MarkableImage() {
         <TouchableOpacity onPress={() => goBack()} style={{ marginLeft: 10 }}>
           <Image style={styles.backIcon} source={require("../assets/images/icons/backIcon.png")} />
         </TouchableOpacity>
-        <Text style={styles.title}>Mark Moles on {body}</Text>
+        <Text style={styles.title}>Mark Moles on {body} {view ? `(${view})` : ''}</Text>
 
         <TouchableOpacity onPress={saveImage} style={{ marginRight: 10, backgroundColor: COLORS.primary, width: 90, justifyContent: 'center', alignItems: 'center', padding: 5, borderRadius: 5 }}>
           <Text style={{ color: '#fff' }}>Save</Text>
@@ -854,7 +907,7 @@ export default function MarkableImage() {
                   resizeMode="contain"
                 />
 
-                <Svg style={StyleSheet.absoluteFill}>
+                <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
                   {circles.map((c, i) => {
                     const dims = getDisplayedImageSize();
                     if (!dims) return null;
@@ -864,7 +917,7 @@ export default function MarkableImage() {
 
                     const cx = offsetX + c.center.x * displayedWidth;
                     const cy = offsetY + c.center.y * displayedHeight;
-                    const r = c.radius * scale;
+                    const r = c.radius * displayedWidth;
 
                     return (
                       <React.Fragment key={i}>
@@ -949,7 +1002,7 @@ export default function MarkableImage() {
                 {item.attachedImages && (
                   <View style={{ marginTop: 6, flexDirection: "row", flexWrap: "wrap" }}>
                     {item.attachedImages.map((img, idx) => (
-                      <TouchableOpacity onPress={() => { openZoomView(item.attachedImages, idx) }}>
+                      <TouchableOpacity key={"mark_" + index + '_' + idx} onPress={() => { openZoomView(img, idx) }}>
                         <FastImage
                           key={idx}
                           source={{ uri: img.path }}

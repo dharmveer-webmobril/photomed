@@ -214,6 +214,6 @@ export const combinedData = [
     { id: 3, name: "Neck", data: neckData },
     { id: 4, name: "Trichology", data: trichologyData },
     { id: 5, name: "Body", data: bodyData },
-    { id: 7, name: "Dermatoscopy", data: [] },
+    // { id: 7, name: "Dermatoscopy", data: [] },
     { id: 6, name: "Ghost Photo", data: [] },
 ];

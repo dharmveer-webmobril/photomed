@@ -6,7 +6,8 @@ import ScreenName from "./screenName";
 import { getData, storeData } from "./helperFunction";
 import { store } from "../redux/store";
 import { logout, setAccessToken, } from "../redux/slices/authSlice";
-import { atob } from "react-native-quick-base64";
+// import { atob } from "react-native-quick-base64";
+import base64 from 'react-native-base64';
 const { dispatch } = store;
 import "react-native-get-random-values";
 import { v4 as uuidv4 } from "uuid";
@@ -18,6 +19,7 @@ import Config from 'react-native-config';
 
 export const configUrl = {
   imageUrl: "https://photomedpro.com:10049/",
+  // imageUrl: "http://10.34.185.152:10049/",
   BASE_URL: BASEURL || Config.BASEURL,
   defaultUser: "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
   DROPBOX_CLIENT_ID: DROPBOX_CLIENT_ID || Config.DROPBOX_CLIENT_ID,
@@ -29,6 +31,7 @@ export const configUrl = {
 
 const GOOGLE_BASE_URL = "https://www.googleapis.com/drive/v3";
 const DRIVE_API = 'https://www.googleapis.com/drive/v3/files';
+console.log('BASEURL',BASEURL);
 
 export async function getFolderId(
   folderName,
@@ -700,7 +703,9 @@ async function checkIfPathExists(path, accessToken) {
 }
 
 function base64ToBinary(base64) {
-  const binaryString = atob(base64);
+
+
+  const binaryString =  base64.decode(base64);
   const len = binaryString.length;
   const bytes = new Uint8Array(len);
 
@@ -1655,6 +1660,7 @@ export const validateSubscription1 = async (token, receipt, platform = Platform.
 
 // api/subscription.js
 export const getMySubscriptionDetails = async (token, userId) => {
+ 
   if (!token) {
     console.error("Authentication token missing. Please log in again.");
     return null;
@@ -1669,7 +1675,7 @@ export const getMySubscriptionDetails = async (token, userId) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ userId }),
+        // body: JSON.stringify({ userId }),
       }
     );
 

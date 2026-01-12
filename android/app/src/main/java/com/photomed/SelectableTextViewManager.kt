@@ -2,34 +2,43 @@ package com.photomedPro.com
 
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.ReadableArray
+import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.bridge.WritableMap
+import com.facebook.react.common.MapBuilder
 import com.facebook.react.uimanager.SimpleViewManager
 import com.facebook.react.uimanager.ThemedReactContext
+import com.facebook.react.uimanager.UIManagerModule
 import com.facebook.react.uimanager.annotations.ReactProp
-import com.facebook.react.uimanager.events.RCTEventEmitter
+import com.facebook.react.uimanager.events.EventDispatcher
 
 class SelectableTextViewManager : SimpleViewManager<SelectableTextView>() {
 
     companion object {
         const val REACT_CLASS = "RCTSelectableTextView"
+        const val EVENT_SELECTION = "topSelection"
     }
 
     override fun getName(): String {
         return REACT_CLASS
     }
+    
+    override fun getExportedCustomBubblingEventTypeConstants(): Map<String, Any>? {
+        return MapBuilder.builder<String, Any>()
+            .put(
+                EVENT_SELECTION,
+                MapBuilder.of("phasedRegistrationNames", MapBuilder.of("bubbled", "onSelection"))
+            )
+            .build()
+    }
 
     override fun createViewInstance(reactContext: ThemedReactContext): SelectableTextView {
         val view = SelectableTextView(reactContext)
+        val eventDispatcher = reactContext.getNativeModule(UIManagerModule::class.java)?.eventDispatcher
         
         view.onSelectionCallback = { eventType, content ->
-            val event: WritableMap = Arguments.createMap().apply {
-                putString("eventType", eventType)
-                putString("content", content)
-            }
-            
-            reactContext
-                .getNativeModule(RCTEventEmitter::class.java)
-                ?.receiveEvent(view.id, "onSelection", event)
+            eventDispatcher?.dispatchEvent(
+                SelectableTextSelectionEvent(view.id, eventType, content)
+            )
         }
         
         return view

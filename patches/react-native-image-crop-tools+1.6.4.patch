@@ -1,0 +1,12 @@
+diff --git a/node_modules/react-native-image-crop-tools/react-native-image-crop-tools.podspec b/node_modules/react-native-image-crop-tools/react-native-image-crop-tools.podspec
+index 954c2aa..730e9df 100644
+--- a/node_modules/react-native-image-crop-tools/react-native-image-crop-tools.podspec
++++ b/node_modules/react-native-image-crop-tools/react-native-image-crop-tools.podspec
+@@ -19,6 +19,6 @@ Pod::Spec.new do |s|
+   s.requires_arc = true
+ 
+   s.dependency "React-Core"
+-  s.dependency 'TOCropViewController', '2.5.3'
++  s.dependency 'TOCropViewController', '2.8.0'
+ end
+ 

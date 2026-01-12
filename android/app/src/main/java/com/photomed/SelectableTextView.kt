@@ -40,18 +40,22 @@ class SelectableTextView @JvmOverloads constructor(
 
             override fun onActionItemClicked(mode: ActionMode?, item: MenuItem?): Boolean {
                 if (item?.itemId == android.R.id.copy) {
-                    val selectedText = getSelectedText()?.toString() ?: ""
-                    if (selectedText.isNotEmpty()) {
-                        // Copy to clipboard
-                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                        val clip = ClipData.newPlainText("text", selectedText)
-                        clipboard.setPrimaryClip(clip)
-                        
-                        // Send event to React Native
-                        onSelectionCallback?.invoke("Copy", selectedText)
-                        
-                        mode?.finish()
-                        return true
+                    val selectionStart = selectionStart
+                    val selectionEnd = selectionEnd
+                    if (selectionStart >= 0 && selectionEnd > selectionStart) {
+                        val selectedText = text.substring(selectionStart, selectionEnd)
+                        if (selectedText.isNotEmpty()) {
+                            // Copy to clipboard
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            val clip = ClipData.newPlainText("text", selectedText)
+                            clipboard.setPrimaryClip(clip)
+                            
+                            // Send event to React Native
+                            onSelectionCallback?.invoke("Copy", selectedText)
+                            
+                            mode?.finish()
+                            return true
+                        }
                     }
                 }
                 return false

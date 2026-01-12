@@ -22,14 +22,15 @@ import CollageAdd from "../screens/CollageAdd";
 import EditPatient from "../screens/EditPatient";
 import SelectPhoto from "../screens/SelectPhoto";
 import Framing from "../screens/Framing";
-import CollageDermoscopy from "../screens/CollageDermoscopy";
+import DermoscopyCollage from "../screens/dermoscopy/DermoscopyCollage";
 import ImageZoomML from "../screens/ImageZoomML";
 import { Image, TouchableOpacity } from "react-native";
 import SubscriptionManage from "../screens/Auth/SubscriptionManage";
 import MarkableImage from "../screens/MarkableImage";
-import TextRecognizationUi from "../screens/TextRecognizationUi";
-import FaceRecognitionCamera from "../screens/FaceRecognitionCamera";
+import DermoScopyImageCompare from "../screens/dermoscopy/DermoScopyImageCompare";
+import DermoScopyTakePicture from "../screens/dermoscopy/DermoScopyTakePicture";
 import { IAPProvider } from "../configs/IAPContext";
+import BodyPartSelector from "../screens/dermoscopy/BodyPartSelector";
 
 const Stack = createNativeStackNavigator();
 
@@ -50,24 +51,6 @@ const MainStack = () => {
         },
       }}
     >
-      {/* <Stack.Screen
-        name={"FaceRecognitionCamera"}
-        component={FaceRecognitionCamera}
-        options={{
-          headerShown: false,
-          headerTintColor: COLORS.textColor,
-          headerTitle: "Mark Image",
-        }}
-      /> */}
-      {/* <Stack.Screen
-        name={"TextRecognizationUi"}
-        component={TextRecognizationUi}
-        options={{
-          headerShown: false,
-          headerTintColor: COLORS.textColor,
-          headerTitle: "Mark Image",
-        }}
-      /> */}
 
       <Stack.Screen
         name={"Bottom"}
@@ -122,8 +105,17 @@ const MainStack = () => {
       />
 
       <Stack.Screen
-        name={"CollageDermoscopy"}
-        component={CollageDermoscopy}
+        name={"DermoscopyCollage"}
+        component={DermoscopyCollage}
+        options={{
+          headerShown: true,
+          headerTintColor: COLORS.textColor,
+          headerTitle: "Compare",
+        }}
+      />
+      <Stack.Screen
+        name={"BodyPartSelector"}
+        component={BodyPartSelector}
         options={{
           headerShown: true,
           headerTintColor: COLORS.textColor,
@@ -156,7 +148,7 @@ const MainStack = () => {
         name={ScreenName.CAMERA_GRID}
         component={CameraGrid}
         options={{
-          headerShown: true,
+          headerShown: false,
           headerTintColor: COLORS.textColor,
           headerTitle: "",
           headerLeft: () => {
@@ -217,15 +209,13 @@ const MainStack = () => {
           headerTintColor: COLORS.textColor,
         }}
       />
-      {/* <Stack.Screen
-        name={ScreenName.SUB_MANAGE}
-        component={SubscriptionManage}
-        options={{
-          headerShown: false,
-          headerTintColor: COLORS.textColor
-        }}
-      /> */}
+
       <Stack.Screen
+        name={ScreenName.SUB_MANAGE}
+        options={{ headerShown: false }}
+        component={SubscriptionManage}
+      /> 
+      {/* <Stack.Screen
         name={ScreenName.SUB_MANAGE}
         options={{ headerShown: false }}
       >
@@ -234,7 +224,7 @@ const MainStack = () => {
             <SubscriptionManage page="profile" />
           </IAPProvider>
         )}
-      </Stack.Screen>
+      </Stack.Screen> */}
       <Stack.Screen
         name={ScreenName.SELECT_PHOTO}
         component={SelectPhoto}
@@ -263,6 +253,22 @@ const MainStack = () => {
       <Stack.Screen
         name={ScreenName.DERMO_SCOPY}
         component={DermoscopyDash}
+        options={{
+          headerShown: false,
+          headerTintColor: COLORS.textColor,
+        }}
+      />
+      <Stack.Screen
+        name={ScreenName.DERMO_SCOPY_COMPARE}
+        component={DermoScopyImageCompare}
+        options={{
+          headerShown: false,
+          headerTintColor: COLORS.textColor,
+        }}
+      />
+      <Stack.Screen
+        name={ScreenName.DERMO_SCOPY_CAMERA}
+        component={DermoScopyTakePicture}
         options={{
           headerShown: false,
           headerTintColor: COLORS.textColor,

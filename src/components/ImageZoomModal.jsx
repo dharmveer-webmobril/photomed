@@ -1,28 +1,33 @@
 import React from "react";
-import { Modal, Pressable, View, StyleSheet } from "react-native";
-import ImageViewing from "react-native-image-viewing";
+import { Modal, Pressable, View, StyleSheet, Dimensions, Image, TouchableOpacity } from "react-native";
+import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
+import { SafeAreaView } from "react-native-safe-area-context";
+import COLORS from "../styles/colors";
 
-const ImageZoomModal = ({ visible, onClose, imageUri, imageIndex }) => {
-  console.log('imageIndex',imageIndex);
-  
+const ImageZoomModal = ({ visible, onClose, imageUriJson, imageIndex }) => {
+  console.log('imageIndex', imageIndex);
+  console.log('imageUriJson', imageUriJson);
+
   return (
     <Modal
       visible={visible}
       animationType="fade"
       transparent
     >
-      <View style={styles.backdrop}>
+      <SafeAreaView style={styles.backdrop}>
+        <TouchableOpacity onPress={() => { onClose() }} style={styles.removeFaceBtn}>
+          <Image source={require('../assets/images/icons/close.png')} style={{ height: 12, width: 12, tintColor: COLORS.primary }} />
+        </TouchableOpacity>
         <View style={styles.modalContent}>
-          <ImageViewing
-            images={imageUri}
-            imageIndex={imageIndex}
-            visible={true}
-            onRequestClose={onClose}
-            swipeToCloseEnabled={false}
-            doubleTapToZoomEnabled
-          />
+          <ReactNativeZoomableView
+            maxZoom={30}
+            contentWidth={300}
+            contentHeight={150}
+          >
+            <Image source={{ uri: imageUriJson?.path }} resizeMode="contain" style={{ width: '100%', height: '100%' }} />
+          </ReactNativeZoomableView>
         </View>
-      </View>
+      </SafeAreaView>
     </Modal>
   );
 };
@@ -38,6 +43,17 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  removeFaceBtn: {
+    position: "absolute",
+    top: 40,
+    right: 40,
+    backgroundColor: COLORS.whiteColor,
+    borderRadius: 100,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 15,
+    zIndex: 9999
+  }
 });
 
 export default ImageZoomModal;

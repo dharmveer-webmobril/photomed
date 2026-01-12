@@ -38,10 +38,8 @@ import {
 } from "../configs/api";
 import {
   useDeleteTagSubTagMutation,
-  useGetAttachImageWithTagQuery,
   useGetFolderIdQuery,
   useGetMixedCategoriesQuery,
-  useLazyGetAttachImageWithTagQuery,
   usePostAttachImageWithTagMutation,
   usePostDrCategorySubcatMutation,
   usePostPatientTagsMutation,
@@ -93,6 +91,7 @@ const ImageDetails = (props) => {
   const { data: mixedCatData, error: mixedCatError, isLoading: mixedCatLoading, refetch: catSubcatRefetch } = useGetMixedCategoriesQuery({ token });
   const [deletTagSubtag, { isLoading: deletTagLoading }] = useDeleteTagSubTagMutation();
 
+  const [postPatientTags, { isLoading: postPatientTagsLoading }] = usePostPatientTagsMutation();
 
   const [selectedCat, setSelectedCat] = useState("");
   const [selectedSubcat, setSelectedSubcat] = useState("");
@@ -155,9 +154,9 @@ const ImageDetails = (props) => {
   };
 
   const [postAttachImageWithTag] = usePostAttachImageWithTagMutation();
-  
+
   const [localImageData, setLocalImageData] = useState(null);
-  const fetchImageTags = async (imageId) => { 
+  const fetchImageTags = async (imageId) => {
     try {
       const response = await fetch(`${configUrl.BASE_URL}imagecategory/${imageId}`, {
         method: 'GET', // or GET, based on your API
@@ -165,8 +164,8 @@ const ImageDetails = (props) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`, // if needed
         },
-      }); 
-      
+      });
+
       const data = await response.json();
       if (data?.ResponseBody) {
         setLocalImageData(data.ResponseBody);
@@ -202,47 +201,25 @@ const ImageDetails = (props) => {
       setSelectedSubcat(subTagData.trim().length > 0 ? subTagData : '');
     }
   }, [localImageData]);
-  // const [fetchImageTags, { data: imageTagedData, isFetching }] = useLazyGetAttachImageWithTagQuery();
 
-  // const [localImageData, setLocalImageData] = useState(null);
+  const addtaginpatientAcc = async (cat, subtag) => {
+    try {
+      let data = { tags: [cat, subtag] };
 
-  // useFocusEffect(
-  //   React.useCallback(() => {
-  //     setSelectedCat("");
-  //     setSelectedSubcat("");
-  //     setLocalImageData(null); // ✅ Clear old data on focus
-
-  //     if (!isMultiple && images?.length > 0) {
-  //       fetchImageTags({
-  //         token,
-  //         imageId: images[0].id,
-  //       });
-  //     }
-  //   }, [images, token, isMultiple])
-  // );
-
-  // // ✅ Set only valid API response
-  // useEffect(() => {
-  //   if (
-  //     imageTagedData?.ResponseBody &&
-  //     Object.keys(imageTagedData.ResponseBody).length > 0
-  //   ) {
-  //     setLocalImageData(imageTagedData.ResponseBody);
-  //   }
-  // }, [imageTagedData]);
-
-  // // ✅ Set tags only when localImageData updates
-  // useEffect(() => {
-  //   if (localImageData) {
-  //     const tagData = localImageData.tag || "";
-  //     const subTagData = localImageData.subtag || "";
-
-  //     setSelectedCat(tagData.trim().length > 0 ? tagData : "");
-  //     setSelectedSubcat(subTagData.trim().length > 0 ? subTagData : "");
-  //   }
-  // }, [localImageData]);
-
-
+      let res = await postPatientTags({
+        token,
+        tags: data,
+        patientId: pData?._id,
+      });
+      console.log("added to add tag", res);
+      if (res?.data?.ResponseCode === 200) {
+      } else {
+        console.log("eeror to add tag", res);
+      }
+    } catch (error) {
+      Toast.show("Unable to delete.");
+    }
+  };
 
   const handleUploadImageCategory = async () => {
     console.log("selectedCat", selectedCat);
@@ -337,10 +314,11 @@ const ImageDetails = (props) => {
           count
         );
         count++;
-
         await postAttachImageWithTag({ token, tag: selectedCat, subtag: selectedSubcat, imageId: imageItem.id });
-        // await attachImageWithTag(formatedTag, formatedSubtag,imageItem.id);
       }
+
+      await addtaginpatientAcc(selectedCat, selectedSubcat);
+
       Toast.show(`Image added for selected category`);
       // navigate(ScreenName.HOME);
       goBack();
@@ -393,6 +371,8 @@ const ImageDetails = (props) => {
         return false;
       }
     }
+    await addtaginpatientAcc(selectedCat, selectedSubcat);
+
     Toast.show(`Image added for selected category`);
     // navigate(ScreenName.HOME);
     goBack();

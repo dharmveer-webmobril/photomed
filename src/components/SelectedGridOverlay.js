@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Image } from 'react-native';
+import { View, Image, Platform } from 'react-native';
 import DynamicGrid from './DynamicGrid'; // Import DynamicGrid if it is a separate component
 import { verticalScale } from '../styles/responsiveLayoute';
 
@@ -17,7 +17,7 @@ const SelectedGridOverlay = ({
                 return (
                     (selectedGridItem.id === 1 || selectedGridItem.id === 2) && (
                         <DynamicGrid
-                            containerHeight={height}
+                            containerHeight={Platform.isPad ? height + verticalScale(105) : height}
                             containerWidth={width}
                             rows={selectedGridItem.id === 1 ? 3 : 4}
                             columns={selectedGridItem.id === 1 ? 3 : 4}
@@ -41,7 +41,7 @@ const SelectedGridOverlay = ({
                     <Image
                         style={{
                             height: height + verticalScale(80),
-                            width: selectedGridItem.align === 'center' ? '130%' : '50%',
+                            width: selectedGridItem.align === 'center' ? '130%' : '50%', marginTop: -verticalScale(80)
                         }}
                         source={selectedGridItem.image}
                         resizeMode="contain"
@@ -67,7 +67,7 @@ const SelectedGridOverlay = ({
             pointerEvents='none'
             style={{
                 position: 'absolute',
-                top: selectedCategory === 5 ? -verticalScale(80) : 10,
+                top: selectedCategory === 5 ? -verticalScale(80) : selectedCategory === 1 ? 0 : 10,
                 left: 0,
                 right: 0,
                 bottom: 0,
