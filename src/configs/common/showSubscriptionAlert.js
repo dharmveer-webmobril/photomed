@@ -16,7 +16,7 @@ export const showSubscriptionAlert = (navigation) => {
           // 👉 Navigate to your subscription screen here
           // Example if using navigation:
           // navigation.navigate("Subscription");
-          navigation("SubscriptionManage");
+          navigation("SubscriptionManage", { from: "profile" });
           console.log("User wants to subscribe");
         },
       },

@@ -62,6 +62,7 @@ import {
 const windowWidth = Dimensions.get("window").width;
 import { combinedData, askForDermoScopy } from "../utils";
 import FastImage from "react-native-fast-image";
+import { showSubscriptionAlert } from "../configs/common/showSubscriptionAlert";
 /* -------------------- Aspect Ratios (FULL removed as requested) -------------------- */
 const ASPECT_RATIOS = {
   '16:9': '16:9',
@@ -324,7 +325,7 @@ const CameraGrid = (props) => {
 
   const _chooseFile = async () => {
     if (needSubscription) {
-      showSubscriptionAlert(navigate);
+      showSubscriptionAlert(navigate, { from: "profile" });
       return;
     }
     if (loacalImageArr?.length <= 0) {

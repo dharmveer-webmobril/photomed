@@ -8,6 +8,7 @@ import {
   Alert,
   Platform,
   Linking,
+  Image,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import Loading from "../../components/Loading";
@@ -49,8 +50,7 @@ export default function SubscriptionManage(params) {
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  const from = params?.page || "asd";
-
+  const from = params?.route?.params?.from || "asd";
   // Initialize IAP connection and fetch subscriptions
   useEffect(() => {
     const initializeIAP = async () => {
@@ -450,7 +450,7 @@ export default function SubscriptionManage(params) {
       Alert.alert('Error', 'Unable to open link at the moment.');
     }
   };
-
+console.log('from------', from);
   return (
     <SafeAreaView style={styles.safeArea}>
       <Loading visible={isLoading || isGetSubLoading} />
@@ -461,7 +461,7 @@ export default function SubscriptionManage(params) {
               from === "profile" && goBack();
             }}
           >
-            {from === "profile" && <Text style={styles.iconText}>←</Text>}
+            {from === "profile" && <Image source={require('../../assets/images/left_icon.png')} style={styles.iconText} />}
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Manage Subscription Plan</Text>
           <View />
@@ -677,9 +677,8 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   iconText: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#000",
+    width: 20,
+    height: 20,
   },
   headerTitle: {
     fontSize: 18,
