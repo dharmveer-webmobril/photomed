@@ -15,9 +15,12 @@ const ImageZoomModal = ({ visible, onClose, imageUriJson, imageIndex }) => {
       transparent
     >
       <SafeAreaView style={styles.backdrop}>
-        <TouchableOpacity onPress={() => { onClose() }} style={styles.removeFaceBtn}>
-          <Image source={require('../assets/images/icons/close.png')} style={{ height: 12, width: 12, tintColor: COLORS.primary }} />
-        </TouchableOpacity>
+        <View style={styles.closeBtnContainer}>
+
+          <TouchableOpacity onPress={() => { onClose() }} style={styles.removeFaceBtn}>
+            <Image source={require('../assets/images/icons/close.png')} style={{ height: 12, width: 12, tintColor: COLORS.whiteColor }} />
+          </TouchableOpacity>
+        </View>
         <View style={styles.modalContent}>
           <ReactNativeZoomableView
             maxZoom={30}
@@ -35,7 +38,7 @@ const ImageZoomModal = ({ visible, onClose, imageUriJson, imageIndex }) => {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0)",
+    backgroundColor: "#ffffff",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -46,13 +49,18 @@ const styles = StyleSheet.create({
   removeFaceBtn: {
     position: "absolute",
     top: 40,
-    right: 40,
-    backgroundColor: COLORS.whiteColor,
+    right: 20,
+    backgroundColor: COLORS.primary,
     borderRadius: 100,
     justifyContent: "center",
     alignItems: "center",
     padding: 15,
     zIndex: 9999
+  },
+  closeBtnContainer: {
+    backgroundColor: "red",
+    width: "100%",
+    zIndex: 9999,
   }
 });
 

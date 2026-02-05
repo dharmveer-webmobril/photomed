@@ -279,7 +279,7 @@ export default function SubscriptionManage(params) {
             transactionId: responseData?.transactionId || (Array.isArray(purchase) ? purchase[0].transactionId : purchase.transactionId),
           };
 
-          console.log("expData:", JSON.stringify(expData, null, 2));
+          // console.log("expData:", JSON.stringify(expData, null, 2));
 
           // Update local state and redux
           setCurrentSubscription(expData);

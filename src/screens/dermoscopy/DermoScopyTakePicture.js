@@ -23,7 +23,7 @@ import { useRoute } from "@react-navigation/native";
 import FastImage from "react-native-fast-image";
 import { goBack } from "../../navigators/NavigationService";
 import ImageWithLoader from "../../components/ImageWithLoader";
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { generateUniqueKey } from "../../configs/api";
 import { verticalScale } from "../../styles/responsiveLayoute";
 
@@ -53,6 +53,8 @@ export default function DermoScopyImageCompare() {
     const opacity = useSharedValue(0.5);
 
     const route = useRoute();
+    const type = route?.params?.type;
+    console.log('type', type);
     const imagesParam = useMemo(() => route?.params?.images || [], [route?.params?.images]);
     const onSave = route?.params?.onSave; // Callback function to save images
     const body = route?.params?.body; // Body part name for naming
@@ -144,6 +146,8 @@ export default function DermoScopyImageCompare() {
                 mime: 'image/jpeg',
             };
 
+
+
             // For main image capture, replace the image instead of adding to array
             if (isMainImageCapture) {
                 setCapturedImages([newImage]);
@@ -175,10 +179,10 @@ export default function DermoScopyImageCompare() {
             </View>
         );
     }
-
+    const topheight = useSafeAreaInsets().top;
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
+        <View style={styles.container}>
+            <View style={[styles.header, { paddingTop: topheight }]}>
                 <TouchableOpacity onPress={() => { goBack() }} style={styles.closeBtn}>
                     <Image source={require('../../assets/images//icons/close.png')} style={styles.closeIcon} />
                 </TouchableOpacity>
@@ -187,36 +191,36 @@ export default function DermoScopyImageCompare() {
                 </TouchableOpacity>
             </View>
             {/* Camera View */}
-            <View style={{flex:1}}>
+            <View style={{ flex: 1 }}>
 
-            <View style={styles.cameraWrapper}>
-                <Camera
-                    style={[StyleSheet.absoluteFill]}
-                    ref={cameraRef}
-                    device={device}
-                    format={format}
-                    isActive={true}
-                    photo={true}
-                    resizeMode="contain"
-                />
+                <View style={styles.cameraWrapper}>
+                    <Camera
+                        style={[StyleSheet.absoluteFill]}
+                        ref={cameraRef}
+                        device={device}
+                        format={format}
+                        isActive={true}
+                        photo={true}
+                        resizeMode="contain"
+                    />
 
-                {/* Ghost Overlay - Show if selectedImage exists (works for both compare and capture mode) */}
-                {selectedImage && (
-                    <Animated.View 
-                        pointerEvents="none" 
-                        style={[styles.overlayImage,animatedStyle,(selectedRatio==='1:1' && Platform.OS === 'ios') ? {height:height+verticalScale(70)} : {height:height}]}
-                        key={`overlay-${selectedRatio}`}
-                    >
-                        <FastImage
-                            key={`ghost-image-${selectedRatio}`}
-                            source={{ uri: selectedImage.path }}
-                            resizeMode="cover"
+                    {/* Ghost Overlay - Show if selectedImage exists (works for both compare and capture mode) */}
+                    {selectedImage && (
+                        <Animated.View
+                            pointerEvents="none"
+                            style={[styles.overlayImage, animatedStyle, (selectedRatio === '1:1' && Platform.OS === 'ios') ? { height: height + verticalScale(70) } : { height: height }]}
+                            key={`overlay-${selectedRatio}`}
+                        >
+                            <FastImage
+                                key={`ghost-image-${selectedRatio}`}
+                                source={{ uri: selectedImage.path }}
+                                resizeMode="cover"
 
-                            style={[styles.overlayImage, { width:screenWidth, height:(selectedRatio==='1:1' && Platform.OS === 'ios')  ? height+verticalScale(70) : height }]}
-                        />
-                    </Animated.View>
-                )}
-            </View>
+                                style={[styles.overlayImage, { width: screenWidth, height: (selectedRatio === '1:1' && Platform.OS === 'ios') ? height + verticalScale(70) : height }]}
+                            />
+                        </Animated.View>
+                    )}
+                </View>
             </View>
             <View style={styles.bottomContainer}>
                 {isCaptureMode ? (
@@ -244,12 +248,12 @@ export default function DermoScopyImageCompare() {
                             </View>
                         )}
                         <View style={styles.controlsRow}>
-                            <TouchableOpacity onPress={() => toggleCamera()} style={styles.camBtn}>
+                            {<TouchableOpacity onPress={() => toggleCamera()} style={styles.camBtn}>
                                 <Image
                                     style={styles.switchIcon}
                                     source={require("../../assets/images/icons/switch.png")}
                                 />
-                            </TouchableOpacity>
+                            </TouchableOpacity>}
                             <View style={styles.captureBtnWrapper}>
                                 <TouchableOpacity
                                     onPress={takePhoto}
@@ -259,7 +263,7 @@ export default function DermoScopyImageCompare() {
                                     <View style={styles.captureBtnInner} />
                                 </TouchableOpacity>
                             </View>
-                            <TouchableOpacity
+                            {<TouchableOpacity
                                 onPress={handleSave}
                                 disabled={capturedImages.length === 0}
                                 style={[styles.saveBtn, capturedImages.length === 0 && styles.saveBtnDisabled]}
@@ -269,7 +273,7 @@ export default function DermoScopyImageCompare() {
                                         ? (isMainImageCapture ? 'Save' : `Save (${capturedImages.length})`)
                                         : 'Save'}
                                 </Text>
-                            </TouchableOpacity>
+                            </TouchableOpacity>}
                         </View>
                         {imagesParam.length > 1 && (
                             <View style={styles.imageListContainer}>
@@ -396,7 +400,7 @@ export default function DermoScopyImageCompare() {
                     </>
                 )}
             </View>
-        </SafeAreaView>
+        </View>
     );
 }
 
@@ -413,10 +417,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20,
         paddingVertical: 10,
         zIndex: 99999,
-        position:'absolute',
-        left:0,
-        right:0,
-        top:0
+        // position:'absolute',
+        // left:0,
+        // right:0,
+        // top:0
     },
     closeBtn: {
         height: 40,
@@ -432,7 +436,7 @@ const styles = StyleSheet.create({
         height: "100%",
         width: '100%',
         resizeMode: "cover",
-      },
+    },
     ratioBtn: {
         backgroundColor: COLORS.primary,
         paddingHorizontal: 16,
@@ -495,6 +499,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         alignItems: "center",
         paddingVertical: 0,
+        marginBottom: 20,
     },
     captureBtnWrapper: {
         position: "absolute",
@@ -503,7 +508,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
         pointerEvents: "box-none",
-        bottom:2
+        bottom: 2
     },
     controlsRowCompare: {
         marginTop: 20,
@@ -573,6 +578,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         marginTop: 20,
+        marginBottom: 20,
     },
     imageListContent: {
         alignSelf: 'center',

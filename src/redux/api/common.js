@@ -1098,9 +1098,8 @@ export const commonApi = createApi({
 
     getDermoScopyMoles: builder.query({
       query: ({ body, patientId, token, cloudType }) => {
-        console.log('getDermoScopyMoles patientId cloudType', patientId, cloudType);
-        console.log('`dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`', `dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`);
-
+        // console.log('getDermoScopyMoles patientId cloudType', patientId, cloudType);
+        // console.log('`dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`', `dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`);
         return {
           url: `dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`,
           method: 'GET',
@@ -1111,6 +1110,7 @@ export const commonApi = createApi({
         }
       }
     }),
+
     postDermoScopyMole: builder.mutation({
       query: ({ token, data }) => ({
         url: `dermoscopy`,
@@ -1122,6 +1122,7 @@ export const commonApi = createApi({
         body: JSON.stringify(data),
       }),
     }),
+
     updateDermoScopyMole: builder.mutation({
       query: ({ token, data, id }) => ({
         url: `dermoscopy/${id}`,
@@ -1133,6 +1134,7 @@ export const commonApi = createApi({
         body: JSON.stringify(data),
       }),
     }),
+    
     postPatientTags: builder.mutation({
       query: ({ token, tags, patientId }) => ({
         url: `addtags/${patientId}`,

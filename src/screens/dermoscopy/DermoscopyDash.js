@@ -183,7 +183,8 @@ export default function DermoscopyDash() {
                     value={searchTerm}
                     onChangeText={setSearchTerm}
                     placeholder="Search..."
-                    style={{ flex: 1 }}
+                    placeholderTextColor={COLORS.placeHolderTxtColor}
+                    style={{ flex: 1 ,paddingVertical:12,color:COLORS.textColor}}
                 />
                 {searchTerm.length > 0 && (
                     <TouchableOpacity onPress={() => setSearchTerm('')}>
