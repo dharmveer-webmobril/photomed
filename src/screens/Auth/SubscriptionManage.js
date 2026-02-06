@@ -161,7 +161,35 @@ export default function SubscriptionManage(params) {
       let res = await getMySubscriptionDetails(token, userId);
       console.log("getMySubscriptionDetails res:", JSON.stringify(res, null, 2));
 
-      if (res && res?.productId && res?.isExpired === false) {
+      // Handle expired subscriptions - clear pending transactions for iOS
+      // Handle both boolean and string formats for isExpired
+      const isExpired = res && (res?.isExpired === true || res?.isExpired === "yes");
+      
+      if (Platform.OS === "ios" && isExpired) {
+        // For expired subscriptions on iOS, clear any pending transactions
+        // This ensures a fresh purchase flow and password prompt
+        try {
+          const pendingPurchases = await getAvailablePurchases();
+          console.log("Pending purchases before clearing:", JSON.stringify(pendingPurchases, null, 2));
+          
+          // Finish any pending transactions related to expired subscriptions
+          for (const pendingPurchase of pendingPurchases) {
+            if (pendingPurchase.productId && res?.productId === pendingPurchase.productId) {
+              try {
+                await finishTransaction({ purchase: pendingPurchase, isConsumable: false });
+                console.log("Cleared pending transaction for expired subscription:", pendingPurchase.transactionId);
+              } catch (finishErr) {
+                console.warn("Error finishing pending transaction:", finishErr);
+              }
+            }
+          }
+        } catch (clearError) {
+          console.warn("Error clearing pending transactions:", clearError);
+          // Continue with purchase even if clearing fails
+        }
+      }
+
+      if (res && res?.productId && res?.isExpired !== true && res?.isExpired !== "yes") {
         const currentPlanPriority = PLAN_PRIORITY[res.productId];
         const selectedPlanPriority = PLAN_PRIORITY[selectedPlan];
 
@@ -205,11 +233,19 @@ export default function SubscriptionManage(params) {
           ],
         };
       } else {
-        // iOS: Use the existing SKU-based approach
-        purchaseParams = { sku: selectedPlan };
+        // iOS: For expired subscriptions, ensure we're requesting a new subscription
+        // Use the SKU directly - iOS will handle it as a new purchase if expired
+        purchaseParams = { 
+          sku: selectedPlan,
+          // For expired subscriptions, explicitly request a new subscription
+          ...(isExpired && { 
+            // Force new purchase by not including any existing subscription context
+          })
+        };
       }
 
       console.log("Purchase request params:", JSON.stringify(purchaseParams, null, 2));
+      console.log("Is expired subscription:", isExpired);
 
       // Initiate subscription purchase
       const purchase = await requestSubscription(purchaseParams);
@@ -298,7 +334,25 @@ export default function SubscriptionManage(params) {
       }
     } catch (error) {
       console.error("Purchase failed:", error.message, error.code, error);
-      Alert.alert("Error", `Failed to complete purchase: ${error.message}`);
+      
+      // Handle specific error cases
+      if (error.code === "E_USER_CANCELLED" || error.code === "E_USER_ERROR") {
+        // User cancelled or there was a user error - don't show error alert
+        console.log("Purchase cancelled by user");
+        return;
+      } else if (error.code === "E_NETWORK_ERROR") {
+        Alert.alert("Network Error", "Please check your internet connection and try again.");
+      } else if (error.code === "E_SERVICE_ERROR") {
+        Alert.alert("Service Error", "There was an issue with the subscription service. Please try again later.");
+      } else if (error.message && error.message.includes("already purchased")) {
+        // Handle case where subscription might already exist
+        Alert.alert(
+          "Subscription Exists", 
+          "A subscription for this plan already exists. Please use 'Restore Purchases' to restore it, or select a different plan."
+        );
+      } else {
+        Alert.alert("Error", `Failed to complete purchase: ${error.message || "Unknown error occurred"}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -554,13 +608,18 @@ console.log('from------', from);
                 onPress={handlePurchase}
               >
                 <Text style={styles.restoreText}>
-                  {selectedPlan === currentSubscription?.productId
+                  {currentSubscription?.isExpired === true || currentSubscription?.isExpired === "yes"
+                    ? "Renew Subscription"
+                    : selectedPlan === currentSubscription?.productId
+                    ? "Upgrade Plan"
+                    : currentSubscription?.productId && selectedPlan !== currentSubscription?.productId
                     ? "Upgrade Plan"
                     : "Subscribe"}
                 </Text>
               </TouchableOpacity>
               {selectedPlan === currentSubscription?.productId &&
-                currentSubscription?.isExpired === false && (
+                currentSubscription?.isExpired !== true && 
+                currentSubscription?.isExpired !== "yes" && (
                   <TouchableOpacity
                     style={styles.restoreBtn}
                     onPress={handleCancelPlan}
