@@ -1668,9 +1668,11 @@ export const getMySubscriptionDetails = async (token, userId) => {
 
   try {
     const response = await fetch(
-      "https://photomedpro.com:10049/api/check-user-subscription",
+
+      "https://photomedpro.com:10049/api/check-non-renewable-subscription-status",
+      // "https://photomedpro.com:10049/api/check-user-subscription",
       {
-        method: "POST",
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -1681,7 +1683,7 @@ export const getMySubscriptionDetails = async (token, userId) => {
 
     const responseData = await response.json();
 
-    if (response.ok && responseData?.transactionId) {
+    if (responseData?.ResponseBody?.isActive && responseData?.ResponseBody?.isExpired === false) {
       console.log("✅ Subscription details:", responseData);
       return responseData;
     } else {

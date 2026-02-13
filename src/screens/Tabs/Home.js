@@ -141,7 +141,7 @@ const Home = () => {
       if (token) {
         let res = await getMySubscriptionDetails(token, userId);
         console.log("getMySubscriptionDetails res", res);
-        dispatch(updateSubscription(res));
+        dispatch(updateSubscription(res?.ResponseBody));
       }
     } catch (error) {
       console.log("getMySubscriptionDetails error", error);

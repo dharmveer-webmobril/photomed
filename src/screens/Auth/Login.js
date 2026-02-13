@@ -141,7 +141,7 @@ const Login = () => {
         device_type,
         fcmToken,
       });
-      console.log("loginApiResponse", loginApiResponse);
+      console.log("loginApiResponse", JSON.stringify(loginApiResponse, null, 2));
       if (loginApiResponse.data?.succeeded) {
         if (loginApiResponse.data.ResponseBody.is_verified == false) {
           navigate(ScreenName.OTP_VERIFICATION, {

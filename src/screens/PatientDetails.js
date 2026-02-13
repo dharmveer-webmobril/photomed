@@ -618,8 +618,8 @@ const PatientDetails = (props) => {
   };
 
   const subscription = useSelector((state) => state.auth?.subscription);
-  const needSubscription = !subscription?.hasSubscription || subscription?.isExpired  // || !subscription?.isActive;
-  // console.log('needSubscriptio------', needSubscription, subscription);
+  const needSubscription = !subscription?.isActive || subscription?.isExpired  // || !subscription?.isActive;
+  console.log('needSubscription------', subscription);
 
 
   const _chooseFile = async () => {

@@ -27,15 +27,16 @@ import { getMySubscriptionDetails } from "../../configs/api";
 import { updateSubscription } from "../../redux/slices/authSlice";
 
 const SKUS = [
-  "com.photomedthreemonth1",
-  "com.photomedonemonth1",
-  "com.photomedyearlyplan1",
+  "com.photomedonemonthsub1",
+  "com.photomedyearlysub1",
+  "com.photomedthreemonthsub1"
 ];
 
+
 const PLAN_PRIORITY = {
-  "com.photomedonemonth1": 1,
-  "com.photomedthreemonth1": 2,
-  "com.photomedyearlyplan1": 3, // highest
+  "com.photomedonemonthsub1": 1,
+  "com.photomedthreemonthsub1": 2,
+  "com.photomedyearlysub1": 3, // highest
 };
 
 export default function SubscriptionManage(params) {
@@ -58,12 +59,12 @@ export default function SubscriptionManage(params) {
         setIsLoading(true);
         await initConnection();
         setIsConnected(true);
-        
+
         // Fetch available subscriptions
         const products = await getSubscriptions({ skus: SKUS });
         console.log("Subscriptions fetched:", JSON.stringify(products, null, 2));
         setSubscriptions(products);
-        
+
         // Set default selected plan if subscriptions available
         if (products.length > 0 && !selectedPlan) {
           setSelectedPlan(products[0].productId);
@@ -90,7 +91,7 @@ export default function SubscriptionManage(params) {
   useEffect(() => {
     const fetchSubscription = async () => {
       if (!token || !userId) return;
-      
+
       setIsGetSubLoading(true);
       try {
         const data = await getMySubscriptionDetails(token, userId);
@@ -120,9 +121,9 @@ export default function SubscriptionManage(params) {
   const finishTransaction1 = async (purchase) => {
     try {
       await finishTransaction({ purchase, isConsumable: false });
-      console.log("Transaction finished:", purchase.transactionId);
+      console.log("finishTransaction1 Transaction finished:", purchase.transactionId);
     } catch (err) {
-      console.warn("Finish transaction error:", err.message, err);
+      console.log("finishTransaction1 Finish transaction error:", err.message, err);
     }
   };
 
@@ -161,35 +162,7 @@ export default function SubscriptionManage(params) {
       let res = await getMySubscriptionDetails(token, userId);
       console.log("getMySubscriptionDetails res:", JSON.stringify(res, null, 2));
 
-      // Handle expired subscriptions - clear pending transactions for iOS
-      // Handle both boolean and string formats for isExpired
-      const isExpired = res && (res?.isExpired === true || res?.isExpired === "yes");
-      
-      if (Platform.OS === "ios" && isExpired) {
-        // For expired subscriptions on iOS, clear any pending transactions
-        // This ensures a fresh purchase flow and password prompt
-        try {
-          const pendingPurchases = await getAvailablePurchases();
-          console.log("Pending purchases before clearing:", JSON.stringify(pendingPurchases, null, 2));
-          
-          // Finish any pending transactions related to expired subscriptions
-          for (const pendingPurchase of pendingPurchases) {
-            if (pendingPurchase.productId && res?.productId === pendingPurchase.productId) {
-              try {
-                await finishTransaction({ purchase: pendingPurchase, isConsumable: false });
-                console.log("Cleared pending transaction for expired subscription:", pendingPurchase.transactionId);
-              } catch (finishErr) {
-                console.warn("Error finishing pending transaction:", finishErr);
-              }
-            }
-          }
-        } catch (clearError) {
-          console.warn("Error clearing pending transactions:", clearError);
-          // Continue with purchase even if clearing fails
-        }
-      }
-
-      if (res && res?.productId && res?.isExpired !== true && res?.isExpired !== "yes") {
+      if (res && res?.productId && res?.isExpired === false) {
         const currentPlanPriority = PLAN_PRIORITY[res.productId];
         const selectedPlanPriority = PLAN_PRIORITY[selectedPlan];
 
@@ -233,19 +206,11 @@ export default function SubscriptionManage(params) {
           ],
         };
       } else {
-        // iOS: For expired subscriptions, ensure we're requesting a new subscription
-        // Use the SKU directly - iOS will handle it as a new purchase if expired
-        purchaseParams = { 
-          sku: selectedPlan,
-          // For expired subscriptions, explicitly request a new subscription
-          ...(isExpired && { 
-            // Force new purchase by not including any existing subscription context
-          })
-        };
+        // iOS: Use the existing SKU-based approach
+        purchaseParams = { sku: selectedPlan };
       }
 
       console.log("Purchase request params:", JSON.stringify(purchaseParams, null, 2));
-      console.log("Is expired subscription:", isExpired);
 
       // Initiate subscription purchase
       const purchase = await requestSubscription(purchaseParams);
@@ -277,7 +242,7 @@ export default function SubscriptionManage(params) {
 
         // Verify purchase with backend
         const response = await fetch(
-          "https://photomedpro.com:10049/api/verify-inapp-receipt",
+          "https://photomedpro.com:10049/api/verify-non-renewable-receipt",
           {
             method: "POST",
             headers: {
@@ -306,13 +271,13 @@ export default function SubscriptionManage(params) {
 
           // Prepare subscription data
           let expData = {
-            expirationDate: responseData?.expirationDate,
+            expirationDate: responseData?.ResponseBody?.expirationDate,
             hasSubscription: true,
-            isActive: responseData?.isActive,
-            isExpired: responseData?.isExpired,
-            productId: responseData?.productId || (Array.isArray(purchase) ? purchase[0].productId : purchase.productId),
-            success: responseData?.success,
-            transactionId: responseData?.transactionId || (Array.isArray(purchase) ? purchase[0].transactionId : purchase.transactionId),
+            isActive: responseData?.ResponseBody?.isActive,
+            isExpired: responseData?.ResponseBody?.isExpired,
+            productId: responseData?.ResponseBody?.productId || (Array.isArray(purchase) ? purchase[0].productId : purchase.productId),
+            success: responseData?.ResponseBody?.success,
+            transactionId: responseData?.ResponseBody?.transactionId || (Array.isArray(purchase) ? purchase[0].transactionId : purchase.transactionId),
           };
 
           // console.log("expData:", JSON.stringify(expData, null, 2));
@@ -320,6 +285,48 @@ export default function SubscriptionManage(params) {
           // Update local state and redux
           setCurrentSubscription(expData);
           dispatch(updateSubscription(expData));
+
+          if (Platform.OS === "ios" && res?.productId && !res?.isExpired) {
+            Alert.alert(
+              "Subscription Already Active",
+              "You already have an active subscription.\n\n" +
+              "• You can manage, cancel, or upgrade your plan from Apple ID Subscriptions.\n" +
+              "• If you upgrade or change your plan, please restart the app afterward.\n" +
+              "• You may also choose a different subscription plan from this app.",
+              [
+                {
+                  text: "Cancel",
+                  style: "cancel",
+                },
+                {
+                  text: "Open Apple Subscriptions",
+                  onPress: () => {
+                    const url = "itms-apps://apps.apple.com/account/subscriptions";
+
+                    Linking.canOpenURL(url)
+                      .then((supported) => {
+                        if (supported) {
+                          Linking.openURL(url);
+                        } else {
+                          Linking.openURL(
+                            "https://apps.apple.com/account/subscriptions"
+                          );
+                        }
+                      })
+                      .catch(() => { });
+                  },
+                },
+                {
+                  text: "Choose Another Plan",
+                  onPress: () => {
+                    return
+                  },
+                },
+              ]
+            );
+
+            return;
+          }
 
           if (from === "profile") {
             goBack();
@@ -334,25 +341,7 @@ export default function SubscriptionManage(params) {
       }
     } catch (error) {
       console.error("Purchase failed:", error.message, error.code, error);
-      
-      // Handle specific error cases
-      if (error.code === "E_USER_CANCELLED" || error.code === "E_USER_ERROR") {
-        // User cancelled or there was a user error - don't show error alert
-        console.log("Purchase cancelled by user");
-        return;
-      } else if (error.code === "E_NETWORK_ERROR") {
-        Alert.alert("Network Error", "Please check your internet connection and try again.");
-      } else if (error.code === "E_SERVICE_ERROR") {
-        Alert.alert("Service Error", "There was an issue with the subscription service. Please try again later.");
-      } else if (error.message && error.message.includes("already purchased")) {
-        // Handle case where subscription might already exist
-        Alert.alert(
-          "Subscription Exists", 
-          "A subscription for this plan already exists. Please use 'Restore Purchases' to restore it, or select a different plan."
-        );
-      } else {
-        Alert.alert("Error", `Failed to complete purchase: ${error.message || "Unknown error occurred"}`);
-      }
+      Alert.alert("Error", `Failed to complete purchase: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
@@ -404,7 +393,7 @@ export default function SubscriptionManage(params) {
 
         // Verify purchase with backend
         const response = await fetch(
-          "https://photomedpro.com:10049/api/verify-inapp-receipt",
+          "https://photomedpro.com:10049/api/verify-non-renewable-receipt",
           {
             method: "POST",
             headers: {
@@ -504,7 +493,7 @@ export default function SubscriptionManage(params) {
       Alert.alert('Error', 'Unable to open link at the moment.');
     }
   };
-console.log('from------', from);
+  console.log('from------', from);
   return (
     <SafeAreaView style={styles.safeArea}>
       <Loading visible={isLoading || isGetSubLoading} />
@@ -545,15 +534,15 @@ console.log('from------', from);
                   style={[styles.planCard, isSelected && styles.selectedCard]}
                 >
                   <View style={styles.cardHeader}>
-                    {plan.productId === "com.photomedthreemonth1" && (
+                    {plan.productId === "com.photomedthreemonthsub1" && (
                       <Text style={styles.planTitle}>3-Month Premium Plan</Text>
                     )}
-                    {plan.productId === "com.photomedyearlyplan1" && (
+                    {plan.productId === "com.photomedyearlysub1" && (
                       <Text style={styles.planTitle}>
                         Annual Pro Subscription
                       </Text>
                     )}
-                    {plan.productId === "com.photomedonemonth1" && (
+                    {plan.productId === "com.photomedonemonthsub1" && (
                       <Text style={styles.planTitle}>Monthly Access Plan</Text>
                     )}
                     <Text style={styles.planPrice}>
@@ -562,17 +551,17 @@ console.log('from------', from);
                         : plan.localizedPrice}
                     </Text>
                   </View>
-                  {plan.productId === "com.photomedthreemonth1" && (
+                  {plan.productId === "com.photomedthreemonthsub1" && (
                     <Text style={styles.planText}>
                       • Enjoy full access to all features for 3 months
                     </Text>
                   )}
-                  {plan.productId === "com.photomedyearlyplan1" && (
+                  {plan.productId === "com.photomedyearlysub1" && (
                     <Text style={styles.planText}>
                       • Full app access for a year at a great value
                     </Text>
                   )}
-                  {plan.productId === "com.photomedonemonth1" && (
+                  {plan.productId === "com.photomedonemonthsub1" && (
                     <Text style={styles.planText}>
                       • Access to all features for 1 month
                     </Text>
@@ -608,18 +597,13 @@ console.log('from------', from);
                 onPress={handlePurchase}
               >
                 <Text style={styles.restoreText}>
-                  {currentSubscription?.isExpired === true || currentSubscription?.isExpired === "yes"
-                    ? "Renew Subscription"
-                    : selectedPlan === currentSubscription?.productId
-                    ? "Upgrade Plan"
-                    : currentSubscription?.productId && selectedPlan !== currentSubscription?.productId
+                  {selectedPlan === currentSubscription?.productId
                     ? "Upgrade Plan"
                     : "Subscribe"}
                 </Text>
               </TouchableOpacity>
               {selectedPlan === currentSubscription?.productId &&
-                currentSubscription?.isExpired !== true && 
-                currentSubscription?.isExpired !== "yes" && (
+                currentSubscription?.isExpired === false && (
                   <TouchableOpacity
                     style={styles.restoreBtn}
                     onPress={handleCancelPlan}
