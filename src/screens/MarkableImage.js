@@ -51,7 +51,7 @@ export default function MarkableImage() {
   const drawingScaleRef = useRef(1);
   const cloudType = useSelector((state) => state.auth.cloudType);
   const route = useRoute();
-  const { body, view } = route?.params || {}; // 'front' or 'back'
+  const { body, view, bodyType, dermoscopyId, dermoscopyData, imageUrl, isExistingDermoscopy } = route?.params || {}; // 'front' or 'back', bodyType like 'face'
 
   const [postDermoscopyMole] = usePostDermoScopyMoleMutation();
   const [updateDermoscopyMole] = useUpdateDermoScopyMoleMutation();
@@ -66,6 +66,8 @@ export default function MarkableImage() {
   const [loading, setLoading] = useState(false)
   const [savedMolesId, setsavedMolesId] = useState(null)
   const [tappedIndex, setTapedIndex] = useState(null)
+  const [updateCount, setUpdateCount] = useState(0)
+  const [notes, setNotes] = useState("")
 
   const viewShotRef = useRef(null);
 
@@ -91,9 +93,62 @@ export default function MarkableImage() {
   }
 
   useEffect(() => {
-    if (cloudType === 'google') getDriveData()
-    else getDropBoxData();
-  }, [cloudType, view, body]);
+    // If navigating from existing dermoscopy record, use the provided imageUrl
+    if (isExistingDermoscopy && imageUrl && dermoscopyData) {
+      console.log("Loading existing dermoscopy image:", imageUrl);
+      console.log("Dermoscopy data:", dermoscopyData);
+      
+      // Set the image directly from the URL
+      setCapturedImage({
+        webContentLink: imageUrl,
+        publicUrl: imageUrl,
+        path_display: imageUrl,
+        name: dermoscopyData.dermoscopyImage || `dermoscopy_${dermoscopyData._id}.jpg`,
+      });
+      
+      // Load existing notes if available
+      if (dermoscopyData.notes) {
+        setNotes(dermoscopyData.notes);
+      }
+      
+      // Set saved moles ID for updates
+      if (dermoscopyData._id) {
+        setsavedMolesId(dermoscopyData._id);
+      }
+      
+      // Set update count if available
+      if (dermoscopyData.updateCount !== undefined) {
+        setUpdateCount(dermoscopyData.updateCount);
+      }
+      
+      setIsLoading(false);
+    } else {
+      // Normal flow: load from cloud storage
+      if (cloudType === 'google') getDriveData()
+      else getDropBoxData();
+    }
+  }, [cloudType, view, body, isExistingDermoscopy, imageUrl, dermoscopyData]);
+
+  // Handle loading moles from dermoscopyData when navigating from existing record
+  useEffect(() => {
+    if (isExistingDermoscopy && dermoscopyData?.moles && Array.isArray(dermoscopyData.moles) && dermoscopyData.moles.length > 0) {
+      console.log("Loading moles from dermoscopyData:", dermoscopyData.moles);
+      
+      // Convert moles to circles format (moles already have center, radius, name)
+      const circlesData = dermoscopyData.moles.map((mole, index) => ({
+        ...mole,
+        // Ensure circles have the required format
+        center: mole.center || { x: 0, y: 0 },
+        radius: mole.radius || 0.1,
+        name: mole.name || `mole_${index}`,
+        attachedImages: [], // Will be populated if needed from cloud
+      }));
+      
+      setCombinedMoles(circlesData);
+      setCircles(circlesData);
+      console.log("Set circles from dermoscopyData:", circlesData);
+    }
+  }, [isExistingDermoscopy, dermoscopyData]);
 
   useEffect(() => {
     (async () => {
@@ -301,6 +356,16 @@ export default function MarkableImage() {
 
       setCombinedMoles(combineData);
       setCircles(combineData);
+      
+      // Set notes if available
+      if (data.ResponseBody[0]?.notes) {
+        setNotes(data.ResponseBody[0].notes);
+      }
+      
+      // Set update count if available (assuming backend returns this)
+      if (data.ResponseBody[0]?.updateCount !== undefined) {
+        setUpdateCount(data.ResponseBody[0].updateCount);
+      }
     }
   }, [data, imageByCloud]);
 
@@ -610,24 +675,98 @@ export default function MarkableImage() {
         return Alert.alert("No Marks", "Please add at least one mark");
       }
 
-      // const { isValid, invalidIndices } = validateAllMolesHavePhotos();
-      // if (!isValid) {
-      //   const moleList = invalidIndices.map(i => `M${i + 1}`).join(", ");
-      //   return Alert.alert(
-      //     "Missing Photos",
-      //     `Please attach at least one photo to each mole:\n${moleList}`
-      //   );
-      // }
+      // Check update count limit (only for updates, not first save)
+      if (savedMolesId && updateCount >= 5) {
+        return Alert.alert(
+          "Update Limit Reached",
+          "You have reached the maximum of 5 updates for this dermoscopy record."
+        );
+      }
 
       setLoading(true);
 
+      // Capture screenshot of the marked image (required)
+      let screenshotUri = null;
+      try {
+        if (viewShotRef.current) {
+          screenshotUri = await viewShotRef.current.capture();
+          console.log("Screenshot captured:", screenshotUri);
+        } else {
+          throw new Error("ViewShot ref not available");
+        }
+      } catch (screenshotError) {
+        console.error("Error capturing screenshot:", screenshotError);
+        Alert.alert("Error", "Failed to capture screenshot. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      if (!screenshotUri) {
+        Alert.alert("Error", "Failed to capture screenshot. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Upload images to cloud storage first
       if (cloudType === "google") {
         await addToDrive();
       } else {
         await addToDropBox();
       }
 
-      await addCirclesDimentions(circles);
+      // Build cloud folder path (same structure as used in addToDropBox and addToDrive)
+      // Format: /PhotoMed/{patientName + patientId}/Dermoscopy/{view}/{body} or /PhotoMed/{patientName + patientId}/Dermoscopy/{body}
+      const basePath = `/PhotoMed/${patientName + patientId}/Dermoscopy`;
+      const cloudFolderPath = view ? `${basePath}/${view}/${body}` : `${basePath}/${body}`;
+
+      // Prepare moles data - convert normalized coordinates to pixel coordinates if needed
+      // Based on Postman, moles should have center {x, y} and radius
+      // The current implementation uses normalized coordinates (0-1), but Postman shows pixel values
+      // We'll keep normalized coordinates as they're more flexible
+      const molesData = circles.map((circle) => ({
+        name: circle.name,
+        center: {
+          x: circle.center.x, // Normalized (0-1)
+          y: circle.center.y, // Normalized (0-1)
+        },
+        radius: circle.radius, // Normalized (0-1)
+      }));
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append('patientId', patientFullId || patientId);
+      formData.append('body', body);
+      formData.append('path', cloudFolderPath); // Use cloud folder path where images are stored
+      formData.append('bodyType', bodyType || body); // Use bodyType from route or fallback to body
+      formData.append('cloudType', cloudType);
+      formData.append('notes', notes || '');
+      formData.append('moles', JSON.stringify(molesData));
+      
+      // Add screenshot image (always required)
+      const screenshotFileName = `screenshot_${body}_${Date.now()}.jpg`;
+      formData.append('image', {
+        uri: screenshotUri,
+        type: 'image/jpeg',
+        name: screenshotFileName,
+      });
+
+      // Send to backend API
+      if (savedMolesId) {
+        // Update existing record
+        await updateDermoscopyMole({
+          token,
+          formData,
+          id: savedMolesId,
+        }).unwrap();
+        setUpdateCount(prev => prev + 1);
+      } else {
+        // Create new record
+        await postDermoscopyMole({
+          token,
+          formData,
+        }).unwrap();
+      }
+
       Alert.alert(
         "Success",
         "Image with marks saved successfully!",
@@ -641,7 +780,7 @@ export default function MarkableImage() {
       );
     } catch (error) {
       console.log("❌ Error in saveImage:", error);
-      Alert.alert("Error", "Something went wrong while saving the image.");
+      Alert.alert("Error", `Something went wrong while saving the image: ${error.message || "Unknown error"}`);
     } finally {
       setLoading(false);
     }
@@ -822,37 +961,11 @@ export default function MarkableImage() {
     }
   }
 
+  // This function is kept for backward compatibility but main save logic is now in saveImage
   async function addCirclesDimentions(updatedList) {
-    let idpatientId = await AsyncStorage.getItem("patientId");
-    const dadada = updatedList.map((item) => ({
-      name: item.name,
-      center: item.center,
-      radius: item.radius,
-    }));
-
-    let payload = {
-      body,
-      patientId: idpatientId,
-      cloudType,
-      moles: dadada,
-    };
-
-    try {
-      if (savedMolesId) {
-        await updateDermoscopyMole({
-          token,
-          data: payload,
-          id: savedMolesId,
-        }).unwrap();
-      } else {
-        await postDermoscopyMole({
-          token,
-          data: payload,
-        }).unwrap();
-      }
-    } catch (error) {
-      console.log("Save error:", error);
-    }
+    // This function is now deprecated - saveImage handles everything
+    // Keeping it for any legacy calls but it won't be used in the main flow
+    console.log("addCirclesDimentions called but deprecated - use saveImage instead");
   }
 
   return (

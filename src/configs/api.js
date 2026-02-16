@@ -19,6 +19,7 @@ import Config from 'react-native-config';
 
 export const configUrl = {
   imageUrl: "https://photomedpro.com:10049/",
+  imageUrl1: "https://photomedpro.com:10049",
   // imageUrl: "http://10.34.185.152:10049/",
   BASE_URL: BASEURL || Config.BASEURL,
   defaultUser: "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
@@ -31,7 +32,7 @@ export const configUrl = {
 
 const GOOGLE_BASE_URL = "https://www.googleapis.com/drive/v3";
 const DRIVE_API = 'https://www.googleapis.com/drive/v3/files';
-console.log('BASEURL',BASEURL);
+console.log('BASEURL', BASEURL);
 
 export async function getFolderId(
   folderName,
@@ -705,7 +706,7 @@ async function checkIfPathExists(path, accessToken) {
 function base64ToBinary(base64) {
 
 
-  const binaryString =  base64.decode(base64);
+  const binaryString = base64.decode(base64);
   const len = binaryString.length;
   const bytes = new Uint8Array(len);
 
@@ -1660,7 +1661,7 @@ export const validateSubscription1 = async (token, receipt, platform = Platform.
 
 // api/subscription.js
 export const getMySubscriptionDetails = async (token, userId) => {
- 
+
   if (!token) {
     console.error("Authentication token missing. Please log in again.");
     return null;
@@ -1683,7 +1684,7 @@ export const getMySubscriptionDetails = async (token, userId) => {
 
     const responseData = await response.json();
 
-    if (responseData?.ResponseBody?.isActive && responseData?.ResponseBody?.isExpired === false) {
+    if (responseData?.ResponseCode === 200) {
       console.log("✅ Subscription details:", responseData);
       return responseData;
     } else {

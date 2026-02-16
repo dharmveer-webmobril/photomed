@@ -66,9 +66,9 @@ export default function SubscriptionManage(params) {
         setSubscriptions(products);
 
         // Set default selected plan if subscriptions available
-        if (products.length > 0 && !selectedPlan) {
-          setSelectedPlan(products[0].productId);
-        }
+        // if (products.length > 0 && !selectedPlan) {
+        //   setSelectedPlan(products[0].productId);
+        // }
       } catch (error) {
         console.error("Error initializing IAP:", error);
         Alert.alert("Error", "Failed to initialize subscription service. Please try again.");
@@ -95,10 +95,11 @@ export default function SubscriptionManage(params) {
       setIsGetSubLoading(true);
       try {
         const data = await getMySubscriptionDetails(token, userId);
+        console.log('my subscription data------', data);
         if (data) {
-          setCurrentSubscription(data);
-          if (data.productId) {
-            setSelectedPlan(data.productId);
+          setCurrentSubscription(data?.ResponseBody);
+          if (data?.ResponseBody?.productId) {
+            setSelectedPlan(data?.ResponseBody?.productId);
           }
         }
       } catch (error) {
@@ -271,16 +272,16 @@ export default function SubscriptionManage(params) {
 
           // Prepare subscription data
           let expData = {
-            expirationDate: responseData?.ResponseBody?.expirationDate,
+            expirationDate: responseData?.expirationDate,
             hasSubscription: true,
-            isActive: responseData?.ResponseBody?.isActive,
-            isExpired: responseData?.ResponseBody?.isExpired,
-            productId: responseData?.ResponseBody?.productId || (Array.isArray(purchase) ? purchase[0].productId : purchase.productId),
-            success: responseData?.ResponseBody?.success,
-            transactionId: responseData?.ResponseBody?.transactionId || (Array.isArray(purchase) ? purchase[0].transactionId : purchase.transactionId),
+            isActive: responseData?.isActive,
+            isExpired: responseData?.isExpired,
+            productId: responseData?.productId || (Array.isArray(purchase) ? purchase[0].productId : purchase.productId),
+            success: responseData?.success,
+            transactionId: responseData?.transactionId || (Array.isArray(purchase) ? purchase[0].transactionId : purchase.transactionId),
           };
 
-          // console.log("expData:", JSON.stringify(expData, null, 2));
+          console.log("expData:", JSON.stringify(expData, null, 2));
 
           // Update local state and redux
           setCurrentSubscription(expData);
