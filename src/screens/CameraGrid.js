@@ -320,8 +320,11 @@ const CameraGrid = (props) => {
     }
   }, [capturedImages]);
 
+  // const subscription = useSelector((state) => state.auth?.subscription);
+  // const needSubscription = !subscription?.hasSubscription || !subscription?.isActive || subscription?.isExpired;
   const subscription = useSelector((state) => state.auth?.subscription);
-  const needSubscription = !subscription?.hasSubscription || !subscription?.isActive || subscription?.isExpired;
+  const needSubscription = !subscription?.isActive || subscription?.isExpired  // || !subscription?.isActive;
+  console.log('needSubscription------', subscription);
 
   const _chooseFile = async () => {
     if (needSubscription) {
