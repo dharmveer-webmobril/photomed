@@ -7,11 +7,9 @@ import AppNavigator from "./src/navigators/AppNavigator";
 import {
   notificationListener,
   requestUserPermission,
-} from "./src/configs/PushNotification";
-import { checkForUpdates } from "./src/configs/helperFunction";
+} from "./src/configs/PushNotification"; 
 import { decode as atob } from "base-64";
-import Orientation from "react-native-orientation-locker";
-import { IAPProvider } from "./src/configs/IAPContext";
+import Orientation from "react-native-orientation-locker"; 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import UpdateChecker from "./src/screens/UpdateCheck";
 import { MenuProvider } from "react-native-popup-menu";

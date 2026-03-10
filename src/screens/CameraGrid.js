@@ -133,6 +133,7 @@ const CameraGrid = (props) => {
   const changeAspectRatio = (ratio) => {
     setActiveAspectRatio((prev) => (prev === ratio ? "4:3" : ratio)); // Toggle between current and default
   };
+  
   // new====================
   const { width: screenWidth } = useWindowDimensions();
   const [selectedRatio, setSelectedRatio] = useState(ASPECT_RATIOS['1:1']);
@@ -343,11 +344,13 @@ const CameraGrid = (props) => {
       console.log("loacalImageArr length", loacalImageArr.length);
 
       if (provider == "google") {
+
         await checkAndRefreshGoogleAccessToken(accessToken);
         const patientInfo = {
           patientId,
           patientName,
         };
+
         const uploadedFileIds = await uploadCaptureFilesToPhotoMedFolder(
           loacalImageArr,
           patientInfo,
