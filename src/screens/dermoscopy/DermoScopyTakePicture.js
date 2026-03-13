@@ -23,6 +23,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
 } from "react-native-reanimated";
+import { Image as CompressImage } from "react-native-compressor";
 import { useRoute } from "@react-navigation/native";
 import FastImage from "react-native-fast-image";
 import { goBack } from "../../navigators/NavigationService";
@@ -127,18 +128,22 @@ export default function DermoScopyImageCompare() {
 
     try {
       setIsCapturing(true);
-      const photo = await cameraRef.current.takePhoto({
+      let photo = await cameraRef.current.takePhoto({
         flash: "off",
         quality: 0.5,
         skipMetadata: true,
       });
 
+      photo = await CompressImage.compress(photo.path, {
+        compressionMethod: "auto",
+        quality: 0.2,
+      });
+
+
       // Process the photo
-      const filePath = photo.path;
+      const filePath = photo;
       const uniqueKey = generateUniqueKey();
-      const fileName = circleName
-        ? `${circleName}_${body}_${uniqueKey}.jpg`
-        : `dermo_${body}_${uniqueKey}.jpg`;
+      const fileName = circleName ? `${circleName}_${body}_${uniqueKey}.jpg` : `dermo_${body}_${uniqueKey}.jpg`;
 
       // Ensure proper file path format
       let newPath = filePath;
@@ -193,6 +198,7 @@ export default function DermoScopyImageCompare() {
       if (saveMainImage && typeof saveMainImage === "function") {
         await saveMainImage(capturedImages[0]);
       }
+
       if (onSave) {
         onSave(capturedImages);
       }

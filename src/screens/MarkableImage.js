@@ -80,7 +80,6 @@ export default function MarkableImage() {
   const token = useSelector((state) => state.auth?.user);
   const [loading, setLoading] = useState(false);
   const [savedMolesId, setsavedMolesId] = useState(null);
-  const savedMolesIdRef = useRef(null);
   const [tappedIndex, setTapedIndex] = useState(null);
   const [updateCount, setUpdateCount] = useState(0);
   const [notes, setNotes] = useState("");
@@ -147,10 +146,9 @@ export default function MarkableImage() {
 
   useEffect(() => {
     if (data && data?.ResponseBody && imageByCloud) {
-      if(data.ResponseBody[0]?._id){
-        savedMolesIdRef.current = data.ResponseBody[0]?._id;
+      if (data.ResponseBody[0]?._id) {
         setsavedMolesId(data.ResponseBody[0]?._id);
-      } 
+      }
 
       if (data.ResponseBody[0]?.moles?.length > 0) {
         const combineData = combineMoleAndFolderData(
@@ -890,8 +888,10 @@ export default function MarkableImage() {
         type: "image/jpeg",
         name: screenshotFileName,
       });
-console.log("savedMolesIdsavedMolesIdsavedMolesId---", savedMolesIdRef?.current);
-// return;
+      console.log(
+        "savedMolesIdsavedMolesIdsavedMolesId---",
+      );
+      // return;
       // Send to backend API
       if (savedMolesId) {
         // Update existing record
@@ -940,12 +940,17 @@ console.log("savedMolesIdsavedMolesIdsavedMolesId---", savedMolesIdRef?.current)
       formData.append("path", cloudFolderPath);
       formData.append("bodyType", bodyType || body);
       formData.append("cloudType", cloudType);
+      formData.append("moles", JSON.stringify([]));
 
       const screenshotFileName = `screenshot_${body}_${Date.now()}.jpg`;
-
+      Image?.getSize(imageData?.path, (width, height) => {
+        console.log("width width width width", width);
+        console.log("height height height height", height);
+      });
+      
       formData.append("image", {
         uri: imageData?.path,
-        type: "image/jpeg",
+        type: "image/jpg",
         name: screenshotFileName,
       });
 
@@ -957,10 +962,11 @@ console.log("savedMolesIdsavedMolesIdsavedMolesId---", savedMolesIdRef?.current)
       }).unwrap();
 
       console.log("1st time mole ", res?.ResponseBody?._id);
+
       if (res?.ResponseBody?._id) {
         setsavedMolesId(res?.ResponseBody?._id);
-        savedMolesIdRef.current = res?.ResponseBody?._id;
       }
+
       console.log("savedMolesIdsavedMolesIdsavedMolesId---", savedMolesId);
     } catch (error) {
       console.log("❌ Error in saveMainImage:", error);

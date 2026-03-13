@@ -1133,6 +1133,11 @@ export const commonApi = createApi({
         },
         body: formData,
       }),
+    
+      transformErrorResponse: (response) => {
+        console.log("API ERROR:123123123213", response);
+        return response;
+      },
     }),
 
     updateDermoScopyMole: builder.mutation({

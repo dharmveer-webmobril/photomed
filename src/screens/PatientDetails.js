@@ -391,6 +391,7 @@ const PatientDetails = (props) => {
           "Content-Type": "application/json",
         },
       });
+      console.log("data data data data", JSON.stringify(data, null, 2));
       const list = processDermoscopyResponse(data, cloudProvider);
       setDermoscopyImagesList(list);
       prevCombinedRef.current = null; // force combined list to recompute
