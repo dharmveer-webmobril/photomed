@@ -126,7 +126,7 @@ const ConnectCloud = () => {
     // }
     startDropboxAuth();
   }
-
+console.log('configUrl.GOOGLE_CLIENT_ID', configUrl.GOOGLE_CLIENT_ID);
   GoogleSignin.configure({
     webClientId: configUrl.GOOGLE_CLIENT_ID,
     offlineAccess: true,

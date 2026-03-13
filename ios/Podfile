@@ -1,3 +1,5 @@
+ENV['NODE_BINARY'] = '/usr/local/bin/node'
+ 
 require Pod::Executable.execute_command(
   'node',
   [

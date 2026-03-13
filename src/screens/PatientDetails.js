@@ -33,8 +33,8 @@ import {
   useGetPatientDetailsQuery,
   useUpdatePatientMutation,
   useUploadFileToDropboxMutation,
-  useGetAllDermoScopyMolesQuery,
 } from "../redux/api/common";
+import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import Loading from "../components/Loading";
 import {
@@ -51,7 +51,7 @@ import {
 import DeleteImagePopUp from "../components/DeleteImagePopUp";
 import ImageWithLoader from "../components/ImageWithLoader";
 import Toast from "react-native-simple-toast";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { logout, savePatientInfo } from "../redux/slices/authSlice";
 import { storeData } from "../configs/helperFunction";
@@ -312,82 +312,40 @@ const PatientDetails = (props) => {
   const [deleteFile, { isLoading: loaded }] =
     useDeleteFileFromDropboxMutation();
 
-  // Fetch all dermoscopy records for the patient
-  const {
-    data: dermoscopyData,
-    isLoading: isLoadingDermoscopy,
-    error: dermoscopyError,
-    refetch: refetchDermoscopy,
-  } = useGetAllDermoScopyMolesQuery(
-    {
-      patientId: preData._id,
-      token,
-    },
-    {
-      skip: !preData?._id || !token, // Skip if patientId or token is not available
-    }
-  );
-
   const [dermoscopyImagesList, setDermoscopyImagesList] = useState([]);
-  const processedDermoscopyRef = useRef(null);
+  const [isLoadingDermoscopy, setIsLoadingDermoscopy] = useState(false);
   const prevCombinedRef = useRef(null);
+  const navigation = useNavigation();
 
-  // Process dermoscopy data using useEffect to avoid infinite loops
+  // Refs so focus callback always has latest values when returning from MarkableImage
+  const preDataIdRef = useRef(preData?._id);
+  const tokenRef = useRef(token);
+  const providerRef = useRef(provider);
   useEffect(() => {
-    if (!dermoscopyData?.ResponseBody || !Array.isArray(dermoscopyData.ResponseBody)) {
-      if (dermoscopyImagesList.length > 0) {
-        setDermoscopyImagesList([]);
-      }
-      return;
+    preDataIdRef.current = preData?._id;
+    tokenRef.current = token;
+    providerRef.current = provider;
+  }, [preData?._id, token, provider]);
+
+  // Process API response into dermoscopy images list (used by axios fetch)
+  const processDermoscopyResponse = useCallback((responseData, cloudProvider) => {
+    if (!responseData?.ResponseBody || !Array.isArray(responseData.ResponseBody)) {
+      return [];
     }
-
-    // Check if we've already processed this data
-    const dataKey = JSON.stringify(dermoscopyData.ResponseBody.map(r => r._id));
-    if (processedDermoscopyRef.current === dataKey) {
-      return; // Already processed
-    }
-
-    console.log("=== DERMOSCOPY API DATA ===");
-    console.log("Full API Response:", JSON.stringify(dermoscopyData, null, 2));
-    console.log("ResponseBody:", dermoscopyData?.ResponseBody);
-    console.log("Number of records:", dermoscopyData?.ResponseBody?.length || 0);
-
     const dermoscopyImages = [];
-
-    dermoscopyData.ResponseBody.forEach((record, index) => {
-      console.log(`\n--- Record ${index + 1} ---`);
-      console.log("ID:", record._id);
-      console.log("Patient ID:", record.patientId);
-      console.log("Body:", record.body);
-      console.log("Body Type:", record.bodyType);
-      console.log("Path:", record.path);
-      console.log("Cloud Type:", record.cloudType);
-      console.log("Dermoscopy Image:", record.dermoscopyImage);
-      console.log("Image URL:", record.imageUrl);
-      console.log("Moles:", record.moles);
-      console.log("Notes:", record.notes);
-      console.log("Created At:", record.createdAt);
-      console.log("Updated At:", record.updatedAt);
-
-      // Add image if imageUrl exists
+    responseData.ResponseBody.forEach((record) => {
       if (record.imageUrl) {
-        // Construct full image URL
         let fullImageUrl = record.imageUrl;
         if (!fullImageUrl.startsWith("http")) {
-          // Handle leading slash properly
-          const baseUrl = configUrl.imageUrl.endsWith("/") 
-            ? configUrl.imageUrl.slice(0, -1) 
+          const baseUrl = configUrl.imageUrl.endsWith("/")
+            ? configUrl.imageUrl.slice(0, -1)
             : configUrl.imageUrl;
-          const imagePath = fullImageUrl.startsWith("/") 
-            ? fullImageUrl 
+          const imagePath = fullImageUrl.startsWith("/")
+            ? fullImageUrl
             : `/${fullImageUrl}`;
           fullImageUrl = `${baseUrl}${imagePath}`;
         }
-        
-        console.log(`Processing dermoscopy image - Original: ${record.imageUrl}, Full: ${fullImageUrl}`);
-        
-        // Format for Google Drive or Dropbox compatibility
-        const imageData = provider === "google" 
+        const imageData = cloudProvider === "google"
           ? {
               id: record._id,
               name: record.dermoscopyImage || `dermoscopy_${record._id}.jpg`,
@@ -411,23 +369,38 @@ const PatientDetails = (props) => {
               server_modified: record.updatedAt || record.createdAt,
               updatedAt: record.updatedAt,
             };
-        
         dermoscopyImages.push(imageData);
       }
     });
+    return dermoscopyImages;
+  }, []);
 
-    console.log("Dermoscopy Images List:", dermoscopyImages);
-    console.log("Dermoscopy Images URLs:", dermoscopyImages.map(img => ({
-      id: img.id,
-      publicUrl: img.publicUrl,
-      webContentLink: img.webContentLink,
-      path_display: img.path_display,
-    })));
-    
-    processedDermoscopyRef.current = dataKey;
-    setDermoscopyImagesList(dermoscopyImages);
-    console.log("=== END DERMOSCOPY DATA ===\n");
-  }, [dermoscopyData, provider]);
+  // Fetch dermoscopy via axios (used on focus so list updates after adding circles in MarkableImage)
+  const fetchDermoscopyData = useCallback(async () => {
+    const patientId = preDataIdRef.current;
+    const authToken = tokenRef.current;
+    const cloudProvider = providerRef.current;
+    if (!patientId || !authToken) return;
+    const baseUrl = (configUrl.BASE_URL || "").replace(/\/?$/, "") + "/";
+    const url = `${baseUrl}dermoscopy?patientId=${patientId}`;
+    setIsLoadingDermoscopy(true);
+    try {
+      const { data } = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const list = processDermoscopyResponse(data, cloudProvider);
+      setDermoscopyImagesList(list);
+      prevCombinedRef.current = null; // force combined list to recompute
+    } catch (err) {
+      console.error("Error fetching dermoscopy:", err);
+      setDermoscopyImagesList([]);
+    } finally {
+      setIsLoadingDermoscopy(false);
+    }
+  }, [processDermoscopyResponse]);
 
   // Combine regular images with dermoscopy images using useMemo with stable dependencies
   const regularImagesHash = useMemo(() => {
@@ -667,19 +640,20 @@ const PatientDetails = (props) => {
       setPatientId();
       setSelectedImages([]);
       setCollageImage([]);
-      // Refetch dermoscopy data when screen comes into focus
-      if (preData?._id && token) {
-        console.log("Refetching dermoscopy data on focus for patient:", preData._id);
-        // Reset the processed ref so new data gets processed
-        processedDermoscopyRef.current = null;
-        refetchDermoscopy().then((result) => {
-          console.log("Dermoscopy refetch result:", result?.data);
-        }).catch((error) => {
-          console.error("Error refetching dermoscopy:", error);
-        });
-      }
-    }, [accessToken, provider, preData?._id, token, refetchDermoscopy])
+    }, [accessToken, provider])
   );
+
+  // Refetch dermoscopy when screen gains focus (e.g. returning from MarkableImage after adding circles)
+  useEffect(() => {
+    const onFocus = () => {
+      if (preDataIdRef.current && tokenRef.current) {
+        fetchDermoscopyData();
+      }
+    };
+    onFocus(); // fetch on mount when screen is focused
+    const unsubscribe = navigation.addListener("focus", onFocus);
+    return unsubscribe;
+  }, [navigation, fetchDermoscopyData]);
 
   // Separate function for Google Drive uploads
   const handleGoogleDriveUpload = async (files) => {
