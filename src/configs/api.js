@@ -165,12 +165,24 @@ export async function createFolderInParent(folderName, parentId, accessToken) {
   }
 }
 
+/** Escape a Drive API `q` string literal (single-quoted name segment). */
+function escapeDriveQueryName(folderName) {
+  if (folderName == null || folderName === "") return "";
+  return String(folderName).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
 export async function createFolderInParentAndCheck(folderName, parentId, accessToken) {
   try {
+    if (!folderName || !parentId) {
+      throw new Error("createFolderInParentAndCheck: folderName and parentId are required");
+    }
+    const safeName = escapeDriveQueryName(folderName);
     // Step 1: Check if folder already exists
-    const query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and '${parentId}' in parents and trashed=false`;
+    const query = `mimeType='application/vnd.google-apps.folder' and name='${safeName}' and '${parentId}' in parents and trashed=false`;
     const searchRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id, name)`,
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
+        query
+      )}&spaces=drive&fields=files(id,name)`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -179,6 +191,11 @@ export async function createFolderInParentAndCheck(folderName, parentId, accessT
     );
 
     const searchData = await searchRes.json();
+    if (!searchRes.ok) {
+      throw new Error(
+        searchData?.error?.message || "Drive folder search failed"
+      );
+    }
     if (searchData.files && searchData.files.length > 0) {
       // ✅ Folder already exists
       return searchData.files[0].id;
@@ -192,7 +209,7 @@ export async function createFolderInParentAndCheck(folderName, parentId, accessT
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        name: folderName,
+        name: String(folderName),
         mimeType: "application/vnd.google-apps.folder",
         parents: [parentId],
       }),
@@ -274,9 +291,11 @@ export const safeCreateFolder = async (
       if (!folderName) continue; // Skip if folderName is empty
 
       try {
+        const safeName = escapeDriveQueryName(folderName);
+        const q = `'${currentParentId}' in parents and name='${safeName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
         // Check if the folder exists in the current parent folder
         const checkRes = await fetch(
-          `${driveEndpoint}?q='${currentParentId}' in parents and name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+          `${driveEndpoint}?q=${encodeURIComponent(q)}&spaces=drive&fields=files(id,name)`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -285,8 +304,10 @@ export const safeCreateFolder = async (
         );
 
         if (!checkRes.ok) {
+          const errBody = await checkRes.json().catch(() => ({}));
           throw new Error(
-            `Failed to fetch folder "${folderName}". Status: ${checkRes.status}`
+            errBody?.error?.message ||
+              `Failed to fetch folder "${folderName}". Status: ${checkRes.status}`
           );
         }
 
@@ -307,7 +328,7 @@ export const safeCreateFolder = async (
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              name: folderName,
+              name: String(folderName),
               mimeType: "application/vnd.google-apps.folder",
               parents: [currentParentId],
             }),

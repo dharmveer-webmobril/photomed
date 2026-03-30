@@ -382,7 +382,9 @@ const PatientDetails = (props) => {
     const cloudProvider = providerRef.current;
     if (!patientId || !authToken) return;
     const baseUrl = (configUrl.BASE_URL || "").replace(/\/?$/, "") + "/";
-    const url = `${baseUrl}dermoscopy?patientId=${patientId}`;
+    const url = `${baseUrl}dermoscopy?patientId=${patientId}&cloudType=${cloudProvider}`;
+    console.log("url url url url", url);
+    console.log("url url url url", authToken);
     setIsLoadingDermoscopy(true);
     try {
       const { data } = await axios.get(url, {
@@ -391,7 +393,7 @@ const PatientDetails = (props) => {
           "Content-Type": "application/json",
         },
       });
-      console.log("data data data data", JSON.stringify(data, null, 2));
+      // console.log("data data data data", JSON.stringify(data, null, 2));
       const list = processDermoscopyResponse(data, cloudProvider);
       setDermoscopyImagesList(list);
       prevCombinedRef.current = null; // force combined list to recompute
@@ -786,15 +788,15 @@ const PatientDetails = (props) => {
     // If it's a dermoscopy image, navigate directly to MarkableImage
     if (item[0]?.isDermoscopy && item[0]?.dermoscopyRecord) {
       const record = item[0]?.dermoscopyRecord;
-      console.log("Navigating to MarkableImage with dermoscopy record:", record?.path);
+      // console.log("Navigating to MarkableImage with dermoscopy record:", record?.path);
       let pathsssss = record?.path?.split('/');
-      console.log('pathsssss------', pathsssss);
+      // console.log('pathsssss------', pathsssss);
       console.log("Image URL:", item[0]?.publicUrl || item[0]?.webContentLink || item[0]?.path_display || item[0]?.imageUrl);
       navigate("MarkableImage", {
         body: pathsssss[pathsssss.length - 1],
         view: pathsssss[pathsssss.length - 2],
       });
-      console.log('record------', pathsssss[pathsssss.length - 1], pathsssss[pathsssss.length - 2]);
+      // console.log('record------', pathsssss[pathsssss.length - 1], pathsssss[pathsssss.length - 2]);
       return;
     }
 
@@ -827,7 +829,7 @@ const PatientDetails = (props) => {
 
   const subscription = useSelector((state) => state.auth?.subscription);
   const needSubscription = !subscription?.isActive || subscription?.isExpired  // || !subscription?.isActive;
-  console.log('needSubscription------', subscription);
+  // console.log('needSubscription------', subscription);
 
 
   const _chooseFile = async () => {

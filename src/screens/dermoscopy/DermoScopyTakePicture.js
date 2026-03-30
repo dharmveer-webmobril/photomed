@@ -191,23 +191,22 @@ export default function DermoScopyImageCompare() {
 
     try {
       setIsSaving(true);
+      let imagesAfterUpload = capturedImages;
       if (uploadToCloud && typeof uploadToCloud === "function") {
-        saveMainImage && typeof saveMainImage === "function"
-          ? uploadToCloud(capturedImages, {
-              isMainImage: isMainImageCapture,
-              circleName: circleName || undefined,
-            })
-          : await uploadToCloud(capturedImages, {
-              isMainImage: isMainImageCapture,
-              circleName: circleName || undefined,
-            });
+        const maybeUpdated = await uploadToCloud(capturedImages, {
+          isMainImage: isMainImageCapture,
+          circleName: circleName || undefined,
+        });
+        if (Array.isArray(maybeUpdated) && maybeUpdated.length > 0) {
+          imagesAfterUpload = maybeUpdated;
+        }
       }
       if (saveMainImage && typeof saveMainImage === "function") {
-        await saveMainImage(capturedImages[0]);
+        await saveMainImage(imagesAfterUpload[0]);
       }
 
       if (onSave) {
-        onSave(capturedImages);
+        onSave(imagesAfterUpload);
       }
       goBack();
     } catch (err) {

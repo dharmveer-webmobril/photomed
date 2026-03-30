@@ -501,6 +501,11 @@ export default function MarkableImage() {
   const uploadCapturedImagesToCloud = useCallback(
     async (images, { isMainImage, circleName }) => {
       if (!images?.length) return;
+      if (!isMainImage && !(circleName && String(circleName).trim())) {
+        throw new Error(
+          "Mole cloud folder is missing. Open the mark menu and attach a photo again.",
+        );
+      }
       const basePath = `/PhotoMed/${patientName + patientId}/Dermoscopy`;
       const viewPath = view
         ? `${basePath}/${view}/${body}`
@@ -539,6 +544,7 @@ export default function MarkableImage() {
             accessToken,
           );
         }
+        const uploaded = [];
         for (const img of images) {
           const path = img.path?.startsWith("file://")
             ? img.path
@@ -548,8 +554,10 @@ export default function MarkableImage() {
             name: img.name,
             type: img.mime || "image/jpeg",
           };
-          await uploadFileToDrive(file, targetFolderId, accessToken);
+          const fileId = await uploadFileToDrive(file, targetFolderId, accessToken);
+          uploaded.push({ ...img, id: fileId });
         }
+        return uploaded;
       } else {
         for (const img of images) {
           const path = img.path?.startsWith("file://")
