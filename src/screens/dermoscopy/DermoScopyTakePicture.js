@@ -143,7 +143,14 @@ export default function DermoScopyImageCompare() {
       // Process the photo
       const filePath = photo;
       const uniqueKey = generateUniqueKey();
-      const fileName = circleName ? `${circleName}_${body}_${uniqueKey}.jpg` : `dermo_${body}_${uniqueKey}.jpg`;
+      const sanitize = (str) => str?.replace(/\s+/g, '_');
+
+      const fileName = circleName
+        ? `${sanitize(circleName)}_${sanitize(body)}_${uniqueKey}.jpg`
+        : `dermo_${sanitize(body)}_${uniqueKey}.jpg`;
+
+      console.log("fileNamefileNamefileName", fileName);
+      // return;
 
       // Ensure proper file path format
       let newPath = filePath;

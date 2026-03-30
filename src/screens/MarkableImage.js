@@ -193,7 +193,7 @@ export default function MarkableImage() {
       ? `${basePath}/${view}/${body}`
       : `${basePath}/${body}`; // front/back comes before body part
     const path = folderPath === "" ? "" : folderPath;
-    console.log("pathpathpath", path);
+    console.log("pathpathpath getDropBoxData", path);
 
     setIsLoading(true);
     try {
@@ -212,7 +212,7 @@ export default function MarkableImage() {
           include_has_explicit_shared_members: false,
         },
       });
-
+    console.log("responseresponseresponse getDropBoxData", JSON.stringify(response.data, null, 2));
       const entries = response.data.entries || [];
       const folders = entries.filter((item) => item[".tag"] === "folder");
       const files = entries.filter((item) => item[".tag"] === "file");
