@@ -51,6 +51,43 @@ import OptionsModal from "../components/OptionsModal";
 import ImageZoomModal from "../components/ImageZoomModal";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+function normalizeDropboxPath(p) {
+  return (p || "").replace(/\/+$/, "").toLowerCase();
+}
+
+/** Dropbox list_folder is paginated; collect every entry for recursive listings. */
+async function listDropboxFolderRecursiveAll(listPath, accessToken) {
+  let entries = [];
+  let cursor = null;
+  let hasMore = true;
+
+  while (hasMore) {
+    const response = await axios({
+      method: "POST",
+      url: cursor
+        ? "https://api.dropboxapi.com/2/files/list_folder/continue"
+        : "https://api.dropboxapi.com/2/files/list_folder",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      data: cursor
+        ? { cursor }
+        : {
+            path: listPath,
+            recursive: true,
+            include_media_info: true,
+            include_deleted: false,
+            include_has_explicit_shared_members: false,
+          },
+    });
+    entries = entries.concat(response.data.entries || []);
+    hasMore = response.data.has_more === true;
+    cursor = response.data.cursor;
+  }
+  return entries;
+}
+
 export default function MarkableImage() {
   const [box, setBox] = useState({ w: 0, h: 0 });
   const [imageSize, setImageSize] = useState({ w: 0, h: 0 });
@@ -197,23 +234,7 @@ export default function MarkableImage() {
 
     setIsLoading(true);
     try {
-      const response = await axios({
-        method: "POST",
-        url: "https://api.dropboxapi.com/2/files/list_folder",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        data: {
-          path,
-          recursive: true,
-          include_media_info: true,
-          include_deleted: false,
-          include_has_explicit_shared_members: false,
-        },
-      });
-    console.log("responseresponseresponse getDropBoxData", JSON.stringify(response.data, null, 2));
-      const entries = response.data.entries || [];
+      const entries = await listDropboxFolderRecursiveAll(path, accessToken);
       const folders = entries.filter((item) => item[".tag"] === "folder");
       const files = entries.filter((item) => item[".tag"] === "file");
       const imageFiles = files.filter((file) =>
@@ -281,8 +302,20 @@ export default function MarkableImage() {
         }),
       );
 
-      let imageJson = groupedFolders[0]?.images[0];
-      let imageJson1 = groupedFolders.slice(1);
+      const listingNorm = normalizeDropboxPath(path);
+      const mainFolderGroup = groupedFolders.find(
+        (g) => normalizeDropboxPath(g.folderPath) === listingNorm,
+      );
+      const moleFolderGroups = groupedFolders.filter((g) => {
+        const fp = normalizeDropboxPath(g.folderPath);
+        if (fp === listingNorm) return false;
+        const prefix = `${listingNorm}/`;
+        if (!fp.startsWith(prefix)) return false;
+        return fp.slice(prefix.length).indexOf("/") === -1;
+      });
+
+      const imageJson = mainFolderGroup?.images?.[0];
+      const imageJson1 = moleFolderGroups;
       setCapturedImage(imageJson);
       setImageByCloud(imageJson1);
       console.log("fasdfafasfasfa", JSON.stringify(groupedFolders, null, 2));
