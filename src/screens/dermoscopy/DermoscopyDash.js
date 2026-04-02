@@ -12,16 +12,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { goBack, navigate } from '../../navigators/NavigationService';
 import { useSelector } from 'react-redux';
-
 import AppTextInput from '../../components/AppTextInput';
 import CustomBtn from '../../components/CustomBtn';
 import Loading from '../../components/Loading';
-
 import COLORS from '../../styles/colors';
-import FONTS from '../../styles/fonts';
 import CrossIcon from '../../assets/SvgIcons/CrossIcon';
 import { imagePath } from '../../configs/imagePath';
-
 import { useAddBodyPartsMutation } from '../../redux/api/common';
 import { useCurrentUserProfileQuery } from '../../redux/api/user';
 
@@ -187,7 +183,8 @@ export default function DermoscopyDash() {
                     value={searchTerm}
                     onChangeText={setSearchTerm}
                     placeholder="Search..."
-                    style={{ flex: 1 }}
+                    placeholderTextColor={COLORS.placeHolderTxtColor}
+                    style={{ flex: 1 ,paddingVertical:12,color:COLORS.textColor}}
                 />
                 {searchTerm.length > 0 && (
                     <TouchableOpacity onPress={() => setSearchTerm('')}>
@@ -304,7 +301,7 @@ const styles = StyleSheet.create({
     backIcon: { height: 30, width: 30 },
     addBtn: { backgroundColor: '#32327C', borderRadius: 8, width: 30, height: 30, alignItems: "center" },
     title: { fontSize: 16, fontWeight: '600' },
-    searchBox: { flexDirection: 'row', alignItems: 'center', margin: 10, borderWidth: 1, borderRadius: 20, padding: 8 },
+    searchBox: { flexDirection: 'row', alignItems: 'center', margin: 10, borderWidth: 1, borderRadius: 20, paddingHorizontal: 8 },
     headerRow: { flexDirection: 'row', justifyContent: 'space-around', marginVertical: 10 },
     columnHeader: { fontWeight: '700', color: '#32327C' },
     rowContainer: { flexDirection: 'row', marginBottom: 8 },

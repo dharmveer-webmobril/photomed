@@ -214,7 +214,7 @@ const MainStack = () => {
         name={ScreenName.SUB_MANAGE}
         options={{ headerShown: false }}
         component={SubscriptionManage}
-      />
+      /> 
       {/* <Stack.Screen
         name={ScreenName.SUB_MANAGE}
         options={{ headerShown: false }}

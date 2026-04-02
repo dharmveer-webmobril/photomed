@@ -6,6 +6,8 @@ import { useRoute } from '@react-navigation/native';
 import COLORS from '../../styles/colors';
 import ImageCropPicker from 'react-native-image-crop-picker';
 import PlusIcon from '../../assets/SvgIcons/PlusIcon';
+import ScreenName from '../../configs/screenName';
+import { navigate } from '../../navigators/NavigationService';
 
 const { height } = Dimensions.get("window");
 export default function CollageDermoscopy() {
@@ -20,7 +22,7 @@ export default function CollageDermoscopy() {
   useEffect(() => {
     setImageArr(images)
     if (images?.length > 0) {
-      setFirstBoximage(images[images?.length-1])
+      setFirstBoximage(images[images?.length - 1])
     }
   }, [images])
 
@@ -38,12 +40,26 @@ export default function CollageDermoscopy() {
       .catch((e) => console.log("Camera cancelled or error:", e));
   };
 
+  const btnOpenCamera = () => {
+    navigate(ScreenName.DERMO_SCOPY_CAMERA, {
+      type: 'collage',
+      onSave: (capturedImages) => {
+        console.log('capturedImages',capturedImages);
+        
+        if (capturedImages && capturedImages.length > 0) {
+          setSecondBoxImage(capturedImages[0])
+        }
+      }
+    })
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.rowContainer}>
         <View style={styles.firstBox}>
           <Gestures
             scalable={{ min: 1, max: 5 }}
+            rotatable={false}
             style={styles.gestureContainer}
           >
             {firstBoximage && <ImageWithLoader
@@ -56,6 +72,7 @@ export default function CollageDermoscopy() {
         <View style={styles.secondBox}>
           {secondBoxImage ? (
             <Gestures
+              rotatable={false}
               scalable={{ min: 1, max: 5 }}
               style={styles.gestureContainer}
             >
@@ -66,13 +83,17 @@ export default function CollageDermoscopy() {
               />
             </Gestures>
           ) : (
-            <TouchableOpacity onPress={() => { openCamera() }} style={styles.addImageButton}>
+            <TouchableOpacity onPress={() => { btnOpenCamera() }} style={styles.addImageButton}>
               <PlusIcon color={COLORS.primary} />
               <Text style={styles.addImageText}>Add Image</Text>
             </TouchableOpacity>
           )}
           {secondBoxImage && (
-            <TouchableOpacity onPress={() => { openCamera() }} style={styles.changeImageButton}>
+            <TouchableOpacity onPress={() => {
+              // openCamera() 
+              btnOpenCamera()
+
+            }} style={styles.changeImageButton}>
               <Text style={styles.changeImageText}>Change Image</Text>
             </TouchableOpacity>
           )}

@@ -10,7 +10,7 @@ const TIMEOUT = 180000; // 3 minutes
 
 const baseQueryWithTimeout = fetchBaseQuery({
   // baseUrl: "https://photomedpro.com:10049/api/",
-  baseUrl: "http://192.168.1.29:10049/api/",
+  baseUrl: "https://photomedpro.com:10049/api/",
   fetchFn: async (input, init) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
@@ -1098,9 +1098,8 @@ export const commonApi = createApi({
 
     getDermoScopyMoles: builder.query({
       query: ({ body, patientId, token, cloudType }) => {
-        console.log('getDermoScopyMoles patientId cloudType', patientId, cloudType);
-        console.log('`dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`', `dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`);
-
+        // console.log('getDermoScopyMoles patientId cloudType', patientId, cloudType);
+        // console.log('`dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`', `dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`);
         return {
           url: `dermoscopy?patientId=${patientId}&body=${body}&cloudType=${cloudType}`,
           method: 'GET',
@@ -1111,28 +1110,63 @@ export const commonApi = createApi({
         }
       }
     }),
+
+    getAllDermoScopyMoles: builder.query({
+      query: ({ patientId, token }) => {
+        return {
+          url: `dermoscopy?patientId=${patientId}`,
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      }
+    }),
+
     postDermoScopyMole: builder.mutation({
-      query: ({ token, data }) => ({
+      query: ({ token, formData }) => ({
         url: `dermoscopy`,
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: formData,
       }),
+    
+      transformErrorResponse: (response) => {
+        console.log("API ERROR:123123123213", response);
+        return response;
+      },
     }),
+
     updateDermoScopyMole: builder.mutation({
-      query: ({ token, data, id }) => ({
-        url: `dermoscopy/${id}`,
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      }),
+      query: ({ token, formData, data, id }) => {
+        // If formData is provided (has image), use form-data
+        // Otherwise use JSON body for backward compatibility
+        if (formData) {
+          return {
+            url: `dermoscopy/${id}`,
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          };
+        } else {
+          return {
+            url: `dermoscopy/${id}`,
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+          };
+        }
+      },
     }),
+    
     postPatientTags: builder.mutation({
       query: ({ token, tags, patientId }) => ({
         url: `addtags/${patientId}`,
@@ -1187,6 +1221,7 @@ export const {
   usePostDermoScopyMoleMutation,
   useUpdateDermoScopyMoleMutation,
   useGetDermoScopyMolesQuery,
+  useGetAllDermoScopyMolesQuery,
   usePostPatientTagsMutation,
   useAddBodyPartsMutation
 } = commonApi;

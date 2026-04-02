@@ -329,7 +329,9 @@ const CollageAdd = (props) => {
       >
         <Gestures
           draggable={selectedImageIndex !== imageIndex}
-          rotatable={selectedImageIndex !== imageIndex}
+          // rotatable={selectedImageIndex !== imageIndex}
+          // draggable={false}
+          rotatable={false}
           scalable={{ min: 1, max: 5 }}
           style={{ height: "100%", width: "100%" }}
         >

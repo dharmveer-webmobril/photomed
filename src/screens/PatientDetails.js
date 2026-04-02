@@ -1,16 +1,16 @@
 import {
   Dimensions,
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import WrapperContainer from "../components/WrapperContainer";
 import commonStyles from "../styles/commonStyles";
 import {
-  height,
   moderateScale,
   verticalScale,
 } from "../styles/responsiveLayoute";
@@ -34,6 +34,7 @@ import {
   useUpdatePatientMutation,
   useUploadFileToDropboxMutation,
 } from "../redux/api/common";
+import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import Loading from "../components/Loading";
 import {
@@ -50,7 +51,7 @@ import {
 import DeleteImagePopUp from "../components/DeleteImagePopUp";
 import ImageWithLoader from "../components/ImageWithLoader";
 import Toast from "react-native-simple-toast";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { logout, savePatientInfo } from "../redux/slices/authSlice";
 import { storeData } from "../configs/helperFunction";
@@ -224,6 +225,40 @@ const styles = StyleSheet.create({
   cameraButtonTitle: {
     fontSize: 14,
   },
+  dermoscopySection: {
+    marginTop: verticalScale(10),
+    marginBottom: verticalScale(10),
+    // paddingHorizontal: moderateScale(20),
+  },
+  bodyPartTitle: {
+    fontFamily: FONTS.medium,
+    fontSize: 14,
+    color: COLORS.textColor,
+    marginBottom: verticalScale(6),
+    textTransform: "capitalize",
+  },
+  dermoscopyImagesContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    // gap: moderateScale(10),
+  },
+  dermoscopyImagesContainer12: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: moderateScale(10),
+  },
+  dermoscopyImageWrapper: {
+    width: (width - moderateScale(80)) / 3,
+    height: (width - moderateScale(80)) / 3,
+    marginBottom: moderateScale(8),
+    borderRadius: 8,
+    overflow: "hidden",
+    backgroundColor: COLORS.placeHolderTxtColor + "20",
+  },
+  dermoscopyImage: {
+    width: "100%",
+    height: "100%",
+  },
 });
 
 const PatientDetails = (props) => {
@@ -277,7 +312,141 @@ const PatientDetails = (props) => {
   const [deleteFile, { isLoading: loaded }] =
     useDeleteFileFromDropboxMutation();
 
+  const [dermoscopyImagesList, setDermoscopyImagesList] = useState([]);
+  const [isLoadingDermoscopy, setIsLoadingDermoscopy] = useState(false);
+  const prevCombinedRef = useRef(null);
+  const navigation = useNavigation();
+
+  // Refs so focus callback always has latest values when returning from MarkableImage
+  const preDataIdRef = useRef(preData?._id);
+  const tokenRef = useRef(token);
+  const providerRef = useRef(provider);
+  useEffect(() => {
+    preDataIdRef.current = preData?._id;
+    tokenRef.current = token;
+    providerRef.current = provider;
+  }, [preData?._id, token, provider]);
+
+  // Process API response into dermoscopy images list (used by axios fetch)
+  const processDermoscopyResponse = useCallback((responseData, cloudProvider) => {
+    if (!responseData?.ResponseBody || !Array.isArray(responseData.ResponseBody)) {
+      return [];
+    }
+    const dermoscopyImages = [];
+    responseData.ResponseBody.forEach((record) => {
+      if (record.imageUrl) {
+        let fullImageUrl = record.imageUrl;
+        if (!fullImageUrl.startsWith("http")) {
+          const baseUrl = configUrl.imageUrl.endsWith("/")
+            ? configUrl.imageUrl.slice(0, -1)
+            : configUrl.imageUrl;
+          const imagePath = fullImageUrl.startsWith("/")
+            ? fullImageUrl
+            : `/${fullImageUrl}`;
+          fullImageUrl = `${baseUrl}${imagePath}`;
+        }
+        const imageData = cloudProvider === "google"
+          ? {
+              id: record._id,
+              name: record.dermoscopyImage || `dermoscopy_${record._id}.jpg`,
+              mimeType: "image/jpeg",
+              webContentLink: fullImageUrl,
+              publicUrl: fullImageUrl,
+              imageUrl: fullImageUrl,
+              isDermoscopy: true,
+              dermoscopyRecord: record,
+              createdAt: record.createdAt,
+              createdTime: record.createdAt,
+            }
+          : {
+              id: record._id,
+              name: record.dermoscopyImage || `dermoscopy_${record._id}.jpg`,
+              path_display: fullImageUrl,
+              publicUrl: fullImageUrl,
+              imageUrl: fullImageUrl,
+              isDermoscopy: true,
+              dermoscopyRecord: record,
+              server_modified: record.updatedAt || record.createdAt,
+              updatedAt: record.updatedAt,
+            };
+        dermoscopyImages.push(imageData);
+      }
+    });
+    return dermoscopyImages;
+  }, []);
+
+  // Fetch dermoscopy via axios (used on focus so list updates after adding circles in MarkableImage)
+  const fetchDermoscopyData = useCallback(async () => {
+    const patientId = preDataIdRef.current;
+    const authToken = tokenRef.current;
+    const cloudProvider = providerRef.current;
+    if (!patientId || !authToken) return;
+    const baseUrl = (configUrl.BASE_URL || "").replace(/\/?$/, "") + "/";
+    const url = `${baseUrl}dermoscopy?patientId=${patientId}&cloudType=${cloudProvider}`;
+    console.log("url url url url", url);
+    console.log("url url url url", authToken);
+    setIsLoadingDermoscopy(true);
+    try {
+      const { data } = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+      });
+      // console.log("data data data data", JSON.stringify(data, null, 2));
+      const list = processDermoscopyResponse(data, cloudProvider);
+      setDermoscopyImagesList(list);
+      prevCombinedRef.current = null; // force combined list to recompute
+    } catch (err) {
+      console.error("Error fetching dermoscopy:", err);
+      setDermoscopyImagesList([]);
+    } finally {
+      setIsLoadingDermoscopy(false);
+    }
+  }, [processDermoscopyResponse]);
+
+  // Combine regular images with dermoscopy images using useMemo with stable dependencies
+  const regularImagesHash = useMemo(() => {
+    const regularImages = provider === "google" ? (patientImages || []) : (imageUrls || []);
+    // Create a hash from image IDs to detect changes
+    return regularImages.map(img => provider === "google" ? img.id : img.path_display).join(',');
+  }, [patientImages, imageUrls, provider]);
+
+  const dermoscopyImagesHash = useMemo(() => {
+    return dermoscopyImagesList.map(img => img.id).join(',');
+  }, [dermoscopyImagesList]);
+
+  const allImagesWithDermoscopy = useMemo(() => {
+    const regularImages = provider === "google" ? (patientImages || []) : (imageUrls || []);
+    const combined = [...dermoscopyImagesList, ...regularImages];
+    
+    // Check if the combined array is the same as previous using hash
+    const currentHash = `${dermoscopyImagesHash}-${regularImagesHash}`;
+    const prevHash = prevCombinedRef.current?.hash;
+    
+    if (prevHash === currentHash && prevCombinedRef.current?.combined) {
+      // Array hasn't changed, return previous
+      return prevCombinedRef.current.combined;
+    }
+    
+    console.log("All Images Combined:", {
+      dermoscopyCount: dermoscopyImagesList.length,
+      regularCount: regularImages.length,
+      totalCount: combined.length,
+    });
+    
+    prevCombinedRef.current = { combined, hash: currentHash };
+    return combined;
+  }, [dermoscopyImagesList, dermoscopyImagesHash, regularImagesHash, patientImages, imageUrls, provider]);
+
   const toggleImageSelection = (items, type = "default") => {
+    // Don't allow selection of dermoscopy images
+    const filteredItems = Array.isArray(items) 
+      ? items.filter(item => !item.isDermoscopy)
+      : (!items.isDermoscopy ? [items] : []);
+
+    if (filteredItems.length === 0) return;
+
     const isGoogle = provider === "google";
     const getImagePath = (item) => (isGoogle ? item.id : item.path_display);
 
@@ -286,7 +455,7 @@ const PatientDetails = (props) => {
 
     const shouldRemove = type === "removeall";
 
-    items.forEach((item) => {
+    filteredItems.forEach((item) => {
       const imagePath = getImagePath(item);
       const isSelected = newSelectedImages.includes(imagePath);
 
@@ -343,7 +512,11 @@ const PatientDetails = (props) => {
   };
 
   const selectAllImages = () => {
-    const selectedImage = provider === "google" ? patientImages : imageUrls;
+    // Only select regular images, exclude dermoscopy images
+    const regularImages = allImagesWithDermoscopy.filter(img => !img.isDermoscopy);
+    const selectedImage = provider === "google" 
+      ? regularImages.filter(img => patientImages.some(pi => pi.id === img.id))
+      : regularImages.filter(img => imageUrls.some(iu => iu.path_display === img.path_display));
 
     if (selectedImages.length === selectedImage.length) {
       // Deselect all
@@ -351,7 +524,7 @@ const PatientDetails = (props) => {
       setCollageImage([]);
       setSelectionMode(false);
     } else {
-      // Select all
+      // Select all regular images only
       const allPaths = selectedImage.map((item) =>
         provider === "google" ? item.id : item.path_display
       );
@@ -472,6 +645,18 @@ const PatientDetails = (props) => {
       setCollageImage([]);
     }, [accessToken, provider])
   );
+
+  // Refetch dermoscopy when screen gains focus (e.g. returning from MarkableImage after adding circles)
+  useEffect(() => {
+    const onFocus = () => {
+      if (preDataIdRef.current && tokenRef.current) {
+        fetchDermoscopyData();
+      }
+    };
+    onFocus(); // fetch on mount when screen is focused
+    const unsubscribe = navigation.addListener("focus", onFocus);
+    return unsubscribe;
+  }, [navigation, fetchDermoscopyData]);
 
   // Separate function for Google Drive uploads
   const handleGoogleDriveUpload = async (files) => {
@@ -600,13 +785,38 @@ const PatientDetails = (props) => {
   };
 
   const handleImagePress = (item, index, allData) => {
+    // If it's a dermoscopy image, navigate directly to MarkableImage
+    if (item[0]?.isDermoscopy && item[0]?.dermoscopyRecord) {
+      const record = item[0]?.dermoscopyRecord;
+      // console.log("Navigating to MarkableImage with dermoscopy record:", record?.path);
+      let pathsssss = record?.path?.split('/');
+      // console.log('pathsssss------', pathsssss);
+      console.log("Image URL:", item[0]?.publicUrl || item[0]?.webContentLink || item[0]?.path_display || item[0]?.imageUrl);
+      navigate("MarkableImage", {
+        body: pathsssss[pathsssss.length - 1],
+        view: pathsssss[pathsssss.length - 2],
+      });
+      // console.log('record------', pathsssss[pathsssss.length - 1], pathsssss[pathsssss.length - 2]);
+      return;
+    }
+
+    // Regular image handling
     if (isSelectionMode) {
       toggleImageSelection(item);
     } else {
-      let arr = [...allData];
-      if (index > -1 && index < arr.length) {
-        const spliceData = arr.splice(index, 1)[0]; // Remove item
-        arr.unshift(spliceData); // Add at the beginning
+      // Filter out dermoscopy images for regular image viewer
+      const regularImages = allData.filter(img => !img.isDermoscopy);
+      const regularIndex = regularImages.findIndex(img => {
+        const isGoogle = provider === "google";
+        const currentPath = isGoogle ? item.id : item.path_display;
+        const comparePath = isGoogle ? img.id : img.path_display;
+        return currentPath === comparePath;
+      });
+
+      let arr = [...regularImages];
+      if (regularIndex > -1 && regularIndex < arr.length) {
+        const spliceData = arr.splice(regularIndex, 1)[0];
+        arr.unshift(spliceData);
       }
       navigate(ScreenName.IMAGE_VIEWER, {
         preData: arr,
@@ -618,15 +828,15 @@ const PatientDetails = (props) => {
   };
 
   const subscription = useSelector((state) => state.auth?.subscription);
-  const needSubscription = !subscription?.hasSubscription || subscription?.isExpired  // || !subscription?.isActive;
-  // console.log('needSubscriptio------', needSubscription, subscription);
+  const needSubscription = !subscription?.isActive || subscription?.isExpired  // || !subscription?.isActive;
+  // console.log('needSubscription------', subscription);
 
 
   const _chooseFile = async () => {
-    // if (needSubscription ) {
-    //   showSubscriptionAlert(navigate);
-    //   return;
-    // }
+    if (needSubscription) {
+      showSubscriptionAlert(navigate);
+      return;
+    }
     // navigate('MarkableImage')
     try {
       // Step 1: Select and map files
@@ -669,10 +879,10 @@ const PatientDetails = (props) => {
   };
 
   const btnCollage = (type) => {
-    // if (needSubscription) {
-    //   showSubscriptionAlert(navigate);
-    //   return;
-    // }
+    if (needSubscription) {
+      showSubscriptionAlert(navigate);
+      return;
+    }
     type === "withSelectedImage"
       ? navigate(ScreenName.COLLAGE_ADD, {
         images: collageImages,
@@ -681,97 +891,106 @@ const PatientDetails = (props) => {
       : navigate(ScreenName.COLLAGE_ADD, { preData: preData });
   };
   const btnAddTag = () => {
-    // if (needSubscription) {
-    //   showSubscriptionAlert(navigate);
-    //   return;
-    // }
+    if (needSubscription) {
+      showSubscriptionAlert(navigate);
+      return;
+    }
     navigate(ScreenName.IMAGE_DETAILS, {
       images: collageImages,
     });
   };
 
+  btnDermoscopy = () => {
+    if (needSubscription) {
+      showSubscriptionAlert(navigate);
+      return;
+    }
+    navigate(ScreenName.DERMO_SCOPY);
+  };
+
   return (
     <WrapperContainer wrapperStyle={styles.wrapperPadding}>
-      <View style={styles.headerContainer}>
-        <TouchableOpacity onPress={() => goBack()} style={styles.backButtonMargin}>
-          <Image
-            style={styles.backIcon}
-            source={require("../assets/images/icons/backIcon.png")}
-          />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          Patient Details
-        </Text>
-        <View />
-      </View>
-      <DeleteImagePopUp
-        title={`Delete ${selectedImages.length} selected photo`}
-        onPressCancel={() => setIsVisible(false)}
-        onPressDelete={
-          provider == "google" ? deleteGoogleDriveImages : handleDeleteDropBox
-        }
-        visible={visible}
-      />
-      <Loading visible={isLoading || loading || deleteImageLoading || loaded} />
-      <View style={[commonStyles.shadowContainer, styles.cardContainer]}>
-        <View
-          style={[
-            commonStyles.flexView,
-            styles.cardHeaderRow,
-          ]}
-        >
-          <View style={commonStyles.flexView}>
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+        <View style={styles.headerContainer}>
+          <TouchableOpacity onPress={() => goBack()} style={styles.backButtonMargin}>
             <Image
-              source={patientProfileImages}
-              style={styles.imgStyle} // You can pass a custom style if needed
+              style={styles.backIcon}
+              source={require("../assets/images/icons/backIcon.png")}
             />
-            <View style={styles.patientInfoContainer}>
-              <Text style={styles.title}>{patient?.full_name}</Text>
-              <Text style={styles.info}>{patient?.dob}</Text>
-              {patient?.mobile && (
-                <Text style={styles.info}>{patient?.mobile}</Text>
-              )}
-              {patient?.email && (
-                <Text style={styles.info}>{patient?.email}</Text>
-              )}
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>
+            Patient Details
+          </Text>
+          <View />
+        </View>
+        <DeleteImagePopUp
+          title={`Delete ${selectedImages.length} selected photo`}
+          onPressCancel={() => setIsVisible(false)}
+          onPressDelete={
+            provider == "google" ? deleteGoogleDriveImages : handleDeleteDropBox
+          }
+          visible={visible}
+        />
+        <Loading visible={isLoading || loading || deleteImageLoading || loaded} />
+        <View style={[commonStyles.shadowContainer, styles.cardContainer]}>
+          <View
+            style={[
+              commonStyles.flexView,
+              styles.cardHeaderRow,
+            ]}
+          >
+            <View style={commonStyles.flexView}>
+              <Image
+                source={patientProfileImages}
+                style={styles.imgStyle}
+              />
+              <View style={styles.patientInfoContainer}>
+                <Text style={styles.title}>{patient?.full_name}</Text>
+                <Text style={styles.info}>{patient?.dob}</Text>
+                {patient?.mobile && (
+                  <Text style={styles.info}>{patient?.mobile}</Text>
+                )}
+                {patient?.email && (
+                  <Text style={styles.info}>{patient?.email}</Text>
+                )}
+              </View>
             </View>
           </View>
-        </View>
-        <View style={styles.buttonRow}>
-          <CustomBtn
-            onPress={() =>
-              navigate(ScreenName.EDIT_PATIENT, {
-                patient,
-                imageCount:
-                  provider === "google" ? images.length : imageUrls.length,
-              })
-            }
-            titleStyle={styles.titleStyleSmall}
-            btnStyle={styles.editInfoButton}
-            title={"Edit Information"}
-          />
+          <View style={styles.buttonRow}>
+            <CustomBtn
+              onPress={() =>
+                navigate(ScreenName.EDIT_PATIENT, {
+                  patient,
+                  imageCount:
+                    provider === "google" ? images.length : imageUrls.length,
+                })
+              }
+              titleStyle={styles.titleStyleSmall}
+              btnStyle={styles.editInfoButton}
+              title={"Edit Information"}
+            />
             <CustomBtn
               onPress={() => {
-                navigate(ScreenName.DERMO_SCOPY)
+                btnDermoscopy();
                 // navigate('BodyPartSelector')
               }}
               titleStyle={styles.titleStyleSmall}
               btnStyle={styles.editInfoButton}
               title={"Dermoscopy"}
             />
+          </View>
         </View>
-      </View>
-      <View style={styles.subContainer}>
-        <View style={commonStyles.flexView}>
-          <Image source={imagePath.gallery} style={styles.galStyle} />
-          <Text style={styles.title}>All Photos</Text>
-        </View>
+        <View style={styles.subContainer}>
+          <View style={commonStyles.flexView}>
+            <Image source={imagePath.gallery} style={styles.galStyle} />
+            <Text style={styles.title}>All Photos</Text>
+          </View>
         <Text style={styles.title}>
           {selectedImages?.length}/
-          {provider == "google" ? patientImages?.length : imageUrls?.length}
+          {allImagesWithDermoscopy.filter(img => !img.isDermoscopy).length}
         </Text>
       </View>
-      {patientImages?.length >= 1 || imageUrls?.length >= 1 ? (
+      {allImagesWithDermoscopy.length >= 1 ? (
         <TouchableOpacity
           onPress={selectAllImages}
           style={[
@@ -781,19 +1000,18 @@ const PatientDetails = (props) => {
         >
           <View style={styles.check}>
             {selectedImages?.length ===
-              (provider === "google"
-                ? patientImages?.length
-                : imageUrls?.length) && <Tick height={10} width={10} />}
+              allImagesWithDermoscopy.filter(img => !img.isDermoscopy).length && 
+              <Tick height={10} width={10} />}
           </View>
           <Text style={styles.title}>Select All</Text>
         </TouchableOpacity>
       ) : null}
-      {patientImages?.length >= 1 || imageUrls?.length >= 1 ? (
+      {allImagesWithDermoscopy.length >= 1 ? (
         <View
           style={images?.length >= 3 ? styles.imageListWrapperCentered : styles.imageListWrapper}
         >
           <PatientImageList
-            data={provider == "google" ? patientImages : imageUrls}
+            data={allImagesWithDermoscopy}
             selectedImages={selectedImages}
             selectAllImages={() => selectAllImages()}
             handleImagePress={(item, index, allData) => {
@@ -803,85 +1021,86 @@ const PatientDetails = (props) => {
               toggleImageSelection(item, type);
             }}
           />
-          <View style={styles.bottomBottonsWrapper}>
-            <View style={styles.bottomButtonsRow}>
-              <CustomBtn
-                titleStyle={styles.titleStyleSmall}
-                btnStyle={styles.bottomButtonsContainer}
-                title={"Add Image"}
-                onPress={_chooseFile}
-              />
-              <CustomBtn
-                onPress={() => navigateCameraGrid()}
-                titleStyle={styles.titleStyleSmall}
-                btnStyle={styles.bottomButtonsContainer}
-                title={"Camera"}
-              />
-              {selectedImages?.length >= 1 && (
+            <View style={styles.bottomBottonsWrapper}>
+              <View style={styles.bottomButtonsRow}>
                 <CustomBtn
-                  onPress={() => setIsVisible(true)}
                   titleStyle={styles.titleStyleSmall}
                   btnStyle={styles.bottomButtonsContainer}
-                  title={"Delete"}
+                  title={"Add Image"}
+                  onPress={_chooseFile}
                 />
-              )}
-              {selectedImages?.length > 0 && selectedImages?.length <= 3 && (
                 <CustomBtn
-                  onPress={() => btnCollage("withSelectedImage")}
+                  onPress={() => navigateCameraGrid()}
                   titleStyle={styles.titleStyleSmall}
                   btnStyle={styles.bottomButtonsContainer}
-                  title={"Add Collage"}
+                  title={"Camera"}
                 />
-              )}
-              {selectedImages?.length > 1 && selectedImages?.length <= 5 && (
-                <>
+                {selectedImages?.length >= 1 && (
                   <CustomBtn
-                    onPress={() => {
-                      btnAddTag();
-                    }}
+                    onPress={() => setIsVisible(true)}
                     titleStyle={styles.titleStyleSmall}
                     btnStyle={styles.bottomButtonsContainer}
-                    title={"Add Tag"}
+                    title={"Delete"}
                   />
-                  <View style={styles.bottomButtonsContainer} />
-                </>
-              )}
+                )}
+                {selectedImages?.length > 0 && selectedImages?.length <= 3 && (
+                  <CustomBtn
+                    onPress={() => btnCollage("withSelectedImage")}
+                    titleStyle={styles.titleStyleSmall}
+                    btnStyle={styles.bottomButtonsContainer}
+                    title={"Add Collage"}
+                  />
+                )}
+                {selectedImages?.length > 1 && selectedImages?.length <= 5 && (
+                  <>
+                    <CustomBtn
+                      onPress={() => {
+                        btnAddTag();
+                      }}
+                      titleStyle={styles.titleStyleSmall}
+                      btnStyle={styles.bottomButtonsContainer}
+                      title={"Add Tag"}
+                    />
+                    <View style={styles.bottomButtonsContainer} />
+                  </>
+                )}
+              </View>
             </View>
           </View>
-        </View>
-      ) : (
-        <View style={styles.emptyStateContainer}>
-          <Text style={styles.info}>Upload your new photo</Text>
-          <Text style={styles.info}>Number of upload images: 0</Text>
-          <Text style={[styles.info, styles.subTitle]}>
-            Click the below buttons to add patient photos
-          </Text>
-          <View
-            style={[
-              commonStyles.flexView,
-              styles.emptyStateButtonsContainer,
-            ]}
-          >
-            <CommonComp
-              onPress={() => btnCollage("")}
-              title={"Collage"}
-              IconComponent={CollegeIcon}
-            />
-            <CommonComp
-              onPress={() => navigateCameraGrid()}
-              title={"Camera"}
-              commonContainer={{ height: 90, width: 90 }}
-              titleStyle={styles.cameraButtonTitle}
-              IconComponent={AddCamera}
-            />
-            <CommonComp
-              onPress={_chooseFile}
-              title={"Import"}
-              IconComponent={importIcon}
-            />
+        ) : (
+          <View style={styles.emptyStateContainer}>
+            <Text style={styles.info}>Upload your new photo</Text>
+            <Text style={styles.info}>Number of upload images: 0</Text>
+            {/* <Text style={[styles.info, styles.subTitle]}>
+              Click the below buttons to add patient photos
+            </Text> */}
+            <View
+              style={[
+                commonStyles.flexView,
+                styles.emptyStateButtonsContainer,
+              ]}
+            >
+              <CommonComp
+                onPress={() => btnCollage("")}
+                title={"Collage"}
+                IconComponent={CollegeIcon}
+              />
+              <CommonComp
+                onPress={() => navigateCameraGrid()}
+                title={"Camera"}
+                commonContainer={{ height: 90, width: 90 }}
+                titleStyle={styles.cameraButtonTitle}
+                IconComponent={AddCamera}
+              />
+              <CommonComp
+                onPress={_chooseFile}
+                title={"Import"}
+                IconComponent={importIcon}
+              />
+            </View>
           </View>
-        </View>
-      )}
+        )}
+      </ScrollView>
     </WrapperContainer>
   );
 };

@@ -1,5 +1,11 @@
 import { useRoute } from "@react-navigation/native";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   View,
   StyleSheet,
@@ -13,7 +19,17 @@ import {
 } from "react-native";
 import Svg, { Circle, Text as SvgText } from "react-native-svg";
 import { width } from "../styles/responsiveLayoute";
-import { checkAndRefreshGoogleAccessToken, createFolderInParentAndCheck, deleteDriveFolder, deleteFileFromDropbox, generateUniqueKey, getAllImagesRecursively, getFolderId, safeCreateFolder, uploadFileToDrive } from "../configs/api";
+import {
+  checkAndRefreshGoogleAccessToken,
+  createFolderInParentAndCheck,
+  deleteDriveFolder,
+  deleteFileFromDropbox,
+  generateUniqueKey,
+  getAllImagesRecursively,
+  getFolderId,
+  safeCreateFolder,
+  uploadFileToDrive,
+} from "../configs/api";
 import { useSelector } from "react-redux";
 import ViewShot from "react-native-view-shot";
 import Loading from "../components/Loading";
@@ -24,20 +40,55 @@ import {
   usePostDermoScopyMoleMutation,
   useUpdateDermoScopyMoleMutation,
   useUploadDropBoxImageByFolderForDermoMutation,
-
 } from "../redux/api/common";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import COLORS from "../styles/colors";
 const { height: windowHeight } = Dimensions.get("window");
-import FastImage from 'react-native-fast-image'
+import FastImage from "react-native-fast-image";
 import { getDriveImageMetadata } from "../utils/CommonFunction";
 import OptionsModal from "../components/OptionsModal";
 import ImageZoomModal from "../components/ImageZoomModal";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function MarkableImage() {
+function normalizeDropboxPath(p) {
+  return (p || "").replace(/\/+$/, "").toLowerCase();
+}
 
+/** Dropbox list_folder is paginated; collect every entry for recursive listings. */
+async function listDropboxFolderRecursiveAll(listPath, accessToken) {
+  let entries = [];
+  let cursor = null;
+  let hasMore = true;
+
+  while (hasMore) {
+    const response = await axios({
+      method: "POST",
+      url: cursor
+        ? "https://api.dropboxapi.com/2/files/list_folder/continue"
+        : "https://api.dropboxapi.com/2/files/list_folder",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      data: cursor
+        ? { cursor }
+        : {
+            path: listPath,
+            recursive: true,
+            include_media_info: true,
+            include_deleted: false,
+            include_has_explicit_shared_members: false,
+          },
+    });
+    entries = entries.concat(response.data.entries || []);
+    hasMore = response.data.has_more === true;
+    cursor = response.data.cursor;
+  }
+  return entries;
+}
+
+export default function MarkableImage() {
   const [box, setBox] = useState({ w: 0, h: 0 });
   const [imageSize, setImageSize] = useState({ w: 0, h: 0 });
   const [circles, setCircles] = useState([]);
@@ -51,49 +102,72 @@ export default function MarkableImage() {
   const drawingScaleRef = useRef(1);
   const cloudType = useSelector((state) => state.auth.cloudType);
   const route = useRoute();
-  const { body, view } = route?.params || {}; // 'front' or 'back'
+  const { body, view, bodyType } = route?.params || {};
 
   const [postDermoscopyMole] = usePostDermoScopyMoleMutation();
   const [updateDermoscopyMole] = useUpdateDermoScopyMoleMutation();
-  const [uploadDropBoxImageByFolder] = useUploadDropBoxImageByFolderForDermoMutation();
-
-
+  const [uploadDropBoxImageByFolder] =
+    useUploadDropBoxImageByFolderForDermoMutation();
 
   const patientId = useSelector((state) => state.auth.patientId.patientId);
-  const patientName = useSelector((state) => state.auth.patientName.patientName);
+  const patientName = useSelector(
+    (state) => state.auth.patientName.patientName,
+  );
   const accessToken = useSelector((state) => state.auth.accessToken);
   const token = useSelector((state) => state.auth?.user);
-  const [loading, setLoading] = useState(false)
-  const [savedMolesId, setsavedMolesId] = useState(null)
-  const [tappedIndex, setTapedIndex] = useState(null)
+  const [loading, setLoading] = useState(false);
+  const [savedMolesId, setsavedMolesId] = useState(null);
+  const [tappedIndex, setTapedIndex] = useState(null);
+  const [updateCount, setUpdateCount] = useState(0);
+  const [notes, setNotes] = useState("");
 
   const viewShotRef = useRef(null);
 
   const [modalVisible, setModalVisible] = useState(false);
 
-  const openModal = () => {
-    setModalVisible(true);
-  };
+  const openModal = useCallback(() => setModalVisible(true), []);
+  const closeModal = useCallback(() => setModalVisible(false), []);
 
-  const closeModal = () => {
-    setModalVisible(false);
-  };
   const [zoomVisible, setZoomVisible] = useState(false);
   const [zoomImg, setZoomImg] = useState(null);
   const [zoomIndex, setZoomIndex] = useState(0);
 
-
-  const openZoomView = (items = null, index) => {
-    setZoomVisible(false)
-    setZoomImg(items)
+  const openZoomView = useCallback((items = null, index) => {
+    setZoomImg(items);
     setZoomIndex(index);
-    setZoomVisible(true)
-  }
+    setZoomVisible(true);
+  }, []);
 
   useEffect(() => {
-    if (cloudType === 'google') getDriveData()
+    if (cloudType === "google") getDriveData();
     else getDropBoxData();
-  }, [cloudType, view, body]);
+  }, [cloudType]);
+
+  // Handle loading moles from dermoscopyData when navigating from existing record
+  // useEffect(() => {
+  //   if (
+  //     isExistingDermoscopy &&
+  //     dermoscopyData?.moles &&
+  //     Array.isArray(dermoscopyData.moles) &&
+  //     dermoscopyData.moles.length > 0
+  //   ) {
+  //     console.log("Loading moles from dermoscopyData:", dermoscopyData.moles);
+
+  //     // Convert moles to circles format (moles already have center, radius, name)
+  //     const circlesData = dermoscopyData.moles.map((mole, index) => ({
+  //       ...mole,
+  //       // Ensure circles have the required format
+  //       center: mole.center || { x: 0, y: 0 },
+  //       radius: mole.radius || 0.1,
+  //       name: mole.name || `mole_${index}`,
+  //       attachedImages: [], // Will be populated if needed from cloud
+  //     }));
+
+  //     setCombinedMoles(circlesData);
+  //     setCircles(circlesData);
+  //     console.log("Set circles from dermoscopyData:", circlesData);
+  //   }
+  // }, [isExistingDermoscopy, dermoscopyData]);
 
   useEffect(() => {
     (async () => {
@@ -104,9 +178,46 @@ export default function MarkableImage() {
 
   const { data, refetch } = useGetDermoScopyMolesQuery(
     { patientId: patientFullId, body, token, cloudType },
-    { skip: !patientFullId }
+    { skip: !patientFullId },
   );
 
+  useEffect(() => {
+    if (data && data?.ResponseBody && imageByCloud) {
+      if (data.ResponseBody[0]?._id) {
+        setsavedMolesId(data.ResponseBody[0]?._id);
+      }
+
+      if (data.ResponseBody[0]?.moles?.length > 0) {
+        const combineData = combineMoleAndFolderData(
+          data.ResponseBody[0]?.moles,
+          imageByCloud,
+        );
+        setCombinedMoles(combineData);
+        setCircles(combineData);
+      } else {
+        setCombinedMoles([]);
+        setCircles([]);
+      }
+
+      // Set notes if available
+      if (data.ResponseBody[0]?.notes) {
+        setNotes(data.ResponseBody[0].notes);
+      }
+
+      // Set update count if available (assuming backend returns this)
+      if (data.ResponseBody[0]?.updateCount !== undefined) {
+        setUpdateCount(data.ResponseBody[0].updateCount);
+      }
+    }
+  }, [data, imageByCloud]);
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     if (patientFullId) {
+  //       refetch();
+  //     }
+  //   }, [patientFullId, refetch])
+  // );
   useEffect(() => {
     if (patientFullId) {
       refetch();
@@ -115,38 +226,27 @@ export default function MarkableImage() {
 
   async function getDropBoxData() {
     const basePath = `/PhotoMed/${patientName + patientId}/Dermoscopy`;
-    const folderPath = view ? `${basePath}/${view}/${body}` : `${basePath}/${body}`; // front/back comes before body part
+    const folderPath = view
+      ? `${basePath}/${view}/${body}`
+      : `${basePath}/${body}`; // front/back comes before body part
     const path = folderPath === "" ? "" : folderPath;
-    console.log('pathpathpath', path);
+    console.log("pathpathpath getDropBoxData", path);
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const response = await axios({
-        method: "POST",
-        url: "https://api.dropboxapi.com/2/files/list_folder",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        data: {
-          path,
-          recursive: true,
-          include_media_info: true,
-          include_deleted: false,
-          include_has_explicit_shared_members: false,
-        },
-      });
-
-      const entries = response.data.entries || [];
+      const entries = await listDropboxFolderRecursiveAll(path, accessToken);
       const folders = entries.filter((item) => item[".tag"] === "folder");
       const files = entries.filter((item) => item[".tag"] === "file");
       const imageFiles = files.filter((file) =>
-        file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)
+        file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i),
       );
 
       const folderMap = {};
       imageFiles.forEach((file) => {
-        const folderPath = file.path_display.substring(0, file.path_display.lastIndexOf("/"));
+        const folderPath = file.path_display.substring(
+          0,
+          file.path_display.lastIndexOf("/"),
+        );
         const folderName = folderPath.split("/").pop() || "Root";
         const folderEntry = folders.find((f) => f.path_display === folderPath);
         const folderId = folderEntry?.id || "root-folder";
@@ -185,10 +285,13 @@ export default function MarkableImage() {
                   size: file.size,
                 };
               } catch (error) {
-                console.error(`Error fetching link for ${file.name}:`, error.response?.data || error.message);
+                console.error(
+                  `Error fetching link for ${file.name}:`,
+                  error.response?.data || error.message,
+                );
                 return null;
               }
-            })
+            }),
           );
           return {
             folderId: folder.folderId,
@@ -196,24 +299,35 @@ export default function MarkableImage() {
             folderPath: folder.folderPath,
             images: imagesWithUrls.filter(Boolean),
           };
-        })
+        }),
       );
 
-      let imageJson = groupedFolders[0]?.images[0];
-      let imageJson1 = groupedFolders.slice(1);
+      const listingNorm = normalizeDropboxPath(path);
+      const mainFolderGroup = groupedFolders.find(
+        (g) => normalizeDropboxPath(g.folderPath) === listingNorm,
+      );
+      const moleFolderGroups = groupedFolders.filter((g) => {
+        const fp = normalizeDropboxPath(g.folderPath);
+        if (fp === listingNorm) return false;
+        const prefix = `${listingNorm}/`;
+        if (!fp.startsWith(prefix)) return false;
+        return fp.slice(prefix.length).indexOf("/") === -1;
+      });
+
+      const imageJson = mainFolderGroup?.images?.[0];
+      const imageJson1 = moleFolderGroups;
       setCapturedImage(imageJson);
       setImageByCloud(imageJson1);
-      console.log('fasdfafasfasfa', JSON.stringify(groupedFolders, null, 2));
+      console.log("fasdfafasfasfa", JSON.stringify(groupedFolders, null, 2));
 
       return { data: groupedFolders };
     } catch (error) {
       console.log("Dropbox API Error:", error.response?.data || error.message);
       return { error: { message: error.message } };
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   }
-
 
   async function getDriveData() {
     setLoading(true);
@@ -230,7 +344,7 @@ export default function MarkableImage() {
       const patientFolderId = await getFolderId(
         patientName + patientId,
         accessToken,
-        photoMedFolderId
+        photoMedFolderId,
       );
       if (!patientFolderId) {
         console.error("patientFolderId folder not found");
@@ -239,9 +353,9 @@ export default function MarkableImage() {
       }
       // Step 2: Locate the "Dermoscopy" folder inside patient folder
       const dermofolderId = await getFolderId(
-        'Dermoscopy',
+        "Dermoscopy",
         accessToken,
-        patientFolderId
+        patientFolderId,
       );
       if (!dermofolderId) {
         console.error("dermofolderId folder not found");
@@ -254,7 +368,7 @@ export default function MarkableImage() {
         const viewFolderId = await getFolderId(
           view, // 'front' or 'back'
           accessToken,
-          dermofolderId
+          dermofolderId,
         );
         if (viewFolderId) {
           targetFolderId = viewFolderId;
@@ -264,45 +378,30 @@ export default function MarkableImage() {
         }
       }
       // Step 4: Locate the body part folder inside view folder (or dermoscopy if no view)
-      const bodyfolderId = await getFolderId(
-        body,
-        accessToken,
-        targetFolderId
-      );
+      const bodyfolderId = await getFolderId(body, accessToken, targetFolderId);
       if (!bodyfolderId) {
         console.error("bodyfolderId folder not found");
         setLoading(false);
         return;
       }
       targetFolderId = bodyfolderId;
-      const folderData = await getAllImagesRecursively(accessToken, targetFolderId)
+      const folderData = await getAllImagesRecursively(
+        accessToken,
+        targetFolderId,
+      );
       if (folderData && folderData.length > 0) {
-        console.log('---folderData---', JSON.stringify(folderData, null, 2));
-        let rootImage = folderData.filter(item => item.folderName === 'root');
-        let molesData = folderData.filter(item => item.folderName !== 'root');
+        console.log("---folderData---", JSON.stringify(folderData, null, 2));
+        let rootImage = folderData.filter((item) => item.folderName === "root");
+        let molesData = folderData.filter((item) => item.folderName !== "root");
         setCapturedImage(rootImage[0].images[0]);
         setImageByCloud(molesData);
       }
       setLoading(false);
     } catch (error) {
       setLoading(false);
-      console.log('--folderData-- errorerror', error);
+      console.log("--folderData-- errorerror", error);
     }
   }
-
-
-
-  useEffect(() => {
-    console.log('data.ResponseBody-', JSON.stringify(data, null, 2));
-    if (data && data.ResponseBody && data.ResponseBody[0]?.moles?.length > 0 && imageByCloud) {
-      setsavedMolesId(data.ResponseBody[0]?._id)
-      const combineData = combineMoleAndFolderData(data.ResponseBody[0]?.moles, imageByCloud);
-      console.log('combineData', combineData);
-
-      setCombinedMoles(combineData);
-      setCircles(combineData);
-    }
-  }, [data, imageByCloud]);
 
   function combineMoleAndFolderData(moleData, folderData) {
     const folderMap = {};
@@ -339,7 +438,10 @@ export default function MarkableImage() {
 
         // --- GOOGLE DRIVE CASE (fast metadata) ---
         if (capturedImage?.id && cloudType === "google") {
-          const size = await getDriveImageMetadata(capturedImage.id, accessToken);
+          const size = await getDriveImageMetadata(
+            capturedImage.id,
+            accessToken,
+          );
 
           if (!size?.imgWidth || !size?.imgHeight) {
             console.warn("Google metadata missing → fallback to Image.getSize");
@@ -359,10 +461,10 @@ export default function MarkableImage() {
                 imgHeight = h;
                 resolve();
               },
-              err => {
+              (err) => {
                 console.error("Image.getSize error:", err);
                 reject(err);
-              }
+              },
             );
           });
         }
@@ -375,7 +477,7 @@ export default function MarkableImage() {
 
         const scaleFactor = Math.min(
           maxWidth / imgWidth,
-          maxHeight / imgHeight
+          maxHeight / imgHeight,
         );
 
         const scaledWidth = imgWidth * scaleFactor;
@@ -396,56 +498,155 @@ export default function MarkableImage() {
     };
   }, [capturedImage?.path, capturedImage?.id, cloudType, accessToken]);
 
-  const openCamera = () => {
+  const uploadCapturedImagesToCloud = useCallback(
+    async (images, { isMainImage, circleName }) => {
+      if (!images?.length) return;
+      if (!isMainImage && !(circleName && String(circleName).trim())) {
+        throw new Error(
+          "Mole cloud folder is missing. Open the mark menu and attach a photo again.",
+        );
+      }
+      const basePath = `/PhotoMed/${patientName + patientId}/Dermoscopy`;
+      const viewPath = view
+        ? `${basePath}/${view}/${body}`
+        : `${basePath}/${body}`;
+
+      if (cloudType === "google") {
+        await checkAndRefreshGoogleAccessToken(accessToken);
+        const dermoscopyFolderId = await safeCreateFolder(
+          basePath,
+          accessToken,
+          "root",
+        );
+        let targetFolderId;
+        if (view) {
+          const viewFolderId = await safeCreateFolder(
+            `${basePath}/${view}`,
+            accessToken,
+            "root",
+          );
+          targetFolderId = await createFolderInParentAndCheck(
+            body,
+            viewFolderId,
+            accessToken,
+          );
+        } else {
+          targetFolderId = await createFolderInParentAndCheck(
+            body,
+            dermoscopyFolderId,
+            accessToken,
+          );
+        }
+        if (!isMainImage && circleName) {
+          targetFolderId = await createFolderInParentAndCheck(
+            circleName,
+            targetFolderId,
+            accessToken,
+          );
+        }
+        const uploaded = [];
+        for (const img of images) {
+          const path = img.path?.startsWith("file://")
+            ? img.path
+            : `file://${img.path}`;
+          const file = {
+            uri: path,
+            name: img.name,
+            type: img.mime || "image/jpeg",
+          };
+          const fileId = await uploadFileToDrive(file, targetFolderId, accessToken);
+          uploaded.push({ ...img, id: fileId });
+        }
+        return uploaded;
+      } else {
+        for (const img of images) {
+          const path = img.path?.startsWith("file://")
+            ? img.path
+            : `file://${img.path}`;
+          const file = { ...img, path };
+          const subPath = isMainImage
+            ? `${viewPath}/${img.name}`
+            : `${viewPath}/${circleName}/${img.name}`;
+          await uploadDropBoxImageByFolder({
+            file,
+            path: subPath,
+            userId: patientName + patientId,
+            accessToken,
+          }).unwrap();
+        }
+      }
+    },
+    [
+      view,
+      body,
+      patientName,
+      patientId,
+      accessToken,
+      cloudType,
+      uploadDropBoxImageByFolder,
+    ],
+  );
+
+  const openCamera = useCallback(() => {
+    const hadCircles = circles.length > 0;
     navigate(ScreenName.DERMO_SCOPY_CAMERA, {
       body,
+      view,
+      uploadToCloud: uploadCapturedImagesToCloud,
+      saveMainImage: saveMainImage,
       onSave: (capturedImages) => {
         if (capturedImages && capturedImages.length > 0) {
-          const newImg = capturedImages[0]; // Take the first image for main image
+          const newImg = capturedImages[0];
+          console.log("newImgnewImgnewImg---", newImg);
+
           if (!newImg.path.startsWith("file://")) {
             newImg.path = `file://${newImg.path}`;
           }
           setCapturedImage(newImg);
-          setCircles([]);
+          if (!hadCircles) {
+            setCircles([]);
+          }
         }
       },
     });
-  };
+  }, [body, view, circles.length, uploadCapturedImagesToCloud]);
 
   const isMarkingEnabled = !!capturedImage?.path;
 
-  const getDisplayedImageSize = () => {
-    if (!box.w || !box.h || !imageSize.w || !imageSize.h) return null;
-
-    const containerAspect = box.w / box.h;
-    const imageAspect = imageSize.w / imageSize.h;
-
-    let displayedWidth, displayedHeight, offsetX = 0, offsetY = 0;
-
+  const getDisplayedImageSize = useCallback(() => {
+    if (!box?.w || !box?.h || !imageSize?.w || !imageSize?.h) return null;
+    const containerAspect = box?.w / box?.h;
+    const imageAspect = imageSize?.w / imageSize?.h;
+    let displayedWidth,
+      displayedHeight,
+      offsetX = 0,
+      offsetY = 0;
     if (imageAspect > containerAspect) {
-      displayedWidth = box.w;
-      displayedHeight = box.w / imageAspect;
-      offsetY = (box.h - displayedHeight) / 2;
+      displayedWidth = box?.w;
+      displayedHeight = box?.w / imageAspect;
+      offsetY = (box?.h - displayedHeight) / 2;
     } else {
-      displayedHeight = box.h;
-      displayedWidth = box.h * imageAspect;
-      offsetX = (box.w - displayedWidth) / 2;
+      displayedHeight = box?.h;
+      displayedWidth = box?.h * imageAspect;
+      offsetX = (box?.w - displayedWidth) / 2;
     }
-
     return { displayedWidth, displayedHeight, offsetX, offsetY };
-  };
+  }, [box?.w, box?.h, imageSize?.w, imageSize?.h]);
 
-  const isInsideImage = (x, y) => {
-    const dims = getDisplayedImageSize();
-    if (!dims) return false;
-    const { offsetX, offsetY, displayedWidth, displayedHeight } = dims;
-    return (
-      x >= offsetX &&
-      x <= offsetX + displayedWidth &&
-      y >= offsetY &&
-      y <= offsetY + displayedHeight
-    );
-  };
+  const isInsideImage = useCallback(
+    (x, y) => {
+      const dims = getDisplayedImageSize();
+      if (!dims) return false;
+      const { offsetX, offsetY, displayedWidth, displayedHeight } = dims;
+      return (
+        x >= offsetX &&
+        x <= offsetX + displayedWidth &&
+        y >= offsetY &&
+        y <= offsetY + displayedHeight
+      );
+    },
+    [getDisplayedImageSize],
+  );
 
   const panResponder = useMemo(
     () =>
@@ -474,7 +675,7 @@ export default function MarkableImage() {
           });
 
           if (tappedIndex !== -1) {
-            setTapedIndex(tappedIndex)
+            setTapedIndex(tappedIndex);
             Alert.alert("Mark Actions", "Choose an action for this mark", [
               { text: "Cancel", style: "cancel" },
               {
@@ -485,7 +686,14 @@ export default function MarkableImage() {
                 text: "Delete Mark",
                 style: "destructive",
                 onPress: () => {
-                  deleteImage(tappedIndex)
+                  Alert.alert(
+                    "Delete Mark",
+                    "Do you want to delete this mark? Changes will be saved to the backend.",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      { text: "OK", onPress: () => deleteImage(tappedIndex) },
+                    ],
+                  );
                 },
               },
             ]);
@@ -531,14 +739,35 @@ export default function MarkableImage() {
           if (drawing.current && tempCircle) {
             const minRadius = 0.005;
             if (tempCircle.radius >= minRadius) {
-
-              setCircles((prev) => [
-                ...prev,
-                {
-                  ...tempCircle,
-                  name: `m_${tempCircle.uniqueId}`,
-                }
-              ]);
+              const newCircle = {
+                ...tempCircle,
+                name: `m_${tempCircle.uniqueId}`,
+              };
+              setCircles((prev) => [...prev, newCircle]);
+              Alert.alert(
+                "Save Mark",
+                "Do you want to save this mark to the backend?",
+                [
+                  {
+                    text: "Cancel",
+                    style: "cancel",
+                    onPress: () => {
+                      setCircles((prev) =>
+                        prev.filter((c) => c.uniqueId !== tempCircle.uniqueId),
+                      );
+                      // Cancel: do not add circle (never added, so nothing to remove)
+                    },
+                  },
+                  {
+                    text: "OK",
+                    onPress: () => {
+                      setTimeout(() => {
+                        saveImage([...circles, newCircle]);
+                      }, 400);
+                    },
+                  },
+                ],
+              );
             }
           }
           drawing.current = false;
@@ -546,117 +775,263 @@ export default function MarkableImage() {
           drawingScaleRef.current = 1;
         },
       }),
-    [circles, tempCircle, imageSize, box, isMarkingEnabled]
+    [
+      circles,
+      tempCircle,
+      getDisplayedImageSize,
+      isInsideImage,
+      isMarkingEnabled,
+      btnAttachImages,
+      deleteImage,
+    ],
   );
 
-  const btnAttachImages = (tappedIndex) => {
-    const existingImages = circles[tappedIndex]?.attachedImages || [];
-    navigate(ScreenName.DERMO_SCOPY_CAMERA, {
-      body,
-      circleName: circles[tappedIndex]?.name,
-      images: existingImages.length > 0 ? existingImages : undefined, // Pass existing images for ghost overlay if available
-      onSave: (capturedImages) => {
-        if (capturedImages && capturedImages.length > 0) {
-          // Process all captured images
-          const processedImages = capturedImages.map((img) => {
-            const processedImg = { ...img };
-            if (!processedImg.path.startsWith("file://")) {
-              processedImg.path = `file://${processedImg.path}`;
-            }
-            return processedImg;
-          });
+  const btnAttachImages = useCallback(
+    (tappedIndex) => {
+      const existingImages = circles[tappedIndex]?.attachedImages || [];
+      const moleName = circles[tappedIndex]?.name;
+      navigate(ScreenName.DERMO_SCOPY_CAMERA, {
+        body,
+        view,
+        circleName: moleName,
+        images: existingImages.length > 0 ? existingImages : undefined,
+        uploadToCloud: uploadCapturedImagesToCloud,
+        onSave: (capturedImages) => {
+          if (capturedImages && capturedImages.length > 0) {
+            const processedImages = capturedImages.map((img) => {
+              const processedImg = { ...img };
+              if (!processedImg.path.startsWith("file://")) {
+                processedImg.path = `file://${processedImg.path}`;
+              }
+              return processedImg;
+            });
+            setCircles((prev) =>
+              prev.map((circle, idx) =>
+                idx === tappedIndex
+                  ? {
+                      ...circle,
+                      attachedImages: circle.attachedImages
+                        ? [...circle.attachedImages, ...processedImages]
+                        : processedImages,
+                    }
+                  : circle,
+              ),
+            );
+          }
+          setModalVisible(false);
+        },
+      });
+    },
+    [body, view, circles, uploadCapturedImagesToCloud],
+  );
 
-          setCircles((prev) =>
-            prev.map((circle, idx) =>
-              idx === tappedIndex
-                ? {
-                  ...circle,
-                  attachedImages: circle.attachedImages
-                    ? [...circle.attachedImages, ...processedImages]
-                    : processedImages,
-                }
-                : circle
-            )
-          );
-        }
-        closeModal();
-      },
-    });
-  };
-
-  const onLayout = (e) => {
-    const { width, height } = e.nativeEvent.layout;
+  const onLayout = useCallback((e) => {
+    const { width, height } = e?.nativeEvent?.layout;
     setBox({ w: width, h: height });
-  };
+  }, []);
 
   const validateAllMolesHavePhotos = () => {
     const invalidIndices = circles
-      .map((c, i) => (!c.attachedImages || c.attachedImages.length === 0 ? i : -1))
+      .map((c, i) =>
+        !c?.attachedImages || c?.attachedImages?.length === 0 ? i : -1,
+      )
       .filter((i) => i !== -1);
 
     return {
-      isValid: invalidIndices.length === 0,
+      isValid: invalidIndices?.length === 0,
       invalidIndices,
     };
   };
 
-  const saveImage = async () => {
+  const saveImage = async (circleData) => {
     try {
       if (!capturedImage?.path) {
         return Alert.alert("No Image", "Please capture an image first");
       }
 
-      if (circles.length === 0) {
-        return Alert.alert("No Marks", "Please add at least one mark");
-      }
-
-      // const { isValid, invalidIndices } = validateAllMolesHavePhotos();
-      // if (!isValid) {
-      //   const moleList = invalidIndices.map(i => `M${i + 1}`).join(", ");
-      //   return Alert.alert(
-      //     "Missing Photos",
-      //     `Please attach at least one photo to each mole:\n${moleList}`
-      //   );
+      // if (circleData.length === 0) {
+      //   return Alert.alert("No Marks", "Please add at least one mark");
       // }
+
+      // Check update count limit (only for updates, not first save)
+      if (savedMolesId && updateCount >= 5) {
+        return Alert.alert(
+          "Update Limit Reached",
+          "You have reached the maximum of 5 updates for this dermoscopy record.",
+        );
+      }
 
       setLoading(true);
 
+      // Capture screenshot of the marked image (required)
+      let screenshotUri = null;
+      try {
+        if (viewShotRef.current) {
+          screenshotUri = await viewShotRef.current.capture();
+          console.log("Screenshot captured:", screenshotUri);
+        } else {
+          throw new Error("ViewShot ref not available");
+        }
+      } catch (screenshotError) {
+        console.error("Error capturing screenshot:", screenshotError);
+        Alert.alert("Error", "Failed to capture screenshot. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      if (!screenshotUri) {
+        Alert.alert("Error", "Failed to capture screenshot. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // Upload images to cloud storage first
       if (cloudType === "google") {
         await addToDrive();
       } else {
         await addToDropBox();
       }
 
-      await addCirclesDimentions(circles);
-      Alert.alert(
-        "Success",
-        "Image with marks saved successfully!",
-        [
-          {
-            text: "OK",
-            onPress: () => goBack(),
-          },
-        ],
-        { cancelable: false }
+      // Build cloud folder path (same structure as used in addToDropBox and addToDrive)
+      // Format: /PhotoMed/{patientName + patientId}/Dermoscopy/{view}/{body} or /PhotoMed/{patientName + patientId}/Dermoscopy/{body}
+      const basePath = `/PhotoMed/${patientName + patientId}/Dermoscopy`;
+      const cloudFolderPath = view
+        ? `${basePath}/${view}/${body}`
+        : `${basePath}/${body}`;
+
+      const molesData =
+        circleData && circleData.length > 0
+          ? circleData.map((circle) => ({
+              name: circle.name,
+              center: {
+                x: circle.center.x, // Normalized (0-1)
+                y: circle.center.y, // Normalized (0-1)
+              },
+              radius: circle.radius, // Normalized (0-1)
+            }))
+          : [];
+
+      // Create FormData
+      const formData = new FormData();
+      let patientFullId = await AsyncStorage.getItem("patientId");
+      formData.append("patientId", patientFullId || patientId);
+      formData.append("body", body);
+      formData.append("path", cloudFolderPath); // Use cloud folder path where images are stored
+      formData.append("bodyType", bodyType || body); // Use bodyType from route or fallback to body
+      formData.append("cloudType", cloudType);
+      formData.append("notes", notes || "");
+      formData.append("moles", JSON.stringify(molesData));
+
+      // Add screenshot image (always required)
+      const screenshotFileName = `screenshot_${body}_${Date.now()}.jpg`;
+      formData.append("image", {
+        uri: screenshotUri,
+        type: "image/jpeg",
+        name: screenshotFileName,
+      });
+      console.log(
+        "savedMolesIdsavedMolesIdsavedMolesId---",
       );
+      // return;
+      // Send to backend API
+      if (savedMolesId) {
+        // Update existing record
+        await updateDermoscopyMole({
+          token,
+          formData,
+          id: savedMolesId,
+        }).unwrap();
+        setUpdateCount((prev) => prev + 1);
+      } else {
+        // Create new record
+        await postDermoscopyMole({
+          token,
+          formData,
+        }).unwrap();
+      }
     } catch (error) {
-      console.log("❌ Error in saveImage:", error);
-      Alert.alert("Error", "Something went wrong while saving the image.");
+      console.log("❌ Error in :", error);
+      Alert.alert(
+        "Error",
+        `Something went wrong while saving the image: ${
+          error.message || "Unknown error"
+        }`,
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  const saveMainImage = async (imageData) => {
+    try {
+      if (!imageData?.path) {
+        return Alert.alert("No Image", "Please capture an image first");
+      }
+
+      const basePath = `/PhotoMed/${patientName + patientId}/Dermoscopy`;
+      const cloudFolderPath = view
+        ? `${basePath}/${view}/${body}`
+        : `${basePath}/${body}`;
+
+      // Create FormData
+      const formData = new FormData();
+      let patientFullId = await AsyncStorage.getItem("patientId");
+      formData.append("patientId", patientFullId);
+      formData.append("body", body);
+      formData.append("path", cloudFolderPath);
+      formData.append("bodyType", bodyType || body);
+      formData.append("cloudType", cloudType);
+      formData.append("moles", JSON.stringify([]));
+
+      const screenshotFileName = `screenshot_${body}_${Date.now()}.jpg`;
+      Image?.getSize(imageData?.path, (width, height) => {
+        console.log("width width width width", width);
+        console.log("height height height height", height);
+      });
+      
+      formData.append("image", {
+        uri: imageData?.path,
+        type: "image/jpg",
+        name: screenshotFileName,
+      });
+
+      console.log("formDataformDataformData---", JSON.stringify(formData));
+
+      const res = await postDermoscopyMole({
+        token,
+        formData,
+      }).unwrap();
+
+      console.log("1st time mole ", res?.ResponseBody?._id);
+
+      if (res?.ResponseBody?._id) {
+        setsavedMolesId(res?.ResponseBody?._id);
+      }
+
+      console.log("savedMolesIdsavedMolesIdsavedMolesId---", savedMolesId);
+    } catch (error) {
+      console.log("❌ Error in saveMainImage:", error);
+      Alert.alert(
+        "Error",
+        `Something went wrong while saving the image: ${
+          error.message || "Unknown error"
+        }`,
+      );
+    } finally {
+    }
+  };
 
   const addToDropBox = async () => {
     try {
       const basePath = `/PhotoMed/${patientName + patientId}/Dermoscopy`;
-      const viewPath = view ? `${basePath}/${view}/${body}` : `${basePath}/${body}`; // front/back comes before body part
+      const viewPath = view
+        ? `${basePath}/${view}/${body}`
+        : `${basePath}/${body}`; // front/back comes before body part
       const rootPath = `${viewPath}/${capturedImage.name}`;
 
-      console.log('640---', basePath);
-      console.log('641---', rootPath);
-      console.log('capturedImage 641---', capturedImage);
+      console.log("640---", basePath);
+      console.log("641---", rootPath);
+      console.log("capturedImage 641---", capturedImage);
       if (!capturedImage?.id) {
         let res = await uploadDropBoxImageByFolder({
           file: capturedImage,
@@ -665,7 +1040,7 @@ export default function MarkableImage() {
           accessToken,
         }).unwrap();
 
-        console.log('650---', res);
+        console.log("650---", res);
       }
 
       for (const circle of circles) {
@@ -673,7 +1048,7 @@ export default function MarkableImage() {
 
         for (const img of circle.attachedImages) {
           const subPath = `${viewPath}/${circle.name}/${img.name}`;
-          console.log('subPathsubPathsubPath---', subPath);
+          console.log("subPathsubPathsubPath---", subPath);
           if (!img?.id) {
             try {
               await uploadDropBoxImageByFolder({
@@ -703,7 +1078,7 @@ export default function MarkableImage() {
       const dermoscopyFolderId = await safeCreateFolder(
         dermoscopyFolderPath,
         accessToken,
-        "root"
+        "root",
       );
 
       // Create front/back folder first if view is specified
@@ -713,20 +1088,20 @@ export default function MarkableImage() {
         const viewFolderId = await safeCreateFolder(
           viewFolderPath,
           accessToken,
-          "root"
+          "root",
         );
         // Then create body part folder inside view folder using createFolderInParentAndCheck
         targetFolderId = await createFolderInParentAndCheck(
           body,
           viewFolderId,
-          accessToken
+          accessToken,
         );
       } else {
         // If no view, create body part folder directly in Dermoscopy
         targetFolderId = await createFolderInParentAndCheck(
           body,
           dermoscopyFolderId,
-          accessToken
+          accessToken,
         );
       }
 
@@ -748,7 +1123,7 @@ export default function MarkableImage() {
         const subFolderId = await createFolderInParentAndCheck(
           circle.name,
           targetFolderId, // Use targetFolderId (which includes front/back if specified)
-          accessToken
+          accessToken,
         );
 
         for (const img of circle.attachedImages) {
@@ -773,87 +1148,42 @@ export default function MarkableImage() {
     }
   };
 
-  async function deleteImage(tappedIndex) {
-    const selData = circles[tappedIndex];
-
-    if (!selData) {
-      console.log("⚠ Invalid index", tappedIndex);
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      // GOOGLE DRIVE DELETE
-      if (cloudType === "google") {
-        if (!selData.folderId) {
-          const updatedCircles = circles.filter((_, idx) => idx !== tappedIndex);
-          setCircles(updatedCircles);
-          return
+  const deleteImage = useCallback(
+    async (tappedIndex) => {
+      const selData = circles[tappedIndex];
+      if (!selData) {
+        console.log("⚠ Invalid index", tappedIndex);
+        return;
+      }
+      setLoading(true);
+      try {
+        if (cloudType === "google") {
+          if (!selData.folderId) {
+            const updated = circles.filter((_, idx) => idx !== tappedIndex);
+            setCircles(updated);
+            saveImage(updated);
+            return;
+          }
+          await deleteDriveFolder(selData.folderId, accessToken);
+        } else {
+          if (!selData.folderPath) {
+            const updated = circles.filter((_, idx) => idx !== tappedIndex);
+            setCircles(updated);
+            saveImage(updated);
+            return;
+          }
+          await deleteFileFromDropbox(selData.folderPath, accessToken);
         }
-
-
-        await deleteDriveFolder(selData.folderId, accessToken);
+        const updated = circles.filter((_, idx) => idx !== tappedIndex);
+        setCircles(updated);
+      } catch (error) {
+        Alert.alert("Error", "Failed to delete image. Please try again.");
+      } finally {
+        setLoading(false);
       }
-
-
-      else {
-        if (!selData.folderPath) {
-          const updatedCircles = circles.filter((_, idx) => idx !== tappedIndex);
-          setCircles(updatedCircles);
-          return
-        }
-
-        await deleteFileFromDropbox(selData.folderPath, accessToken);
-      }
-
-
-      const updatedCircles = circles.filter((_, idx) => idx !== tappedIndex);
-      setCircles(updatedCircles);
-
-
-      await addCirclesDimentions(updatedCircles);
-
-    } catch (error) {
-      console.log("❌ deleteImage Error:", error);
-      Alert.alert("Error", "Failed to delete image. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function addCirclesDimentions(updatedList) {
-    let idpatientId = await AsyncStorage.getItem("patientId");
-    const dadada = updatedList.map((item) => ({
-      name: item.name,
-      center: item.center,
-      radius: item.radius,
-    }));
-
-    let payload = {
-      body,
-      patientId: idpatientId,
-      cloudType,
-      moles: dadada,
-    };
-
-    try {
-      if (savedMolesId) {
-        await updateDermoscopyMole({
-          token,
-          data: payload,
-          id: savedMolesId,
-        }).unwrap();
-      } else {
-        await postDermoscopyMole({
-          token,
-          data: payload,
-        }).unwrap();
-      }
-    } catch (error) {
-      console.log("Save error:", error);
-    }
-  }
+    },
+    [circles, cloudType, accessToken],
+  );
 
   return (
     <SafeAreaView style={styles.container}>
@@ -861,13 +1191,35 @@ export default function MarkableImage() {
       <OptionsModal
         visible={modalVisible}
         onClose={closeModal}
-        isCompareActive={circles[tappedIndex]?.attachedImages?.length > 0 ? true : false}
-        onAddImage={() => { btnAttachImages(tappedIndex); setModalVisible(false); }}
-        onDelete={() => { deleteImage(tappedIndex); closeModal(); }}
+        isCompareActive={
+          circles[tappedIndex]?.attachedImages?.length > 0 ? true : false
+        }
+        onAddImage={() => {
+          btnAttachImages(tappedIndex);
+          setModalVisible(false);
+        }}
+        onDelete={() => {
+          Alert.alert(
+            "Delete Mark",
+            "Do you want to delete this mark? Changes will be saved to the backend.",
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "OK",
+                onPress: () => {
+                  deleteImage(tappedIndex);
+                  closeModal();
+                },
+              },
+            ],
+          );
+        }}
         onCompare={() => {
           closeModal();
           // navigate(ScreenName.DERMO_SCOPY_COMPARE, { images: circles[tappedIndex].attachedImages });
-          navigate('DermoscopyCollage', { images: circles[tappedIndex].attachedImages });
+          navigate("DermoscopyCollage", {
+            images: circles[tappedIndex].attachedImages,
+          });
         }}
       />
       <ImageZoomModal
@@ -879,25 +1231,36 @@ export default function MarkableImage() {
 
       <View style={styles.headerContainer}>
         <TouchableOpacity onPress={() => goBack()} style={{ marginLeft: 10 }}>
-          <Image style={styles.backIcon} source={require("../assets/images/icons/backIcon.png")} />
+          <Image
+            style={styles.backIcon}
+            source={require("../assets/images/icons/backIcon.png")}
+          />
         </TouchableOpacity>
-        <Text style={styles.title}>Mark Moles on {body} {view ? `(${view})` : ''}</Text>
-
-        <TouchableOpacity onPress={saveImage} style={{ marginRight: 10, backgroundColor: COLORS.primary, width: 90, justifyContent: 'center', alignItems: 'center', padding: 5, borderRadius: 5 }}>
-          <Text style={{ color: '#fff' }}>Save</Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>
+          Mark Moles on {body} {view ? `(${view})` : ""}
+        </Text>
+        <View style={styles.headerSpacer} />
       </View>
 
       <View style={[styles.fixedBox, { width, height: windowHeight * 0.55 }]}>
-        <ViewShot ref={viewShotRef} options={{ format: "jpg", quality: 0.9 }} style={{ width: "100%", height: "100%" }}>
+        <ViewShot
+          ref={viewShotRef}
+          options={{ format: "jpg", quality: 0.9 }}
+          style={{ width: "100%", height: "100%" }}
+        >
           <View
             style={styles.imageContainer}
             onLayout={onLayout}
             {...(isMarkingEnabled ? panResponder.panHandlers : {})}
           >
             {!capturedImage?.path ? (
-              <TouchableOpacity style={styles.noImageContainer} onPress={openCamera}>
-                <Text style={styles.noImageText}>Tap to Capture Body Image</Text>
+              <TouchableOpacity
+                style={styles.noImageContainer}
+                onPress={openCamera}
+              >
+                <Text style={styles.noImageText}>
+                  Tap to Capture Body Image
+                </Text>
               </TouchableOpacity>
             ) : (
               <>
@@ -912,7 +1275,12 @@ export default function MarkableImage() {
                     const dims = getDisplayedImageSize();
                     if (!dims) return null;
 
-                    const { displayedWidth, displayedHeight, offsetX, offsetY } = dims;
+                    const {
+                      displayedWidth,
+                      displayedHeight,
+                      offsetX,
+                      offsetY,
+                    } = dims;
                     const scale = Math.min(displayedWidth, displayedHeight);
 
                     const cx = offsetX + c.center.x * displayedWidth;
@@ -945,42 +1313,45 @@ export default function MarkableImage() {
                     );
                   })}
 
-                  {tempCircle && (() => {
-                    const dims = getDisplayedImageSize();
-                    if (!dims) return null;
-                    const { displayedWidth, displayedHeight, offsetX, offsetY } = dims;
-                    const scale = Math.min(displayedWidth, displayedHeight);
-                    const cx = offsetX + tempCircle.center.x * displayedWidth;
-                    const cy = offsetY + tempCircle.center.y * displayedHeight;
-                    const r = tempCircle.radius * scale;
+                  {tempCircle &&
+                    (() => {
+                      const dims = getDisplayedImageSize();
+                      if (!dims) return null;
+                      const {
+                        displayedWidth,
+                        displayedHeight,
+                        offsetX,
+                        offsetY,
+                      } = dims;
+                      const scale = Math.min(displayedWidth, displayedHeight);
+                      const cx = offsetX + tempCircle.center.x * displayedWidth;
+                      const cy =
+                        offsetY + tempCircle.center.y * displayedHeight;
+                      const r = tempCircle.radius * scale;
 
-                    return (
-                      <>
-                        <Circle
-                          cx={cx}
-                          cy={cy}
-                          r={r}
-                          stroke="red"
-                          strokeWidth={5}
-                          fill="rgba(255, 0, 0, 0.1)"
-                          strokeDasharray="8,6"
-                        />
-                        <SvgText
-                          x={cx}
-                          y={cy - 12}
-                          fontSize={18}
-                          fill="red"
-                          textAnchor="middle"
-                          fontWeight="200"
-                          stroke="#ffffff"
-                          strokeWidth={4}
-                          paintOrder="stroke fill"
-                        >
-                          Drawing...
-                        </SvgText>
-                      </>
-                    );
-                  })()}
+                      return (
+                        <>
+                          <Circle
+                            cx={cx}
+                            cy={cy}
+                            r={r}
+                            stroke="red"
+                            strokeWidth={5}
+                            fill="rgba(255, 0, 0, 0.1)"
+                            strokeDasharray="8,6"
+                          />
+                          <SvgText
+                            x={cx}
+                            y={cy - 12}
+                            fontSize={18}
+                            fill="red"
+                            textAnchor="middle"
+                          >
+                            Drawing...
+                          </SvgText>
+                        </>
+                      );
+                    })()}
                 </Svg>
               </>
             )}
@@ -996,17 +1367,32 @@ export default function MarkableImage() {
           renderItem={({ item, index }) => (
             <View style={styles.containerCircleItem}>
               <View style={styles.circleItem}>
-                <Text style={styles.circleText}>
-                  Mole: {item?.name}
-                </Text>
+                <Text style={styles.circleText}>Mole: {item?.name}</Text>
                 {item.attachedImages && (
-                  <View style={{ marginTop: 6, flexDirection: "row", flexWrap: "wrap" }}>
+                  <View
+                    style={{
+                      marginTop: 6,
+                      flexDirection: "row",
+                      flexWrap: "wrap",
+                    }}
+                  >
                     {item.attachedImages.map((img, idx) => (
-                      <TouchableOpacity key={"mark_" + index + '_' + idx} onPress={() => { openZoomView(img, idx) }}>
+                      <TouchableOpacity
+                        key={"mark_" + index + "_" + idx}
+                        onPress={() => {
+                          openZoomView(img, idx);
+                        }}
+                      >
                         <FastImage
                           key={idx}
                           source={{ uri: img.path }}
-                          style={{ height: 45, width: 45, marginRight: 4, marginBottom: 4, borderRadius: 3 }}
+                          style={{
+                            height: 45,
+                            width: 45,
+                            marginRight: 4,
+                            marginBottom: 4,
+                            borderRadius: 3,
+                          }}
                         />
                       </TouchableOpacity>
                     ))}
@@ -1014,14 +1400,25 @@ export default function MarkableImage() {
                 )}
               </View>
 
-              {data?.ResponseBody && <TouchableOpacity
-                onPress={() => {
-                  setTapedIndex(index)
-                  openModal()
-                }}
-                style={{ justifyContent: 'center', alignItems: 'center', padding: 5, borderRadius: 5 }}>
-                <Image source={require('../assets/images/threedot.png')} style={{ height: 25, width: 10 }} />
-              </TouchableOpacity>}
+              {data?.ResponseBody && (
+                <TouchableOpacity
+                  onPress={() => {
+                    setTapedIndex(index);
+                    openModal();
+                  }}
+                  style={{
+                    justifyContent: "center",
+                    alignItems: "center",
+                    padding: 5,
+                    borderRadius: 5,
+                  }}
+                >
+                  <Image
+                    source={require("../assets/images/threedot.png")}
+                    style={{ height: 25, width: 10 }}
+                  />
+                </TouchableOpacity>
+              )}
             </View>
           )}
         />
@@ -1036,7 +1433,6 @@ export default function MarkableImage() {
       )}
     </SafeAreaView>
   );
-
 }
 
 const styles = StyleSheet.create({
@@ -1091,9 +1487,8 @@ const styles = StyleSheet.create({
     color: "#222",
   },
   backIcon: { height: 28, width: 28 },
-  circleItem: {
-
-  },
+  headerSpacer: { width: 90 },
+  circleItem: {},
   containerCircleItem: {
     flexDirection: "row",
     justifyContent: "space-between",

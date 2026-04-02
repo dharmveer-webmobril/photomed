@@ -1,12 +1,10 @@
 module.exports = {
   presets: ['module:@react-native/babel-preset'],
-  plugins: [
-    ["module:react-native-dotenv", {
+  plugins: ['react-native-reanimated/plugin', ["module:react-native-dotenv", {
       moduleName: '@env',
       path: '.env',
       allowUndefined: true,
-    }],
-    // ← Reanimated plugin MUST be the very last one
-    'react-native-worklets/plugin',
-  ],
+    }]],
 };
+
+ 

@@ -27,8 +27,14 @@ const PatientImageList = memo(
 
     useEffect(() => {
       if (data && data.length > 0) {
+        console.log("PatientImageList - Received data:", data.length, "items");
+        console.log("PatientImageList - Dermoscopy images:", data.filter(item => item.isDermoscopy).length);
         let gData = groupByDate(data);
+        console.log("PatientImageList - Grouped data:", gData.length, "groups");
         setImageArr(gData);
+      } else {
+        console.log("PatientImageList - No data received or empty array");
+        setImageArr([]);
       }
     }, [data]);
 
@@ -37,12 +43,16 @@ const PatientImageList = memo(
       const yesterday = new Date();
       yesterday.setDate(today.getDate() - 1);
 
-      // Group items by date
-      const groupedData = data.reduce((acc, item) => {
+      // Separate dermoscopy images and regular images
+      const dermoscopyImages = data.filter(item => item.isDermoscopy);
+      const regularImages = data.filter(item => !item.isDermoscopy);
+
+      // Group regular items by date
+      const groupedData = regularImages.reduce((acc, item) => {
         const date =
           provider == "google"
-            ? item.createdTime.split("T")[0]
-            : item.server_modified.split("T")[0];
+            ? (item.createdTime || item.createdAt || new Date().toISOString()).split("T")[0]
+            : (item.server_modified || item.updatedAt || new Date().toISOString()).split("T")[0];
         const itemDate = new Date(date);
 
         // Format title
@@ -65,8 +75,15 @@ const PatientImageList = memo(
         return acc;
       }, []);
 
+      // Add dermoscopy images as a separate group at the beginning
+      if (dermoscopyImages.length > 0) {
+        groupedData.unshift({ title: "Dermoscopy", data: dermoscopyImages });
+      }
+
       // Sort groups in descending order (latest date first)
       groupedData.sort((a, b) => {
+        if (a.title === "Dermoscopy") return -1;
+        if (b.title === "Dermoscopy") return 1;
         if (a.title === "Today") return -1;
         if (b.title === "Today") return 1;
         if (a.title === "Yesterday") return -1;
@@ -77,10 +94,16 @@ const PatientImageList = memo(
       //   Sort items within each group in descending order
       groupedData.forEach((group) => {
         group.data.sort((a, b) => {
+          if (a.isDermoscopy || b.isDermoscopy) {
+            // For dermoscopy images, sort by createdAt/updatedAt
+            const aDate = a.dermoscopyRecord?.createdAt || a.dermoscopyRecord?.updatedAt || new Date().toISOString();
+            const bDate = b.dermoscopyRecord?.createdAt || b.dermoscopyRecord?.updatedAt || new Date().toISOString();
+            return moment(bDate).valueOf() - moment(aDate).valueOf();
+          }
           if (provider === "google") {
-            return moment(b.createdTime).valueOf() - moment(a.createdTime).valueOf(); // Descending
+            return moment(b.createdTime || b.createdAt).valueOf() - moment(a.createdTime || a.createdAt).valueOf(); // Descending
           } else {
-            return moment(b.server_modified).valueOf() - moment(a.server_modified).valueOf(); // Descending
+            return moment(b.server_modified || b.updatedAt).valueOf() - moment(a.server_modified || a.updatedAt).valueOf(); // Descending
           }
         });
       });
@@ -103,8 +126,12 @@ const PatientImageList = memo(
     //   return anyIncluded;
     // }
     function checkAllIdsIncluded(data, validIds) {
-      // Extract all ids from the data array
-      const dataIds = data.map(item => provider == "google" ? item.id : item.path_display);
+      // Filter out dermoscopy images
+      const regularData = data.filter(item => !item.isDermoscopy);
+      if (regularData.length === 0) return false;
+      
+      // Extract all ids from the regular data array
+      const dataIds = regularData.map(item => provider == "google" ? item.id : item.path_display);
       // Check if all ids from data are in the validIds array
       const allIncluded = dataIds.every(id => validIds.includes(id));
       return allIncluded
@@ -147,23 +174,40 @@ const PatientImageList = memo(
                 </Text>
 
 
-                <TouchableOpacity
-                  onPress={() => { onPresTitle(section) }}
-                  style={[
-                    styles.check,
-                  ]}
-                >
-                  {isAllIdsIncluded && <Tick height={10} width={10} />}
-                </TouchableOpacity>
+                {/* Don't show select all for Dermoscopy section */}
+                {section.title !== "Dermoscopy" && (
+                  <TouchableOpacity
+                    onPress={() => { onPresTitle(section) }}
+                    style={[
+                      styles.check,
+                    ]}
+                  >
+                    {isAllIdsIncluded && <Tick height={10} width={10} />}
+                  </TouchableOpacity>
+                )}
 
               </View>
               <View style={{ width: "100%", flexDirection: "row", flexWrap: "wrap", justifyContent: 'space-between' }}>
                 {
                   section?.data && formatData(section?.data, 3)?.map((item, index) => {
-
-                    const selected = !item?.empty && selectedImages.includes(
+                    const isDermoscopy = item?.isDermoscopy;
+                    const selected = !item?.empty && !isDermoscopy && selectedImages.includes(
                       provider == "google" ? item.id : item.path_display
                     );
+                    
+                    // Debug logging for dermoscopy images
+                    if (isDermoscopy && !item?.empty) {
+                      const imageUri = item.publicUrl || item.webContentLink || item.path_display || item.imageUrl || item.dermoscopyRecord?.imageUrl;
+                      console.log(`Dermoscopy image ${index}:`, {
+                        id: item.id,
+                        uri: imageUri,
+                        hasPublicUrl: !!item.publicUrl,
+                        hasWebContentLink: !!item.webContentLink,
+                        hasPathDisplay: !!item.path_display,
+                        hasImageUrl: !!item.imageUrl,
+                      });
+                    }
+                    
                     return item?.empty
                       ?
                       <View style={{
@@ -174,7 +218,12 @@ const PatientImageList = memo(
                       (
                         <TouchableOpacity
                           onPress={() => handleImagePress([item], index, section?.data)} // Adjusted to pass the item
-                          onLongPress={() => toggleImageSelection([item])} // Pass item for selection
+                          onLongPress={() => {
+                            // Don't allow long press selection for dermoscopy images
+                            if (!isDermoscopy) {
+                              toggleImageSelection([item]);
+                            }
+                          }}
                           style={{
                             borderRadius: 22,
                             overflow: "hidden",
@@ -184,9 +233,11 @@ const PatientImageList = memo(
                         >
                           <ImageWithLoader
                             uri={
-                              provider === "google"
-                                ? item.webContentLink
-                                : item.publicUrl
+                              isDermoscopy
+                                ? (item.publicUrl || item.webContentLink || item.path_display || item.imageUrl || item.dermoscopyRecord?.imageUrl)
+                                : (provider === "google"
+                                    ? item.webContentLink
+                                    : item.publicUrl)
                             }
                             // resizeMode={Fas}
                             style={{
@@ -194,7 +245,7 @@ const PatientImageList = memo(
                               width: width * 0.29,
                             }}
                           />
-                          {selected && (
+                          {selected && !isDermoscopy && (
                             <View
                               style={[
                                 styles.check,

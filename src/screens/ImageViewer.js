@@ -308,8 +308,12 @@ const ZoomSwiper = (props) => {
         visible={visible}
       />
       <Loading visible={isLoading || loading} />
-      <SwiperFlatList showPagination={false} ref={swiperRef}
-        scrollEnabled={false} >
+      <SwiperFlatList 
+      showPagination={false} 
+      onChangeIndex={({index,prevIndex}) => {setCurrentIndex(index);}}
+      ref={swiperRef}
+        // scrollEnabled={false} 
+        >
         {preData.map((item, index) => {
           const imageUri = provider == "google" ? item.webContentLink : item.publicUrl
           return (
@@ -337,19 +341,19 @@ const ZoomSwiper = (props) => {
                 </TouchableOpacity>
               </View>
 
-              <ImageZoom
+              {/* <ImageZoom
                 cropWidth={width}
                 cropHeight={height * 0.8}
                 imageWidth={width}
                 imageHeight={height * 0.7}
                 enableSwipeDown={false}
-              >
+              > */}
                 <ImageWithLoader
                   uri={imageUri}
                   resizeMode={FastImage.resizeMode.contain}
                   style={{ width: '100%', height: '100%', resizeMode: 'contain' }}
                 />
-              </ImageZoom>
+              {/* </ImageZoom> */}
             </View>)
         })}
       </SwiperFlatList>

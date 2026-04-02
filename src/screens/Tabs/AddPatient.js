@@ -300,7 +300,7 @@ const AddPatient = () => {
               />
             </View>
 
-            < TouchableOpacity style={styles.ocrBtn} onPress={() => { setImageModal(true); setPickerType('scanner') }}>
+            <TouchableOpacity style={styles.ocrBtn} onPress={() => { setImageModal(true); setPickerType('scanner') }}>
               <Image source={require('../../assets/images/ocr.png')} style={styles.ocrIcon} />
             </TouchableOpacity>
           </View>

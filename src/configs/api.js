@@ -18,7 +18,8 @@ import { BASEURL, DROPBOX_CLIENT_ID, DROPBOX_CLIENT_SECRET, GOOGLE_CLIENT_ID, GO
 import Config from 'react-native-config';
 
 export const configUrl = {
-  imageUrl: "http://192.168.1.29:10049/",
+  imageUrl: "https://photomedpro.com:10049/",
+  imageUrl1: "https://photomedpro.com:10049",
   // imageUrl: "http://10.34.185.152:10049/",
   BASE_URL: BASEURL || Config.BASEURL,
   defaultUser: "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
@@ -31,7 +32,7 @@ export const configUrl = {
 
 const GOOGLE_BASE_URL = "https://www.googleapis.com/drive/v3";
 const DRIVE_API = 'https://www.googleapis.com/drive/v3/files';
-console.log('BASEURL',BASEURL);
+console.log('BASEURL', BASEURL);
 
 export async function getFolderId(
   folderName,
@@ -164,12 +165,24 @@ export async function createFolderInParent(folderName, parentId, accessToken) {
   }
 }
 
+/** Escape a Drive API `q` string literal (single-quoted name segment). */
+function escapeDriveQueryName(folderName) {
+  if (folderName == null || folderName === "") return "";
+  return String(folderName).replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+}
+
 export async function createFolderInParentAndCheck(folderName, parentId, accessToken) {
   try {
+    if (!folderName || !parentId) {
+      throw new Error("createFolderInParentAndCheck: folderName and parentId are required");
+    }
+    const safeName = escapeDriveQueryName(folderName);
     // Step 1: Check if folder already exists
-    const query = `mimeType='application/vnd.google-apps.folder' and name='${folderName}' and '${parentId}' in parents and trashed=false`;
+    const query = `mimeType='application/vnd.google-apps.folder' and name='${safeName}' and '${parentId}' in parents and trashed=false`;
     const searchRes = await fetch(
-      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id, name)`,
+      `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(
+        query
+      )}&spaces=drive&fields=files(id,name)`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -178,6 +191,11 @@ export async function createFolderInParentAndCheck(folderName, parentId, accessT
     );
 
     const searchData = await searchRes.json();
+    if (!searchRes.ok) {
+      throw new Error(
+        searchData?.error?.message || "Drive folder search failed"
+      );
+    }
     if (searchData.files && searchData.files.length > 0) {
       // ✅ Folder already exists
       return searchData.files[0].id;
@@ -191,7 +209,7 @@ export async function createFolderInParentAndCheck(folderName, parentId, accessT
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        name: folderName,
+        name: String(folderName),
         mimeType: "application/vnd.google-apps.folder",
         parents: [parentId],
       }),
@@ -273,9 +291,11 @@ export const safeCreateFolder = async (
       if (!folderName) continue; // Skip if folderName is empty
 
       try {
+        const safeName = escapeDriveQueryName(folderName);
+        const q = `'${currentParentId}' in parents and name='${safeName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
         // Check if the folder exists in the current parent folder
         const checkRes = await fetch(
-          `${driveEndpoint}?q='${currentParentId}' in parents and name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+          `${driveEndpoint}?q=${encodeURIComponent(q)}&spaces=drive&fields=files(id,name)`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -284,8 +304,10 @@ export const safeCreateFolder = async (
         );
 
         if (!checkRes.ok) {
+          const errBody = await checkRes.json().catch(() => ({}));
           throw new Error(
-            `Failed to fetch folder "${folderName}". Status: ${checkRes.status}`
+            errBody?.error?.message ||
+              `Failed to fetch folder "${folderName}". Status: ${checkRes.status}`
           );
         }
 
@@ -306,7 +328,7 @@ export const safeCreateFolder = async (
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              name: folderName,
+              name: String(folderName),
               mimeType: "application/vnd.google-apps.folder",
               parents: [currentParentId],
             }),
@@ -705,7 +727,7 @@ async function checkIfPathExists(path, accessToken) {
 function base64ToBinary(base64) {
 
 
-  const binaryString =  base64.decode(base64);
+  const binaryString = base64.decode(base64);
   const len = binaryString.length;
   const bytes = new Uint8Array(len);
 
@@ -1660,6 +1682,7 @@ export const validateSubscription1 = async (token, receipt, platform = Platform.
 
 // api/subscription.js
 export const getMySubscriptionDetails = async (token, userId) => {
+
   if (!token) {
     console.error("Authentication token missing. Please log in again.");
     return null;
@@ -1667,20 +1690,22 @@ export const getMySubscriptionDetails = async (token, userId) => {
 
   try {
     const response = await fetch(
-      "https://photomedpro.com:10049/api/check-user-subscription",
+
+      "https://photomedpro.com:10049/api/check-non-renewable-subscription-status",
+      // "https://photomedpro.com:10049/api/check-user-subscription",
       {
-        method: "POST",
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ userId }),
+        // body: JSON.stringify({ userId }),
       }
     );
 
     const responseData = await response.json();
 
-    if (response.ok && responseData?.transactionId) {
+    if (responseData?.ResponseCode === 200) {
       console.log("✅ Subscription details:", responseData);
       return responseData;
     } else {

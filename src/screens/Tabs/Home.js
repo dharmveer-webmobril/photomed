@@ -132,13 +132,16 @@ const Home = () => {
   }
 
   const userId = useSelector((state) => state.auth.userId);
+  const data = useSelector((state) => state.auth);
+  console.log('data', data);
   async function getMySubscription() {
+    console.log('getMySubscription', userId);
+    console.log('getMySubscription', token);
     try {
-      if (token && userId) {
+      if (token) {
         let res = await getMySubscriptionDetails(token, userId);
         console.log("getMySubscriptionDetails res", res);
-
-        dispatch(updateSubscription(res));
+        dispatch(updateSubscription(res?.ResponseBody));
       }
     } catch (error) {
       console.log("getMySubscriptionDetails error", error);
